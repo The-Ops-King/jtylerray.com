@@ -171,7 +171,8 @@ Data-driven content:
 Overall feel:
 - Premium, dark, high-contrast, “operator” energy
 - Big typography, clean spacing, strong hierarchy
-
+- Black and Gold (shiny / Gradient)
+- Geometric 
 Color (token names, not hard values):
 - `--bg` (dark)
 - `--fg` (near-white)
@@ -430,3 +431,7 @@ If the answer is no—simplify, tighten, or remove it.
 ### 14 Memory
 
 Before every new major action, reference the memory.md to remember what you've done, and after every new major  action append to the end of the memory.md a summary of what you've done.
+
+
+### 15. Resources
+Use the resources in the Resources section
