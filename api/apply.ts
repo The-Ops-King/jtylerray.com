@@ -69,6 +69,22 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     `<h2>New Real Estate Applicant</h2>` +
     `<table style="border-collapse:collapse;font-family:sans-serif;font-size:14px">${rows}</table>`;
 
+  // Best-effort: append to a Google Sheet via an Apps Script web app (if configured).
+  // Never block/fail the submission on a Sheets error — email is the source of truth.
+  let sheetOk = false;
+  if (process.env.GSHEET_WEBHOOK_URL) {
+    try {
+      const sr = await fetch(process.env.GSHEET_WEBHOOK_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+      sheetOk = sr.ok;
+    } catch {
+      sheetOk = false;
+    }
+  }
+
   try {
     const resend = new Resend(process.env.RESEND_API_KEY);
     const { error } = await resend.emails.send({
@@ -81,7 +97,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (error) {
       return res.status(502).json({ ok: false, error: error.message });
     }
-    return res.status(200).json({ ok: true });
+    return res.status(200).json({ ok: true, sheet: sheetOk });
   } catch (err) {
     return res.status(500).json({ ok: false, error: String(err) });
   }
