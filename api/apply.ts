@@ -50,8 +50,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   const data: Payload = typeof req.body === 'string' ? JSON.parse(req.body || '{}') : req.body || {};
 
-  if (!data.name || !data.email) {
-    return res.status(400).json({ ok: false, error: 'Name and email are required' });
+  const requiredKeys: (keyof Payload)[] = [
+    'name', 'email', 'facebook', 'position',
+    'commissionTarget', 'topRevenueMonth', 'closingExperience', 'realEstateExperience',
+  ];
+  const missing = requiredKeys.filter((k) => !(data[k] || '').toString().trim());
+  if (missing.length) {
+    return res.status(400).json({ ok: false, error: `Missing required fields: ${missing.join(', ')}` });
   }
 
   const rows = FIELDS.map(([key, label]) => {

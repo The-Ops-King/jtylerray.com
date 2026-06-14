@@ -108,8 +108,8 @@ export default function RealEstate() {
           </div>
 
           <div>
-            <label className={labelCls} htmlFor="facebook">Facebook Profile</label>
-            <input id="facebook" value={form.facebook} onChange={update('facebook')}
+            <label className={labelCls} htmlFor="facebook">Facebook Profile *</label>
+            <input id="facebook" required value={form.facebook} onChange={update('facebook')}
               className={fieldCls} placeholder="facebook.com/yourprofile" />
           </div>
 
@@ -126,26 +126,26 @@ export default function RealEstate() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-24">
             <div>
-              <label className={labelCls} htmlFor="commissionTarget">Monthly Commission Target</label>
-              <input id="commissionTarget" value={form.commissionTarget} onChange={update('commissionTarget')}
+              <label className={labelCls} htmlFor="commissionTarget">Monthly Commission Target *</label>
+              <input id="commissionTarget" required value={form.commissionTarget} onChange={update('commissionTarget')}
                 className={fieldCls} placeholder="$10,000" />
             </div>
             <div>
-              <label className={labelCls} htmlFor="topRevenueMonth">Top Revenue Generated (Month)</label>
-              <input id="topRevenueMonth" value={form.topRevenueMonth} onChange={update('topRevenueMonth')}
+              <label className={labelCls} htmlFor="topRevenueMonth">Top Revenue Generated (Month) *</label>
+              <input id="topRevenueMonth" required value={form.topRevenueMonth} onChange={update('topRevenueMonth')}
                 className={fieldCls} placeholder="$100,000" />
             </div>
           </div>
 
           <div>
-            <label className={labelCls} htmlFor="closingExperience">Closing Experience</label>
-            <textarea id="closingExperience" rows={3} value={form.closingExperience} onChange={update('closingExperience')}
+            <label className={labelCls} htmlFor="closingExperience">Closing Experience *</label>
+            <textarea id="closingExperience" required rows={3} value={form.closingExperience} onChange={update('closingExperience')}
               className={fieldCls} placeholder="What have you sold, for how long, what offers/price points?" />
           </div>
 
           <div>
-            <label className={labelCls} htmlFor="realEstateExperience">Real Estate Experience</label>
-            <textarea id="realEstateExperience" rows={3} value={form.realEstateExperience} onChange={update('realEstateExperience')}
+            <label className={labelCls} htmlFor="realEstateExperience">Real Estate Experience *</label>
+            <textarea id="realEstateExperience" required rows={3} value={form.realEstateExperience} onChange={update('realEstateExperience')}
               className={fieldCls} placeholder="Any real estate sales, investing, or industry background?" />
           </div>
 
