@@ -8,6 +8,7 @@ const FROM = process.env.RESEND_FROM || 'Applications <onboarding@resend.dev>';
 const TO = process.env.NOTIFY_EMAIL || 'jt@jtylerray.com';
 
 const FIELDS: [keyof Payload, string][] = [
+  ['source', 'Source'],
   ['name', 'Name'],
   ['email', 'Email'],
   ['facebook', 'Facebook'],
@@ -16,11 +17,14 @@ const FIELDS: [keyof Payload, string][] = [
   ['topRevenueMonth', 'Top Revenue Month'],
   ['closingExperience', 'Closing Experience'],
   ['realEstateExperience', 'Real Estate Experience'],
+  ['aiExperience', 'AI Experience'],
+  ['experience', 'Industry Experience'],
   ['loomUrl', 'Loom URL'],
   ['anythingElse', 'Anything Else'],
 ];
 
 type Payload = {
+  source?: string;
   name?: string;
   email?: string;
   facebook?: string;
@@ -29,6 +33,9 @@ type Payload = {
   topRevenueMonth?: string;
   closingExperience?: string;
   realEstateExperience?: string;
+  aiExperience?: string;
+  experience?: string | string[];
+  experienceOther?: string;
   loomUrl?: string;
   anythingElse?: string;
 };
@@ -50,10 +57,23 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   const data: Payload = typeof req.body === 'string' ? JSON.parse(req.body || '{}') : req.body || {};
 
+  // Normalize the experience checkboxes (+ optional free-text) into one string,
+  // so both the email and the Google Sheet get a single readable value.
+  const experienceArr = Array.isArray(data.experience)
+    ? data.experience
+    : (data.experience ? [String(data.experience)] : []);
+  const experienceOther = (data.experienceOther || '').toString().trim();
+  data.experience = [...experienceArr, ...(experienceOther ? [experienceOther] : [])]
+    .map((s) => String(s).trim())
+    .filter(Boolean)
+    .join(', ');
+
   const requiredKeys: (keyof Payload)[] = [
     'name', 'email', 'facebook', 'position',
     'commissionTarget', 'topRevenueMonth', 'closingExperience', 'realEstateExperience',
   ];
+  // The /apply form additionally requires AI experience and at least one industry.
+  if (data.source === 'apply') requiredKeys.push('aiExperience', 'experience');
   const missing = requiredKeys.filter((k) => !(data[k] || '').toString().trim());
   if (missing.length) {
     return res.status(400).json({ ok: false, error: `Missing required fields: ${missing.join(', ')}` });
@@ -65,8 +85,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       `<td style="border:1px solid #ddd;padding:6px;white-space:pre-wrap">${escapeHtml(val)}</td></tr>`;
   }).join('');
 
+  const sourceLabel = data.source === 'apply' ? 'Apply' : 'Real Estate';
   const html =
-    `<h2>New Real Estate Applicant</h2>` +
+    `<h2>New ${sourceLabel} Applicant</h2>` +
     `<table style="border-collapse:collapse;font-family:sans-serif;font-size:14px">${rows}</table>`;
 
   // Best-effort: append to a Google Sheet via an Apps Script web app (if configured).
@@ -91,7 +112,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       from: FROM,
       to: TO,
       replyTo: data.email,
-      subject: `New Real Estate Applicant: ${data.name} (${data.position || 'No position'})`,
+      subject: `New ${sourceLabel} Applicant: ${data.name} (${data.position || 'No position'})`,
       html,
     });
     if (error) {

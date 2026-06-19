@@ -1,9 +1,33 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 // Submissions are emailed via the /api/apply serverless function (Resend).
 const FORM_ENDPOINT = '/api/apply';
 
 const POSITIONS = ['Closer', 'DM Setter', 'Phone Setter'] as const;
+
+// Industry / vertical experience options for the multi-select dropdown.
+const EXPERIENCE_OPTIONS = [
+  'Real Estate',
+  'Real Estate Coaching',
+  'Car Sales',
+  'Health & Fitness',
+  'AI',
+  'B2B',
+  'SaaS',
+  'Solar',
+  'Insurance',
+  'Mortgage / Lending',
+  'Financial Services',
+  'Info Products / Online Courses',
+  'Coaching / Consulting',
+  'Agency / Marketing Services',
+  'Medical / Med Spa',
+  'Home Improvement',
+  'E-commerce',
+  'Recruiting / Staffing',
+] as const;
+
+const OTHER = 'Other';
 
 type FormState = {
   name: string;
@@ -14,6 +38,9 @@ type FormState = {
   topRevenueMonth: string;
   closingExperience: string;
   realEstateExperience: string;
+  aiExperience: string;
+  experience: string[];
+  experienceOther: string;
   loomUrl: string;
   anythingElse: string;
 };
@@ -27,6 +54,9 @@ const EMPTY: FormState = {
   topRevenueMonth: '',
   closingExperience: '',
   realEstateExperience: '',
+  aiExperience: '',
+  experience: [],
+  experienceOther: '',
   loomUrl: '',
   anythingElse: '',
 };
@@ -36,24 +66,76 @@ const fieldCls =
   'w-full px-16 py-12 bg-bg-elevated border border-border rounded-card text-fg placeholder-fg-muted/50 ' +
   'focus:outline-none focus:border-accent/60 focus:ring-1 focus:ring-accent/40 transition-colors';
 
-export default function RealEstate() {
+export default function Apply() {
   const [form, setForm] = useState<FormState>(EMPTY);
   const [status, setStatus] = useState<'idle' | 'submitting' | 'success' | 'error'>('idle');
+  const [expOpen, setExpOpen] = useState(false);
+  const [expError, setExpError] = useState(false);
+  const expRef = useRef<HTMLDivElement>(null);
+
+  const otherChecked = form.experience.includes(OTHER);
+
+  // Close the experience dropdown when clicking outside it.
+  useEffect(() => {
+    if (!expOpen) return;
+    const onClick = (e: MouseEvent) => {
+      if (expRef.current && !expRef.current.contains(e.target as Node)) setExpOpen(false);
+    };
+    document.addEventListener('mousedown', onClick);
+    return () => document.removeEventListener('mousedown', onClick);
+  }, [expOpen]);
 
   const update = (key: keyof FormState) => (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
   ) => setForm((f) => ({ ...f, [key]: e.target.value }));
 
+  const toggleExperience = (option: string) => {
+    setExpError(false);
+    setForm((f) => {
+      const has = f.experience.includes(option);
+      const experience = has
+        ? f.experience.filter((o) => o !== option)
+        : [...f.experience, option];
+      // Clear the "Other" text if Other gets unchecked.
+      const experienceOther = option === OTHER && has ? '' : f.experienceOther;
+      return { ...f, experience, experienceOther };
+    });
+  };
+
+  const hasExperience =
+    form.experience.filter((o) => o !== OTHER).length > 0 ||
+    (otherChecked && form.experienceOther.trim().length > 0);
+
+  const selectedSummary = (() => {
+    const picks = form.experience
+      .filter((o) => o !== OTHER)
+      .concat(otherChecked && form.experienceOther.trim() ? [form.experienceOther.trim()] : []);
+    return picks.length ? picks.join(', ') : '';
+  })();
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (status === 'submitting') return;
+
+    if (!hasExperience) {
+      setExpError(true);
+      setExpOpen(true);
+      return;
+    }
+
     setStatus('submitting');
 
     try {
       const res = await fetch(FORM_ENDPOINT, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...form, source: 'real-estate', submittedAt: new Date().toISOString() }),
+        body: JSON.stringify({
+          ...form,
+          experience: form.experience.filter((o) => o !== OTHER),
+          experienceOther: otherChecked ? form.experienceOther.trim() : '',
+          source: 'apply',
+          submittedAt: new Date().toISOString(),
+        }),
       });
       if (!res.ok) throw new Error('Request failed');
       setStatus('success');
@@ -82,7 +164,7 @@ export default function RealEstate() {
         {/* Header */}
         <div className="mb-40 text-center">
           <span className="inline-block px-16 py-8 text-small font-medium tracking-wider uppercase bg-accent/10 border border-accent/20 rounded-full text-accent mb-24">
-            REAL ESTATE
+            APPLY
           </span>
           <h1 className="text-h2 md:text-h1 font-black text-fg leading-tight mb-16">
             Apply to Join the Team
@@ -124,6 +206,64 @@ export default function RealEstate() {
             </select>
           </div>
 
+          {/* Experience multi-select */}
+          <div ref={expRef} className="relative">
+            <label className={labelCls} htmlFor="experience-trigger">Check the Experience You Have *</label>
+            <button
+              id="experience-trigger"
+              type="button"
+              onClick={() => setExpOpen((o) => !o)}
+              className={fieldCls + ' flex items-center justify-between text-left' +
+                (selectedSummary ? '' : ' text-fg-muted/50')}
+            >
+              <span className="truncate pr-12">{selectedSummary || 'Select all that apply'}</span>
+              <span className="text-fg-muted shrink-0">{expOpen ? '▲' : '▼'}</span>
+            </button>
+
+            {expOpen && (
+              <div className="absolute z-10 mt-8 w-full max-h-[280px] overflow-y-auto bg-bg-elevated border border-border rounded-card shadow-lg p-8">
+                {EXPERIENCE_OPTIONS.map((opt) => (
+                  <label
+                    key={opt}
+                    className="flex items-center gap-12 px-12 py-8 rounded-card hover:bg-bg cursor-pointer"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={form.experience.includes(opt)}
+                      onChange={() => toggleExperience(opt)}
+                      className="h-16 w-16 accent-accent shrink-0"
+                    />
+                    <span className="text-body text-fg">{opt}</span>
+                  </label>
+                ))}
+                <label className="flex items-center gap-12 px-12 py-8 rounded-card hover:bg-bg cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={otherChecked}
+                    onChange={() => toggleExperience(OTHER)}
+                    className="h-16 w-16 accent-accent shrink-0"
+                  />
+                  <span className="text-body text-fg">Other</span>
+                </label>
+                {otherChecked && (
+                  <input
+                    value={form.experienceOther}
+                    onChange={(e) => {
+                      setExpError(false);
+                      setForm((f) => ({ ...f, experienceOther: e.target.value }));
+                    }}
+                    className={fieldCls + ' mt-8'}
+                    placeholder="Tell us what else"
+                  />
+                )}
+              </div>
+            )}
+
+            {expError && (
+              <p className="text-danger text-small mt-8">Please select at least one.</p>
+            )}
+          </div>
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-24">
             <div>
               <label className={labelCls} htmlFor="commissionTarget">Monthly Commission Target *</label>
@@ -147,6 +287,12 @@ export default function RealEstate() {
             <label className={labelCls} htmlFor="realEstateExperience">Real Estate Experience *</label>
             <textarea id="realEstateExperience" required rows={3} value={form.realEstateExperience} onChange={update('realEstateExperience')}
               className={fieldCls} placeholder="Any real estate sales, investing, or industry background?" />
+          </div>
+
+          <div>
+            <label className={labelCls} htmlFor="aiExperience">What AI Experience Do You Have? *</label>
+            <textarea id="aiExperience" required rows={3} value={form.aiExperience} onChange={update('aiExperience')}
+              className={fieldCls} placeholder="What AI tools have you used, and how?" />
           </div>
 
           <div>

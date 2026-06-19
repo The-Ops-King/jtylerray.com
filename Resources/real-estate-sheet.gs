@@ -13,9 +13,10 @@
  */
 
 const HEADERS = [
-  'Submitted At', 'Name', 'Email', 'Facebook', 'Position',
+  'Submitted At', 'Source', 'Name', 'Email', 'Facebook', 'Position',
   'Monthly Commission Target', 'Top Revenue Month',
-  'Closing Experience', 'Real Estate Experience', 'Loom URL', 'Anything Else',
+  'Closing Experience', 'Real Estate Experience', 'AI Experience', 'Industry Experience',
+  'Loom URL', 'Anything Else',
 ];
 
 function doPost(e) {
@@ -29,6 +30,7 @@ function doPost(e) {
 
     sheet.appendRow([
       data.submittedAt || new Date().toISOString(),
+      data.source || 'real-estate',
       data.name || '',
       data.email || '',
       data.facebook || '',
@@ -37,6 +39,8 @@ function doPost(e) {
       data.topRevenueMonth || '',
       data.closingExperience || '',
       data.realEstateExperience || '',
+      data.aiExperience || '',
+      Array.isArray(data.experience) ? data.experience.join(', ') : (data.experience || ''),
       data.loomUrl || '',
       data.anythingElse || '',
     ]);
