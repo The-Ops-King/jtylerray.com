@@ -39,6 +39,7 @@ const fieldCls =
 export default function RealEstate() {
   const [form, setForm] = useState<FormState>(EMPTY);
   const [status, setStatus] = useState<'idle' | 'submitting' | 'success' | 'error'>('idle');
+  const [emailError, setEmailError] = useState('');
 
   const update = (key: keyof FormState) => (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
@@ -47,6 +48,13 @@ export default function RealEstate() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (status === 'submitting') return;
+
+    const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim());
+    if (!emailOk) {
+      setEmailError('Please enter a valid email address.');
+      return;
+    }
+
     setStatus('submitting');
 
     try {
@@ -102,8 +110,13 @@ export default function RealEstate() {
             </div>
             <div>
               <label className={labelCls} htmlFor="email">Email *</label>
-              <input id="email" type="email" required value={form.email} onChange={update('email')}
+              <input id="email" type="text" inputMode="email" autoComplete="email" required
+                value={form.email}
+                onChange={(e) => { setEmailError(''); setForm((f) => ({ ...f, email: e.target.value })); }}
                 className={fieldCls} placeholder="you@email.com" />
+              {emailError && (
+                <p className="text-danger text-small mt-8">{emailError}</p>
+              )}
             </div>
           </div>
 
