@@ -1,0 +1,325 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <title>J. Tyler Ray — Sales Operations</title>
+    <meta name="description" content="I build the systems behind sales teams: CRM architecture, automations, reporting, and the custom tools that don't come out of the box. Remote, available for full-time or project work." />
+    <meta name="author" content="J. Tyler Ray" />
+    <link rel="canonical" href="https://jtylerray.com/resume" />
+
+    <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
+    <meta name="googlebot" content="index, follow" />
+
+    <meta property="og:type" content="profile" />
+    <meta property="og:site_name" content="J. Tyler Ray" />
+    <meta property="og:title" content="J. Tyler Ray — Sales Operations" />
+    <meta property="og:description" content="I build the systems behind sales teams: CRM architecture, automations, reporting, and the custom tools that don't come out of the box. If it doesn't exist yet, I build it." />
+    <meta property="og:url" content="https://jtylerray.com/resume" />
+    <meta property="og:locale" content="en_US" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="J. Tyler Ray — Sales Operations" />
+    <meta name="twitter:description" content="I build the systems behind sales teams. Remote, available for full-time or project work." />
+
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Person",
+      "name": "J. Tyler Ray",
+      "jobTitle": "Sales Operations",
+      "url": "https://jtylerray.com/resume",
+      "email": "mailto:jt@jtylerray.com",
+      "description": "Sales operations specialist who builds the systems behind sales teams: CRM architecture, automation, reporting, call intelligence, and custom internal tools.",
+      "knowsAbout": ["Sales Operations","CRM Architecture","GoHighLevel","HubSpot","Zapier","Make","n8n","Airtable","Supabase","BigQuery","Looker Studio","Sales Automation","Revenue Operations","Call Intelligence","JavaScript"],
+      "worksFor": { "@type": "Organization", "name": "J. Tyler Ray — The Operations King", "url": "https://jtylerray.com/" }
+    }
+    </script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+    <style>
+      :root {
+        --bg: #000000;
+        --elevated: #0a0a0a;
+        --fg: #f5f5f5;
+        --muted: #a3a3a3;
+        --border: #262626;
+        --accent: #d4af37;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--fg);
+        font-family: 'Inter', system-ui, -apple-system, sans-serif;
+        line-height: 1.6;
+        -webkit-font-smoothing: antialiased;
+      }
+      a { color: var(--accent); }
+      .wrap { max-width: 62rem; margin: 0 auto; padding: 0 1.5rem; }
+      .container { padding: 4rem 0; }
+
+      /* Top bar */
+      .topbar { border-bottom: 1px solid var(--border); }
+      .topbar .wrap { display: flex; align-items: center; justify-content: space-between; padding-top: 1.25rem; padding-bottom: 1.25rem; }
+      .topbar .brand { font-weight: 800; letter-spacing: 0.02em; text-decoration: none; color: var(--fg); }
+      .topbar .brand span { color: var(--accent); }
+      .topbar nav a { color: var(--muted); text-decoration: none; margin-left: 1.5rem; font-weight: 500; font-size: 0.95rem; }
+      .topbar nav a:hover { color: var(--fg); }
+
+      /* Hero */
+      .hero { padding: 5rem 0 3.5rem; border-bottom: 1px solid var(--border); }
+      .eyebrow { text-transform: uppercase; letter-spacing: 0.18em; font-size: 0.8rem; color: var(--accent); font-weight: 600; margin: 0 0 0.75rem; }
+      h1 { font-size: 3rem; line-height: 1.05; font-weight: 800; margin: 0 0 1.25rem; }
+      .lede { font-size: 1.3rem; color: var(--fg); max-width: 48rem; margin: 0 0 1.25rem; }
+      .avail { color: var(--muted); font-size: 1.05rem; margin: 0 0 2rem; }
+      .avail strong { color: var(--fg); font-weight: 600; }
+
+      /* CTAs */
+      .cta-row { display: flex; flex-wrap: wrap; gap: 1rem; align-items: center; }
+      .btn { display: inline-block; text-decoration: none; font-weight: 700; padding: 0.85rem 1.6rem; border-radius: 0.75rem; }
+      .btn-primary { background: var(--accent); color: #000; }
+      .btn-primary:hover { background: #e6c65a; }
+      .btn-ghost { border: 1px solid var(--border); color: var(--fg); }
+      .btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
+      .cta-note { color: var(--muted); font-size: 0.95rem; }
+      .cta-note a { font-weight: 600; }
+
+      /* Sections */
+      section { border-bottom: 1px solid var(--border); }
+      h2 { font-size: 1.9rem; font-weight: 700; margin: 0 0 1.5rem; }
+      h2 .k { color: var(--accent); }
+      p { color: var(--muted); }
+      .section-lede { color: var(--fg); font-size: 1.1rem; max-width: 48rem; }
+
+      .prose p { font-size: 1.08rem; margin: 0 0 1.15rem; max-width: 50rem; }
+      .prose p strong { color: var(--fg); }
+
+      /* Stack */
+      .stack { display: grid; grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr)); gap: 1.25rem; }
+      .stack .group { background: var(--elevated); border: 1px solid var(--border); border-radius: 0.9rem; padding: 1.25rem 1.35rem; }
+      .stack .group h3 { margin: 0 0 0.5rem; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.12em; color: var(--accent); font-weight: 700; }
+      .stack .group p { margin: 0; color: var(--fg); font-weight: 500; }
+      .stack-note { color: var(--muted); margin-top: 1.5rem; max-width: 48rem; }
+
+      /* Industries */
+      .tags { display: flex; flex-wrap: wrap; gap: 0.6rem; }
+      .tag { background: var(--elevated); border: 1px solid var(--border); border-radius: 999px; padding: 0.5rem 1rem; color: var(--fg); font-size: 0.95rem; }
+
+      /* Projects */
+      .cats { display: grid; gap: 1.5rem; }
+      .cat { background: var(--elevated); border: 1px solid var(--border); border-radius: 1rem; padding: 1.75rem; }
+      .cat h3 { margin: 0 0 1.1rem; font-size: 1.25rem; font-weight: 700; color: var(--fg); }
+      .cat h3 .dot { color: var(--accent); }
+      .proj { padding: 0.9rem 0; border-top: 1px solid var(--border); }
+      .proj:first-of-type { border-top: none; padding-top: 0; }
+      .proj .name { font-weight: 600; color: var(--fg); display: block; }
+      .proj .desc { color: var(--muted); font-size: 0.98rem; }
+
+      /* Background */
+      .bg-list { list-style: none; padding: 0; margin: 0; max-width: 48rem; }
+      .bg-list li { position: relative; padding: 0.5rem 0 0.5rem 1.75rem; color: var(--fg); font-size: 1.08rem; }
+      .bg-list li::before { content: "▸"; color: var(--accent); position: absolute; left: 0; }
+
+      /* Close */
+      .close { text-align: left; }
+      .close .avail { margin-bottom: 1.75rem; }
+
+      footer { padding: 2.5rem 0; color: var(--muted); font-size: 0.9rem; }
+      footer a { color: var(--muted); }
+
+      @media (max-width: 640px) {
+        h1 { font-size: 2.25rem; }
+        .lede { font-size: 1.15rem; }
+        .container { padding: 3rem 0; }
+        .topbar nav a { margin-left: 1rem; }
+      }
+
+      .print-only { display: none; }
+
+      /* Print / PDF: clean light document. Web page stays dark. */
+      @media print {
+        .print-only { display: block; color: #222; font-size: 1rem; margin: 0 0 0.75rem; }
+        :root { --bg: #ffffff; --elevated: #ffffff; --fg: #111111; --muted: #333333; --border: #cccccc; --accent: #a67c00; }
+        body { background: #fff; color: #111; }
+        a { color: #111; text-decoration: none; }
+        .topbar, .topbar nav, footer, .btn, .cta-note { display: none !important; }
+        .hero { padding: 0 0 1.25rem; }
+        section, .hero { border-color: #cccccc; }
+        .container { padding: 1.5rem 0; }
+        .stack .group, .cat, .tag { background: #fff !important; border-color: #cccccc; }
+        h1 { font-size: 2rem; }
+        h2 { font-size: 1.4rem; }
+        .cat { break-inside: avoid; page-break-inside: avoid; }
+        .proj { break-inside: avoid; }
+        .lede, .avail, .section-lede, .prose p { color: #222 !important; }
+        .eyebrow, h2 .k, .stack .group h3 { color: #a67c00 !important; }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Top bar -->
+    <header class="topbar">
+      <div class="wrap">
+        <a class="brand" href="/">J. Tyler Ray <span>· The Operations King</span></a>
+        <nav>
+          <a href="/">Home</a>
+          <a href="mailto:jt@jtylerray.com">Contact</a>
+        </nav>
+      </div>
+    </header>
+
+    <!-- 1. Hero -->
+    <div class="hero">
+      <div class="wrap">
+        <p class="eyebrow">Sales Operations</p>
+        <h1>J. Tyler Ray</h1>
+        <p class="lede">I build the systems behind sales teams. CRM architecture, automations, reporting, and the custom tools that don't come out of the box. If it doesn't exist yet, I build it.</p>
+        <p class="avail"><strong>Remote.</strong> Available for full-time or project work.</p>
+        <p class="print-only">jt@jtylerray.com · jtylerray.com/resume</p>
+        <div class="cta-row">
+          <a class="btn btn-primary" href="https://calendar.google.com/calendar/u/0/appointments/schedules/AcZssZ1sNdq-fawbkAreIeJGRBENL0uXrpEAvGVGj6JXNZv8B00hdPgkoYIDvSotwQotDPXGe_LL5drV">Book a Call</a>
+          <a class="btn btn-ghost" href="/j-tyler-ray-sales-operations.pdf" download>Download PDF</a>
+          <span class="cta-note">or email <a href="mailto:jt@jtylerray.com">jt@jtylerray.com</a></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 2. What I actually do -->
+    <section>
+      <div class="wrap container prose">
+        <h2>What I <span class="k">actually</span> do</h2>
+        <p>Most of what I build replaces one of two things: nothing at all, or something that quietly stopped working. Reps who don't log their calls. Dispositions that never sync. Leads that sit for hours before anyone touches them. A tag list nobody has pruned in two years. The work usually starts by making the invisible visible, then making sure it stays that way without anyone babysitting it.</p>
+        <p>I work across the whole stack rather than inside a single tool. The problem decides the tool, not the other way around — sometimes that's a CRM rebuild, sometimes an automation, sometimes a dashboard, and sometimes a piece of custom software that didn't exist until it needed to.</p>
+        <p>When the no-code tools run out of road, I <strong>write code</strong>. That's the line most operators can't cross, and it's where the durable systems get built — the ones that hold up under real volume instead of breaking the first busy week.</p>
+        <p>I'm not a coach or a sales trainer — I build the systems the people doing that job run on.</p>
+      </div>
+    </section>
+
+    <!-- 3. Stack -->
+    <section>
+      <div class="wrap container">
+        <h2>Stack</h2>
+        <div class="stack">
+          <div class="group"><h3>CRM</h3><p>GoHighLevel, HubSpot</p></div>
+          <div class="group"><h3>Automation</h3><p>Zapier, Make, n8n, custom code</p></div>
+          <div class="group"><h3>Data</h3><p>Airtable, Supabase, BigQuery, Looker Studio</p></div>
+          <div class="group"><h3>Comms &amp; Scheduling</h3><p>Slack, Calendly</p></div>
+          <div class="group"><h3>Build</h3><p>JavaScript, Claude &amp; Claude Code, most documented APIs</p></div>
+        </div>
+        <p class="stack-note">The specific tools matter less than the fact that I learn whatever the company already runs.</p>
+      </div>
+    </section>
+
+    <!-- 4. Industries -->
+    <section>
+      <div class="wrap container">
+        <h2>Industries</h2>
+        <p class="section-lede" style="margin-bottom:1.5rem;">High-ticket coaching offers across:</p>
+        <div class="tags">
+          <span class="tag">Real estate</span>
+          <span class="tag">Real estate investing</span>
+          <span class="tag">Short-term rental</span>
+          <span class="tag">UGC &amp; influencer</span>
+          <span class="tag">ROI offers</span>
+          <span class="tag">Fitness</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- 5. Projects -->
+    <section>
+      <div class="wrap container">
+        <h2>Projects</h2>
+        <p class="section-lede" style="margin-bottom:2rem;">A working sample of what I've built, grouped by what it does.</p>
+        <div class="cats">
+
+          <div class="cat">
+            <h3><span class="dot">▸</span> CRM architecture &amp; data</h3>
+            <div class="proj"><span class="name">Post-call disposition capture</span><span class="desc">Reps only logged the calls they remembered. Rebuilt the pipelines so every call gets logged, not just the memorable ones.</span></div>
+            <div class="proj"><span class="name">Tag architecture rebuild</span><span class="desc">An unmanaged tag list had become noise. Cut it down to a working set that actually drives automation and reporting.</span></div>
+            <div class="proj"><span class="name">Custom field &amp; region structure</span><span class="desc">Inconsistent, duplicated records. Built custom field structures, region classification, and deduplication.</span></div>
+            <div class="proj"><span class="name">Data recovery</span><span class="desc">Dispositions had silently failed to sync. Recovered and backfilled them — closed-won deals included.</span></div>
+          </div>
+
+          <div class="cat">
+            <h3><span class="dot">▸</span> Automation &amp; integration</h3>
+            <div class="proj"><span class="name">Calendly → Zapier → GoHighLevel → Airtable pipeline</span><span class="desc">No reliable path from booking to disposition. Built the whole disposition pipeline from scratch.</span></div>
+            <div class="proj"><span class="name">Slack disposition router</span><span class="desc">Calls disappeared into the CRM. Now every call posts to a channel, confirms in-thread when the form comes back, and sends each closer their outstanding list at end of day.</span></div>
+            <div class="proj"><span class="name">Missing-disposition chasing</span><span class="desc">Reps forgot to fill forms. Automated the follow-up on a timer.</span></div>
+            <div class="proj"><span class="name">Round-robin setter assignment</span><span class="desc">Uneven, manual lead distribution. Automated fair assignment.</span></div>
+            <div class="proj"><span class="name">Cancellation &amp; reschedule handling</span><span class="desc">Calendar churn broke reporting. Built handling so the data stays clean.</span></div>
+            <div class="proj"><span class="name">Automations rewritten in JavaScript</span><span class="desc">No-code flows broke under volume. Rewrote them in code so they hold.</span></div>
+          </div>
+
+          <div class="cat">
+            <h3><span class="dot">▸</span> Reporting &amp; visibility</h3>
+            <div class="proj"><span class="name">Owner-level metrics</span><span class="desc">No shared source of truth. Built per-rep and over-time reporting: booked, showed, closed, show rate, offer rate, close rate, cash collected.</span></div>
+            <div class="proj"><span class="name">Airtable performance tracking</span><span class="desc">Performance lived in people's heads. Made it a system.</span></div>
+            <div class="proj"><span class="name">BigQuery &amp; Looker Studio dashboards</span><span class="desc">Data too big for spreadsheets. Moved it into warehouse-backed dashboards.</span></div>
+            <div class="proj"><span class="name">Slack leaderboards</span><span class="desc">Performance was invisible day to day. Surfaced it where the team already works.</span></div>
+            <div class="proj"><span class="name">Speed-to-lead measurement</span><span class="desc">Nobody knew how slow follow-up was. Measured it and cut it from hours to minutes.</span></div>
+          </div>
+
+          <div class="cat">
+            <h3><span class="dot">▸</span> Call intelligence &amp; quality</h3>
+            <div class="proj"><span class="name">Sales integrity audit</span><span class="desc">Unknown gap between pitch and product. Measured what closers actually say against the offer and against what fulfillment delivers.</span></div>
+            <div class="proj"><span class="name">AI scoring on closing calls</span><span class="desc">Manual review didn't scale. Automated scoring so review time goes to the calls that need it.</span></div>
+            <div class="proj"><span class="name">Playbook adherence scoring</span><span class="desc">No way to see where a rep drifted. Scored calls against a master playbook.</span></div>
+            <div class="proj"><span class="name">Call intelligence platform</span><span class="desc">Built as a product: ingests recorded calls and writes structured notes, rubric scoring, and trend reporting back into the CRM.</span></div>
+          </div>
+
+          <div class="cat">
+            <h3><span class="dot">▸</span> Tools for the team</h3>
+            <div class="proj"><span class="name">Commission trackers</span><span class="desc">Payout math was manual and disputed. Built trackers for closers and for owners.</span></div>
+            <div class="proj"><span class="name">Closer scorecards</span><span class="desc">Feedback was subjective. Made performance legible per rep.</span></div>
+            <div class="proj"><span class="name">Offer reference kit</span><span class="desc">Reps improvised. Built an offer dictionary, avatar breakdowns, pricing strategy, and cheat sheets.</span></div>
+            <div class="proj"><span class="name">Setter tools</span><span class="desc">Built to spec for the setting team.</span></div>
+          </div>
+
+          <div class="cat">
+            <h3><span class="dot">▸</span> Process &amp; fulfillment</h3>
+            <div class="proj"><span class="name">Client journey, onboarding through fulfillment</span><span class="desc">A company had no system in place. Built the full journey.</span></div>
+            <div class="proj"><span class="name">SOPs &amp; process documentation</span><span class="desc">Knowledge lived in people. Documented process for closers and setters.</span></div>
+            <div class="proj"><span class="name">Slack workspace operations</span><span class="desc">Ran workspace operations for a multi-client delivery team.</span></div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- 6. Background -->
+    <section>
+      <div class="wrap container">
+        <h2>Background</h2>
+        <ul class="bg-list">
+          <li>Four years as a high-ticket closer.</li>
+          <li>Recruited 600+ candidates into the Cole Gordon / Closers.io pipeline.</li>
+          <li>Moved into sales operations.</li>
+          <li>Co-founded a sales technology company and built its call intelligence platform.</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- 7. Close -->
+    <section>
+      <div class="wrap container close">
+        <h2>Let's talk</h2>
+        <p class="avail"><strong>Remote.</strong> Available for full-time or project work.</p>
+        <div class="cta-row">
+          <a class="btn btn-primary" href="https://calendar.google.com/calendar/u/0/appointments/schedules/AcZssZ1sNdq-fawbkAreIeJGRBENL0uXrpEAvGVGj6JXNZv8B00hdPgkoYIDvSotwQotDPXGe_LL5drV">Book a Call</a>
+          <a class="btn btn-ghost" href="/j-tyler-ray-sales-operations.pdf" download>Download PDF</a>
+          <span class="cta-note">or email <a href="mailto:jt@jtylerray.com">jt@jtylerray.com</a></span>
+        </div>
+      </div>
+    </section>
+
+    <footer>
+      <div class="wrap">© J. Tyler Ray · The Operations King · <a href="/">jtylerray.com</a></div>
+    </footer>
+  </body>
+</html>

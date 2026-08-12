@@ -1,5 +1,7 @@
 {
   "rewrites": [
+    { "source": "/resume", "destination": "/resume.html" },
+    { "source": "/work", "destination": "/resume.html" },
     { "source": "/(.*)", "destination": "/index.html" }
   ]
 }
