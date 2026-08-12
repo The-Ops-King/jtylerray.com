@@ -61,16 +61,8 @@
       }
       a { color: var(--accent); }
 
-      /* Metallic gold shimmer — matches the site's headline treatment */
-      .gold-shimmer {
-        background: linear-gradient(90deg, #d4af37 0%, #f4e4a6 25%, #d4af37 50%, #f4e4a6 75%, #d4af37 100%);
-        background-size: 200% auto;
-        -webkit-background-clip: text;
-        background-clip: text;
-        -webkit-text-fill-color: transparent;
-        color: transparent;
-        animation: shimmer 3.5s linear infinite;
-      }
+      /* Bright metallic gold — matches the site palette (#ffd700 bright, #fff6cf highlight).
+         Applied via the combined selector near the end of this stylesheet. */
       @keyframes shimmer { to { background-position: 200% center; } }
       .wrap { max-width: 62rem; margin: 0 auto; padding: 0 1.5rem; }
       .container { padding: 4rem 0; }
@@ -84,7 +76,7 @@
       .topbar nav a:hover { color: var(--fg); }
 
       /* Hero */
-      .hero { padding: 5rem 0 3.5rem; border-bottom: 1px solid var(--border); background: radial-gradient(60% 55% at 50% -5%, rgba(212,175,55,0.12), transparent 70%); }
+      .hero { padding: 5rem 0 3.5rem; border-bottom: 1px solid var(--border); background: radial-gradient(60% 55% at 50% -5%, rgba(255,215,0,0.14), transparent 70%); }
       .eyebrow { text-transform: uppercase; letter-spacing: 0.18em; font-size: 0.8rem; color: var(--accent); font-weight: 600; margin: 0 0 0.75rem; }
       h1 { font-size: 3rem; line-height: 1.05; font-weight: 800; margin: 0 0 1.25rem; }
       .lede { font-size: 1.3rem; color: var(--fg); max-width: 48rem; margin: 0 0 1.25rem; }
@@ -94,8 +86,8 @@
       /* CTAs */
       .cta-row { display: flex; flex-wrap: wrap; gap: 1rem; align-items: center; }
       .btn { display: inline-block; text-decoration: none; font-weight: 700; padding: 0.85rem 1.6rem; border-radius: 0.75rem; }
-      .btn-primary { background: var(--accent); color: #1a1400; transition: all 0.3s ease; }
-      .btn-primary:hover { background: #b8941f; transform: translateY(-2px); box-shadow: 0 10px 30px -8px rgba(212,175,55,0.45); }
+      .btn-primary { background: linear-gradient(180deg, #f2d15c 0%, #d4af37 55%, #b8941f 100%); color: #1a1400; transition: all 0.3s ease; box-shadow: 0 2px 10px -3px rgba(212,175,55,0.4); }
+      .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 12px 32px -8px rgba(255,215,0,0.5); }
       .btn-ghost { border: 1px solid var(--border); color: var(--fg); }
       .btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
       .cta-note { color: var(--muted); font-size: 0.95rem; }
@@ -151,12 +143,21 @@
         .topbar nav a { margin-left: 1rem; }
       }
 
+      /* Bright metallic gold for all gold text — matches the site's #ffd700-based palette */
+      .gold-shimmer, .eyebrow, h2 .k, .stack .group h3, .cat h3 .dot, .topbar .brand span {
+        background: linear-gradient(100deg, #b8860b 0%, #d4af37 16%, #ffd700 40%, #fff6cf 50%, #ffd700 60%, #d4af37 84%, #b8860b 100%);
+        background-size: 200% auto;
+        -webkit-background-clip: text; background-clip: text;
+        -webkit-text-fill-color: transparent; color: transparent;
+      }
+      .gold-shimmer, .eyebrow { animation: shimmer 4s linear infinite; }
+
       .print-only { display: none; }
 
       /* Print / PDF: clean light document. Web page stays dark. */
       @media print {
         .print-only { display: block; color: #222; font-size: 1rem; margin: 0 0 0.75rem; }
-        .gold-shimmer { -webkit-text-fill-color: #a67c00 !important; color: #a67c00 !important; background: none !important; animation: none !important; }
+        .gold-shimmer, .eyebrow, h2 .k, .stack .group h3, .cat h3 .dot, .topbar .brand span { -webkit-text-fill-color: #a67c00 !important; color: #a67c00 !important; background: none !important; animation: none !important; }
         .hero { background: none !important; }
         :root { --bg: #ffffff; --elevated: #ffffff; --fg: #111111; --muted: #333333; --border: #cccccc; --accent: #a67c00; }
         body { background: #fff; color: #111; }
