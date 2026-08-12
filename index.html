@@ -51,49 +51,62 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet">
+
+    <!-- Styling for the pre-render content below (shown until the React app mounts,
+         and read by search crawlers and AI agents that don't execute JavaScript). -->
+    <style>
+      #root { background: #000000; color: #f5f5f5; }
+      .prerender { max-width: 60rem; margin: 0 auto; padding: 4rem 1.5rem; font-family: 'Inter', system-ui, sans-serif; line-height: 1.6; }
+      .prerender .badge { display: inline-block; text-transform: uppercase; letter-spacing: 0.1em; font-size: 0.8125rem; color: #d4af37; border: 1px solid rgba(212,175,55,0.3); border-radius: 999px; padding: 0.5rem 1rem; margin-bottom: 1.5rem; }
+      .prerender h1 { font-size: 2.75rem; font-weight: 800; line-height: 1.1; margin: 0 0 1.5rem; color: #f5f5f5; }
+      .prerender h2 { font-size: 1.5rem; font-weight: 700; margin: 3rem 0 1rem; color: #d4af37; }
+      .prerender p { color: #a3a3a3; margin: 0 0 1rem; font-size: 1.125rem; }
+      .prerender .stats { display: flex; flex-wrap: wrap; gap: 2rem; margin: 2rem 0; }
+      .prerender .stat .num { font-size: 2.25rem; font-weight: 800; color: #d4af37; }
+      .prerender .stat .lbl { color: #f5f5f5; font-weight: 600; }
+      .prerender .stat .sub { color: #a3a3a3; font-size: 0.9rem; }
+      .prerender ul { color: #a3a3a3; padding-left: 1.25rem; }
+      .prerender li { margin-bottom: 0.5rem; }
+      .prerender a { color: #d4af37; }
+      .prerender .cta { display: inline-block; background: #d4af37; color: #000; font-weight: 700; text-decoration: none; padding: 0.85rem 1.5rem; border-radius: 0.75rem; margin: 0.5rem 1rem 0.5rem 0; }
+    </style>
   </head>
   <body>
-    <div id="root"></div>
-
-    <!-- Fallback content for crawlers and AI agents that do not execute JavaScript.
-         Hidden from users with JavaScript enabled (React renders into #root above). -->
-    <noscript>
-      <main>
-        <h1>J. Tyler Ray — The Operations King</h1>
-        <p><strong>Stop Drowning in Chaos. Start Dominating Your Operations.</strong></p>
-        <p>Former high-ticket closer turned the king of operations. I build systems that save hundreds of hours and stop deals from slipping away.</p>
+    <div id="root">
+      <!-- Pre-rendered content. The React app replaces this on load; crawlers and AI
+           agents read it as normal page text. Keep in sync with src/content.ts. -->
+      <main class="prerender">
+        <span class="badge">The Operations King</span>
+        <h1>Stop Drowning in Chaos. Start Dominating Your Operations.</h1>
+        <p><strong>J. Tyler Ray</strong> — former high-ticket closer turned the king of operations. I build systems that save hundreds of hours and stop deals from slipping away.</p>
         <p>You didn't build a business to become the glorified admin assistant. Let me build the infrastructure that turns your sales team into a revenue machine.</p>
 
-        <h2>What I do</h2>
-        <ul>
-          <li>300+ hours saved for a single client through automation.</li>
-          <li>75+ automations built across high-ticket sales teams.</li>
-          <li>10+ platforms mastered, including GoHighLevel, Zapier, Make, and n8n.</li>
-        </ul>
+        <div class="stats">
+          <div class="stat"><div class="num">300+</div><div class="lbl">Hours Saved</div><div class="sub">For one client alone</div></div>
+          <div class="stat"><div class="num">75+</div><div class="lbl">Automations Built</div><div class="sub">Across high-ticket teams</div></div>
+          <div class="stat"><div class="num">10+</div><div class="lbl">Platforms Mastered</div><div class="sub">GHL, Zapier, Make, n8n &amp; more</div></div>
+        </div>
 
         <h2>Problems I solve</h2>
         <ul>
-          <li><strong>Revenue Bandits:</strong> Deals slipping through the cracks and CRMs full of dead leads.</li>
-          <li><strong>Time Thieves:</strong> Manual pre-call prep and reporting that steal your focus.</li>
-          <li><strong>Scale Monsters:</strong> Growth that multiplies chaos as more leads create more mess.</li>
-          <li><strong>Pipeline Leaks:</strong> No visibility into what's working while hot leads go cold.</li>
+          <li><strong>Revenue Bandits:</strong> Deals slip through the cracks. Your CRM is a dead-lead graveyard. Follow-up is manual chaos.</li>
+          <li><strong>Time Thieves:</strong> Pre-call prep eats hours. Manual reporting steals your focus. You're drowning in admin work.</li>
+          <li><strong>Scale Monsters:</strong> Growth multiplies the chaos. More leads = more mess. Your team can't keep up.</li>
+          <li><strong>Pipeline Leaks:</strong> No visibility into what's working. Attribution is a mystery. Hot leads go cold while you're busy.</li>
         </ul>
 
-        <h2>Get in touch</h2>
-        <p>
-          <a href="https://calendar.google.com/calendar/u/0/appointments/schedules/AcZssZ1sNdq-fawbkAreIeJGRBENL0uXrpEAvGVGj6JXNZv8B00hdPgkoYIDvSotwQotDPXGe_LL5drV">Book a Connection Call</a>
-          &nbsp;|&nbsp;
-          <a href="https://card.jtylerray.com">Message Me</a>
-        </p>
+        <h2>Ready to build your kingdom?</h2>
+        <p>No pressure, no pitch—just a real discussion about what's broken and how to fix it.</p>
+        <a class="cta" href="https://calendar.google.com/calendar/u/0/appointments/schedules/AcZssZ1sNdq-fawbkAreIeJGRBENL0uXrpEAvGVGj6JXNZv8B00hdPgkoYIDvSotwQotDPXGe_LL5drV">Book a Connection Call</a>
+        <a class="cta" href="https://card.jtylerray.com" style="background:transparent;color:#d4af37;border:1px solid rgba(212,175,55,0.4);">Message Me</a>
 
         <h2>More pages</h2>
         <ul>
-          <li><a href="/real-estate">Real Estate Sales Application</a> — apply for closer, DM setter, or phone setter roles.</li>
+          <li><a href="/real-estate">Real Estate Sales Application</a> — apply for Closer, DM Setter, or Phone Setter roles.</li>
           <li><a href="/apply">Sales Application</a> — general application for high-ticket sales positions.</li>
         </ul>
       </main>
-    </noscript>
-
+    </div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
