@@ -100,6 +100,17 @@ export default function Hero() {
           </a>
         </motion.div>
 
+        {/* Secondary link to the sales operations work / resume page */}
+        <motion.div variants={itemVariants} className="mb-80 -mt-40">
+          <a
+            href="/resume"
+            className="group inline-flex items-center gap-4 text-body text-fg-muted hover:text-accent transition-colors duration-300"
+          >
+            See what I build for sales teams
+            <ArrowRight className="w-16 h-16 transition-transform group-hover:translate-x-4" />
+          </a>
+        </motion.div>
+
         {/* Stats */}
         <motion.div
           variants={containerVariants}
