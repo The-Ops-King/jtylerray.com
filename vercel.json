@@ -2,6 +2,8 @@
   "rewrites": [
     { "source": "/resume", "destination": "/resume.html" },
     { "source": "/work", "destination": "/resume.html" },
+    { "source": "/brand-1", "destination": "/brand-1/index.html" },
+    { "source": "/brand-1/", "destination": "/brand-1/index.html" },
     { "source": "/(.*)", "destination": "/index.html" }
   ]
 }
