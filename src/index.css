@@ -8,6 +8,7 @@
 
   /* text */
   --bone: #f5f3ee;
+  --bone-rgb: 245, 243, 238;
   --grey-mid: #8a857c;
   --grey-dim: #5e5a54;
 
@@ -25,7 +26,12 @@
   --struct: 138, 133, 124;
   --hair: rgba(var(--struct), 0.12);
   --hair-soft: rgba(var(--struct), 0.07);
-  --grid-line: rgba(var(--struct), 0.07);
+
+  /* the sheet and the lens set their line alpha directly — a layer opacity
+     could only ever scale *down* from the colour it was painting, which put a
+     hard ceiling on how bright the lens could get */
+  --grid-a: 0.028;
+  --grid-line: rgba(var(--struct), var(--grid-a));
 
   /* type */
   --display: "Inter Tight", ui-sans-serif, system-ui, -apple-system, sans-serif;
@@ -49,6 +55,12 @@
   --btn-bg: var(--accent);
   --btn-fg: var(--accent-ink);
   --btn-bg-hover: var(--accent-hover);
+
+  /* the pointer lens on the grid — both driven by the tuner */
+  --lens-r: 320px;
+  --lens-a: 0.17;
+  /* --lens-gate is written on the backdrop element, so the line colour is
+     composed there (see grid.css) rather than here */
 
   /* rhythm */
   --gutter: clamp(24px, 5vw, 72px);
@@ -243,8 +255,10 @@ h1.display.md { font-size: clamp(42px, 6.4vw, 84px); line-height: 1.0; }
 [data-eyebrow="underscore"] .eyebrow {
   display: flex;
   width: 100%;
-  /* the rule is structure, not emphasis — grey, one hairline */
-  border-bottom: 1px solid rgba(var(--struct), 0.08);
+  /* clipped to the text column — a rule that runs off into nothing reads as
+     an unfinished edge */
+  max-width: 720px;
+  border-bottom: 1px solid rgba(var(--struct), 0.12);
   padding-bottom: 12px;
   color: var(--grey-dim);
 }
@@ -365,8 +379,16 @@ hr.rule.accent-rule { border-top-color: var(--accent-line); }
 .btn-link { color: var(--grey-mid); font-size: 15px; text-decoration: none; border-bottom: 1px solid var(--hair); padding-bottom: 3px; }
 .btn-link:hover { color: var(--bone); border-bottom-color: rgba(var(--struct), 0.26); }
 .btn.pill, .pill { border-radius: 9999px; }
-/* nav CTA — same primary treatment, one size down so the hero still leads */
-.nav-cta { padding: 11px 20px; font-size: 14px; }
+/* nav CTA — secondary, but findable: bone type on a 24% bone edge. The hero's
+   filled button still leads. */
+/* `.nav a` sets a grey — this has to outrank it or the CTA disappears */
+.nav a.nav-cta {
+  padding: 11px 20px;
+  font-size: 14px;
+  color: var(--bone);
+  border-color: rgba(var(--bone-rgb), 0.24);
+}
+.nav a.nav-cta:hover { border-color: rgba(var(--bone-rgb), 0.48); color: var(--bone); }
 
 /* status dot */
 .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); display: inline-block; }
@@ -543,32 +565,3 @@ hr.rule.accent-rule { border-top-color: var(--accent-line); }
   box-shadow: 0 0 0 2px rgba(12, 11, 10, 0.95), 0 0 0 3.5px #f5f3ee;
 }
 
-/* ── grid tuner (temporary control on the hero) ───────────────────── */
-.grid-tuner .switcher-row {
-  grid-template-columns: 42px 200px auto;
-  gap: 12px;
-}
-.grid-tuner input[type="range"] {
-  -webkit-appearance: none;
-  appearance: none;
-  width: 100%;
-  height: 3px;
-  border-radius: 2px;
-  background: rgba(245, 243, 238, 0.18);
-  cursor: pointer;
-}
-.grid-tuner input[type="range"]::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-  /* the tuner is a tool, not the page — it never spends an accent */
-  background: var(--grey-mid);
-  border: 0;
-}
-.grid-readout {
-  font-size: 11px;
-  letter-spacing: 0.04em;
-  color: var(--grey-mid);
-  white-space: nowrap;
-}

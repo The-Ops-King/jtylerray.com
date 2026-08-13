@@ -40,27 +40,53 @@ export default function GridBackdrop({
     let ty = 0;
     let cx = 0;
     let cy = 0;
+    let mx = -9999;
+    let my = -9999;
+    let gate = 0;
+
+    // The lens is kept off the text by measuring the column it must clear,
+    // not by a viewport percentage — the copy is content-width, so on a
+    // narrower window it reaches further across and a fixed fraction either
+    // lets the lens onto the lede or bans it from the page entirely.
+    let guard = 0;
+    const measure = () => {
+      const col = document.querySelector("[data-lens-guard]");
+      guard = col ? col.getBoundingClientRect().right + 24 : window.innerWidth * 0.6;
+    };
+    measure();
 
     const onMove = (e: PointerEvent) => {
       tx = (e.clientX / window.innerWidth - 0.5) * drift;
       ty = (e.clientY / window.innerHeight - 0.5) * drift;
       // pointer in the backdrop's own space — it is inset -80px on every side
-      el.style.setProperty("--mx", `${e.clientX + 80}px`);
-      el.style.setProperty("--my", `${e.clientY + 80}px`);
+      mx = e.clientX + 80;
+      my = e.clientY + 80;
+      // fade the lens in over the 160px past the column, rather than clipping
+      const t = (e.clientX - guard) / 160;
+      gate = t < 0 ? 0 : t > 1 ? 1 : t;
       if (!raf) raf = requestAnimationFrame(tick);
     };
 
+    // Every custom property is written in the same frame. The lens subtracts
+    // the drift from its own position, so writing the pointer on the event and
+    // the drift on the next animation frame left the two a frame apart — which
+    // read as the disc lagging and sitting off the cursor while moving.
     const tick = () => {
       cx += (tx - cx) * 0.06;
       cy += (ty - cy) * 0.06;
       el.style.setProperty("--px", `${cx.toFixed(2)}px`);
       el.style.setProperty("--py", `${cy.toFixed(2)}px`);
+      el.style.setProperty("--mx", `${mx}px`);
+      el.style.setProperty("--my", `${my}px`);
+      el.style.setProperty("--lens-gate", gate.toFixed(3));
       raf = Math.abs(tx - cx) > 0.05 || Math.abs(ty - cy) > 0.05 ? requestAnimationFrame(tick) : 0;
     };
 
     window.addEventListener("pointermove", onMove, { passive: true });
+    window.addEventListener("resize", measure, { passive: true });
     return () => {
       window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("resize", measure);
       if (raf) cancelAnimationFrame(raf);
     };
   }, [drift]);

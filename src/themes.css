@@ -12,7 +12,9 @@
 [data-style="meridian"] .hero::before,
 [data-style="meridian"] .hero::after {
   content: "";
-  position: absolute;
+  /* fixed, like the other two corners — the hero is no longer a full screen,
+     so registering to it would put two marks 12vh above the other pair */
+  position: fixed;
   width: 14px;
   height: 14px;
   z-index: 3;

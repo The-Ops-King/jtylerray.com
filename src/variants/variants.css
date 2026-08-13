@@ -93,6 +93,17 @@
 }
 
 /* ── L9 · bleed ──────────────────────────────────────────────────── */
+/* 88vh, not a full screen: the block reads without hunting for it */
+.hero.l9 {
+  height: auto;
+  min-height: 88vh;
+}
+/* the sheet has to outrun the section, or the grid and its vignette stop at
+   88vh and leave a visible seam above the fold */
+.hero.l9 .backdrop {
+  bottom: -22vh;
+}
+
 .l9-bleed {
   position: absolute;
   top: 0;
@@ -116,14 +127,58 @@
     linear-gradient(to bottom, #000 62%, transparent 98%);
   -webkit-mask-composite: source-in;
 }
+/* the hero block starts high on the sheet: the sentence should be the first
+   thing read, not something found after scrolling past empty space */
 .l9-body {
   flex: 1;
   display: flex;
+  align-items: flex-start;
+  gap: clamp(32px, 5vw, 72px);
+  /* lands the eyebrow at ~28% of the viewport: measured from the header
+     baseline, which sits higher than a nominal 14vh assumes */
+  padding-top: 20vh;
+}
+.l9-copy {
+  display: flex;
   flex-direction: column;
-  justify-content: center;
   gap: 26px;
   /* no portrait to hold against — the measure is set by the headline now */
   max-width: min(78%, 900px);
+}
+
+/* with a screenshot in the right column the two hold against each other,
+   centred on the headline block */
+.l9-body.has-proof {
+  align-items: center;
+}
+.l9-body.has-proof .l9-copy {
+  flex: 1 1 auto;
+  max-width: min(58%, 660px);
+}
+
+/* ── the proof panel ─────────────────────────────────────────────── */
+.l9-body.has-proof .proof {
+  flex: 0 0 38%;
+  max-width: 38%;
+}
+.proof-panel {
+  background: #16150f;
+  border: 0.5px solid rgba(var(--struct), 0.12);
+  border-radius: 8px;
+  overflow: hidden;
+  /* no shadow — the panel is a held object, not a floating card */
+}
+.proof-panel img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+.proof-caption {
+  margin-top: 12px;
+  font-size: 11px;
+  font-weight: 400;
+  letter-spacing: 0.1em;
+  color: var(--grey-dim);
 }
 /* keep the nav legible where it crosses the portrait */
 .l9-bleed::after {

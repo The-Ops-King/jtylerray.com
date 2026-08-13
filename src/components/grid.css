@@ -8,15 +8,19 @@
   /* pointer position; parked off-canvas until the pointer actually moves */
   --mx: -9999px;
   --my: -9999px;
-  /* how far the pointer lifts the grid — soft-edged, ~2.5in */
-  --lens-r: 240px;
+  /* 0 while the pointer is over the copy column, 1 once it is clear of it.
+     Fading the whole lens keeps the disc a circle centred on the cursor;
+     clipping it against a boundary did not. */
+  --lens-gate: 0;
+  /* --lens-r and --lens-op are declared on :root (index.css) so the tuner can
+     drive them from the document element — declaring them here would shadow
+     whatever it sets */
 }
 
 /* 1px blueprint grid */
 .backdrop-grid {
   position: absolute;
   inset: 0;
-  opacity: var(--grid-op, 1);
   transform: translate3d(var(--px), var(--py), 0);
   background-image:
     linear-gradient(to right, var(--grid-line) 1px, transparent 1px),
@@ -30,12 +34,16 @@
 .backdrop-lens {
   position: absolute;
   inset: 0;
-  opacity: calc(var(--grid-op, 1) * 1.5);
   transform: translate3d(var(--px), var(--py), 0);
+  --lens-line: rgba(var(--struct), calc(var(--lens-a) * var(--lens-gate)));
   background-image:
-    linear-gradient(to right, var(--grid-line) 1px, transparent 1px),
-    linear-gradient(to bottom, var(--grid-line) 1px, transparent 1px);
+    linear-gradient(to right, var(--lens-line) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--lens-line) 1px, transparent 1px);
   background-size: var(--cell) var(--cell);
+  /* one mask only: a disc centred on the pointer. The text-column guardrail
+     is --lens-gate on the line colour, not a second mask — clipping the disc
+     against a vertical boundary made the lit area sit visibly off to one side
+     of the cursor whenever the pointer was near that edge. */
   -webkit-mask-image: radial-gradient(
     circle var(--lens-r) at calc(var(--mx) - var(--px)) calc(var(--my) - var(--py)),
     #000 0%,
@@ -61,11 +69,11 @@
 .backdrop-nodes {
   position: absolute;
   inset: 0;
-  opacity: var(--grid-op, 1);
   transform: translate3d(calc(var(--px) * 1.9), calc(var(--py) * 1.9), 0);
+  /* markers ride the sheet: they fade out with it and never outlive it */
   background-image: radial-gradient(
     circle,
-    rgba(var(--struct), 0.08) 1.15px,
+    rgba(var(--struct), calc(var(--grid-a) * 1.15)) 1.15px,
     transparent 1.6px
   );
   background-size: var(--cell-lg) var(--cell-lg);
