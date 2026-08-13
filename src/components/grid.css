@@ -1,0 +1,227 @@
+.backdrop {
+  position: absolute;
+  inset: -80px;
+  z-index: 0;
+  pointer-events: none;
+  --px: 0px;
+  --py: 0px;
+  /* pointer position; parked off-canvas until the pointer actually moves */
+  --mx: -9999px;
+  --my: -9999px;
+  /* how far the pointer lifts the grid — soft-edged, ~2.5in */
+  --lens-r: 240px;
+}
+
+/* 1px blueprint grid */
+.backdrop-grid {
+  position: absolute;
+  inset: 0;
+  opacity: var(--grid-op, 1);
+  transform: translate3d(var(--px), var(--py), 0);
+  background-image:
+    linear-gradient(to right, var(--grid-line) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--grid-line) 1px, transparent 1px);
+  background-size: var(--cell) var(--cell);
+}
+
+/* the lens — the same sheet at a higher opacity, masked to a soft disc under
+   the pointer. The mask is offset by the drift so the lens sits on the cursor
+   rather than on the drifted copy of the grid. */
+.backdrop-lens {
+  position: absolute;
+  inset: 0;
+  opacity: calc(var(--grid-op, 1) * 1.5);
+  transform: translate3d(var(--px), var(--py), 0);
+  background-image:
+    linear-gradient(to right, var(--grid-line) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--grid-line) 1px, transparent 1px);
+  background-size: var(--cell) var(--cell);
+  -webkit-mask-image: radial-gradient(
+    circle var(--lens-r) at calc(var(--mx) - var(--px)) calc(var(--my) - var(--py)),
+    #000 0%,
+    rgba(0, 0, 0, 0.78) 22%,
+    rgba(0, 0, 0, 0.42) 48%,
+    rgba(0, 0, 0, 0.14) 74%,
+    transparent 100%
+  );
+  mask-image: radial-gradient(
+    circle var(--lens-r) at calc(var(--mx) - var(--px)) calc(var(--my) - var(--py)),
+    #000 0%,
+    rgba(0, 0, 0, 0.78) 22%,
+    rgba(0, 0, 0, 0.42) 48%,
+    rgba(0, 0, 0, 0.14) 74%,
+    transparent 100%
+  );
+}
+@media (prefers-reduced-motion: reduce) {
+  .backdrop-lens { display: none; }
+}
+
+/* markers every Nth intersection — structure, so grey like every other rule */
+.backdrop-nodes {
+  position: absolute;
+  inset: 0;
+  opacity: var(--grid-op, 1);
+  transform: translate3d(calc(var(--px) * 1.9), calc(var(--py) * 1.9), 0);
+  background-image: radial-gradient(
+    circle,
+    rgba(var(--struct), 0.08) 1.15px,
+    transparent 1.6px
+  );
+  background-size: var(--cell-lg) var(--cell-lg);
+}
+
+/* single accent vertical axis */
+.backdrop-axis {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: linear-gradient(
+    to bottom,
+    transparent 0%,
+    var(--accent-line) 22%,
+    var(--accent-line) 78%,
+    transparent 100%
+  );
+  transform: translate3d(calc(var(--px) * 2.6), 0, 0);
+}
+
+/* ── frame mode (Atoms) — hairline rectangles, no texture ────────── */
+.backdrop-frame,
+.backdrop-frame-inner {
+  position: absolute;
+  border: 1px solid var(--hair-soft);
+  transform: translate3d(var(--px), var(--py), 0);
+}
+.backdrop-frame { inset: 100px 92px; }
+.backdrop-frame-inner {
+  inset: 128px 120px;
+  border-color: var(--accent-line);
+  transform: translate3d(calc(var(--px) * 1.6), calc(var(--py) * 1.6), 0);
+}
+
+/* ── aurora mode (AgentQL) — two soft radial glows, hero only ────── */
+.backdrop-glow {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(90px);
+  opacity: 0.5;
+}
+.glow-a {
+  width: 62vw;
+  height: 62vw;
+  left: -12vw;
+  top: -26vw;
+  background: radial-gradient(circle, rgba(98, 95, 255, 0.55) 0%, rgba(98, 95, 255, 0) 68%);
+  transform: translate3d(calc(var(--px) * 2.2), calc(var(--py) * 2.2), 0);
+}
+.glow-b {
+  width: 52vw;
+  height: 52vw;
+  right: -14vw;
+  bottom: -24vw;
+  background: radial-gradient(circle, rgba(255, 125, 218, 0.4) 0%, rgba(255, 125, 218, 0) 66%);
+  transform: translate3d(calc(var(--px) * -1.7), calc(var(--py) * -1.7), 0);
+}
+
+/* ── rule mode (meridian) — instrument panel: fine grid + ruler ticks ── */
+/* two-tier grid: a minor cell plus a heavier major line every 4th, so the
+   sheet reads as drawn rather than as texture */
+.backdrop-fine {
+  position: absolute;
+  inset: 0;
+  transform: translate3d(var(--px), var(--py), 0);
+  background-image:
+    linear-gradient(to right, rgba(255, 255, 255, 0.13) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.13) 1px, transparent 1px),
+    linear-gradient(to right, rgba(255, 255, 255, 0.055) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.055) 1px, transparent 1px);
+  background-size:
+    calc(var(--cell) * 4) calc(var(--cell) * 4),
+    calc(var(--cell) * 4) calc(var(--cell) * 4),
+    var(--cell) var(--cell),
+    var(--cell) var(--cell);
+  mask-image: radial-gradient(140% 110% at 50% 0%, #000 45%, transparent 96%);
+}
+.backdrop-ticks {
+  position: absolute;
+  transform: translate3d(var(--px), var(--py), 0);
+  opacity: 1;
+}
+/* major tick every 4th cell, minor between — reads as a measured edge.
+   the backdrop is inset -80px, so these offsets are +80 from the viewport */
+.ticks-top {
+  top: 188px;
+  left: 0;
+  right: 0;
+  height: 12px;
+  /* `to right` segments each tile horizontally — a `to bottom` gradient
+     would paint the full tile width and render as a solid bar */
+  background-image:
+    linear-gradient(to right, rgba(var(--struct), 0.08) 1px, transparent 1px),
+    linear-gradient(to right, rgba(var(--struct), 0.055) 1px, transparent 1px);
+  background-size: calc(var(--cell) * 4) 14px, var(--cell) 7px;
+  background-repeat: repeat-x;
+  opacity: 0.9;
+}
+/* the measurement baseline the ticks hang from */
+.ticks-top::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 1px;
+  background: rgba(var(--struct), 0.07);
+}
+.ticks-left {
+  top: 0;
+  bottom: 0;
+  left: 116px;
+  width: 14px;
+  opacity: 0.9;
+  background-image:
+    linear-gradient(to bottom, rgba(var(--struct), 0.08) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(var(--struct), 0.055) 1px, transparent 1px);
+  background-size: 14px calc(var(--cell) * 4), 7px var(--cell);
+  background-repeat: repeat-y;
+  mask-image: linear-gradient(to bottom, transparent 4%, #000 16%, #000 88%, transparent 99%);
+}
+.ticks-left::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 1px;
+  background: rgba(var(--struct), 0.07);
+  mask-image: linear-gradient(to bottom, transparent 4%, #000 16%, #000 88%, transparent 99%);
+}
+
+/* ── halo mode (forge) — one soft overhead light + coarse grid ────── */
+.backdrop-coarse {
+  position: absolute;
+  inset: 0;
+  transform: translate3d(var(--px), var(--py), 0);
+  background-image:
+    linear-gradient(to right, rgba(255, 255, 255, 0.022) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.022) 1px, transparent 1px);
+  background-size: var(--cell) var(--cell);
+}
+.backdrop-halo {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(70% 52% at 22% -6%, rgba(255, 246, 232, 0.07) 0%, transparent 62%),
+    radial-gradient(120% 90% at 50% 50%, transparent 42%, rgba(0, 0, 0, 0.55) 100%);
+  transform: translate3d(calc(var(--px) * 0.6), calc(var(--py) * 0.6), 0);
+}
+
+.backdrop-vignette {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(120% 100% at 50% 45%, transparent 38%, var(--ink) 100%),
+    linear-gradient(to bottom, transparent 60%, rgba(7, 6, 5, 0.9) 100%);
+}
