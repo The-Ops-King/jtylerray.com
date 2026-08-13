@@ -17,6 +17,9 @@ type Props = {
   axis?: number | false;
   /** draw the ruler ticks along the top and left edges */
   ticks?: boolean;
+  /** hold the sheet to the viewport instead of to the parent, so one sheet
+   *  can run behind the whole page rather than one per section */
+  fixed?: boolean;
 };
 
 export default function GridBackdrop({
@@ -27,6 +30,7 @@ export default function GridBackdrop({
   crosshairs = 4,
   axis = false,
   ticks = true,
+  fixed = false,
 }: Props) {
   const ref = useRef<HTMLDivElement>(null);
 
@@ -51,7 +55,9 @@ export default function GridBackdrop({
     let guard = 0;
     const measure = () => {
       const col = document.querySelector("[data-lens-guard]");
-      guard = col ? col.getBoundingClientRect().right + 24 : window.innerWidth * 0.6;
+      const past = col ? col.getBoundingClientRect().right + 24 : window.innerWidth * 0.6;
+      // never left of centre, whatever the column measures
+      guard = Math.max(past, window.innerWidth * 0.5);
     };
     measure();
 
@@ -96,7 +102,7 @@ export default function GridBackdrop({
   return (
     <div
       ref={ref}
-      className="backdrop"
+      className={`backdrop${fixed ? " is-fixed" : ""}`}
       data-mode={mode}
       style={
         {

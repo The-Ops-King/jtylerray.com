@@ -1,0 +1,328 @@
+/* ═══════════════════════════════════════════════════════════════════
+   jtylerray.com/card
+
+   The site's language at card scale: the blueprint sheet behind, corner
+   registration at the edges, mono labels, structure in grey, and one accent
+   on the one thing that asks for a reply.
+   ═══════════════════════════════════════════════════════════════════ */
+
+.card-page {
+  position: relative;
+  min-height: 100dvh;
+  background: var(--ink);
+  padding: clamp(24px, 6vw, 56px) clamp(20px, 5vw, 40px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+/* the page scrolls if the card outgrows a short window */
+html:has(.card-page),
+html:has(.card-page) body,
+html:has(.card-page) #root {
+  height: auto;
+  min-height: 100%;
+  overflow: visible;
+}
+
+.card-page .corners span {
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  z-index: 3;
+  pointer-events: none;
+  border-color: rgba(138, 133, 124, 0.18);
+}
+.card-page .corners span:nth-child(1) {
+  left: 18px;
+  top: 18px;
+  border-left: 1px solid;
+  border-top: 1px solid;
+}
+.card-page .corners span:nth-child(2) {
+  right: 18px;
+  top: 18px;
+  border-right: 1px solid;
+  border-top: 1px solid;
+}
+.card-page .corners span:nth-child(3) {
+  left: 18px;
+  bottom: 18px;
+  border-left: 1px solid;
+  border-bottom: 1px solid;
+}
+.card-page .corners span:nth-child(4) {
+  right: 18px;
+  bottom: 18px;
+  border-right: 1px solid;
+  border-bottom: 1px solid;
+}
+
+.card {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  max-width: 1040px;
+}
+
+/* ── the head ─────────────────────────────────────────────────────── */
+
+.card-head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 32px;
+  padding-bottom: 28px;
+  border-bottom: 0.5px solid rgba(138, 133, 124, 0.14);
+}
+/* where I am and what time it is here: the one live line on the card */
+.card-meta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+  padding-bottom: 4px;
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--grey-dim);
+  white-space: nowrap;
+}
+.card-eyebrow {
+  font-size: 10px;
+  letter-spacing: 0.26em;
+  text-transform: uppercase;
+  color: var(--grey-mid);
+}
+.card-name {
+  margin-top: 18px;
+  font-family: var(--display);
+  font-weight: 500;
+  font-size: clamp(38px, 9vw, 56px);
+  line-height: 1;
+  letter-spacing: -0.034em;
+  color: var(--bone);
+}
+.card-role {
+  margin-top: 12px;
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--grey-dim);
+}
+
+/* ── the three columns ───────────────────────────────────────────── */
+
+.card-cols {
+  margin-top: 40px;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0 40px;
+  align-items: start;
+}
+.grp + .grp {
+  border-left: 0.5px solid rgba(138, 133, 124, 0.12);
+  padding-left: 40px;
+  margin-left: -20px;
+}
+.grp-head {
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr);
+  gap: 6px 10px;
+  align-items: baseline;
+  padding-bottom: 18px;
+  border-bottom: 0.5px solid rgba(138, 133, 124, 0.14);
+}
+.grp-n {
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  color: var(--grey-dim);
+}
+.grp-title {
+  font-family: var(--display);
+  font-weight: 500;
+  font-size: clamp(28px, 2.6vw, 34px);
+  line-height: 1.05;
+  letter-spacing: -0.028em;
+  color: var(--bone);
+}
+.grp-sub {
+  grid-column: 2;
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--grey-dim);
+}
+
+/* ── a row ────────────────────────────────────────────────────────── */
+
+.crow {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 16px;
+  gap: 4px 12px;
+  padding: 18px 0 18px 0;
+  transition: padding-left 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+  border-bottom: 0.5px solid rgba(138, 133, 124, 0.08);
+  text-decoration: none;
+  color: inherit;
+}
+.crow-label {
+  grid-column: 1 / -1;
+  grid-row: 1;
+  min-height: 0;
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--grey-dim);
+}
+/* the cursor that arrives on hover, the same device the site's list uses */
+.crow-cursor {
+  position: absolute;
+  left: 0;
+  top: 12px;
+  bottom: 12px;
+  width: 2px;
+  border-radius: 2px;
+  background: var(--accent);
+  opacity: 0;
+  transition: opacity 0.18s ease;
+}
+.crow:hover .crow-cursor {
+  opacity: 1;
+}
+.crow:hover {
+  padding-left: 14px;
+}
+.crow-value {
+  grid-column: 1;
+  grid-row: 2;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 17px;
+  line-height: 1.4;
+  color: var(--bone);
+  overflow-wrap: anywhere;
+  transition: color 0.16s ease;
+}
+/* the platform's own mark, monochrome: colour here would outrank the accent */
+.crow-mark {
+  width: 15px;
+  height: 15px;
+  flex: none;
+  filter: grayscale(1) brightness(0) invert(1);
+  opacity: 0.45;
+  transition: opacity 0.18s ease;
+}
+.crow:hover .crow-mark {
+  opacity: 0.9;
+}
+.crow-note {
+  grid-column: 1 / -1;
+  grid-row: 3;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--grey-dim);
+}
+.crow-go {
+  grid-column: 2;
+  grid-row: 2;
+  justify-self: end;
+  font-size: 12px;
+  color: var(--grey-dim);
+  transition: color 0.16s ease, transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.crow:hover .crow-value {
+  color: var(--accent-text);
+}
+.crow:hover .crow-go {
+  color: var(--accent-text);
+  transform: translateX(3px);
+}
+
+/* ── the foot ─────────────────────────────────────────────────────── */
+
+.card-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.card-page .btn-ghost {
+  background: none;
+  color: var(--bone);
+  border-color: rgba(138, 133, 124, 0.24);
+}
+.card-page .btn-ghost:hover {
+  border-color: rgba(138, 133, 124, 0.5);
+}
+.card-foot {
+  margin-top: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+}
+.card-page .btn {
+  display: inline-flex;
+  align-items: center;
+  font-family: var(--sans);
+  font-size: 16px;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  padding: 14px 24px;
+  border-radius: 6px;
+  text-decoration: none;
+  border: 0.5px solid transparent;
+  transition: background 0.18s ease;
+}
+.card-page .btn-fill {
+  background: var(--accent);
+  color: var(--bone);
+}
+.card-page .btn-fill:hover {
+  background: var(--accent-hover);
+}
+.card-site {
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--grey-dim);
+  text-decoration: none;
+  border-bottom: 1px solid transparent;
+  padding-bottom: 3px;
+  transition: color 0.16s ease, border-color 0.16s ease;
+}
+.card-site:hover {
+  color: var(--bone);
+  border-bottom-color: rgba(138, 133, 124, 0.3);
+}
+
+@media (max-width: 860px) {
+  .card-head {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 20px;
+  }
+  .card-meta {
+    align-items: flex-start;
+  }
+  .card-cols {
+    grid-template-columns: 1fr;
+    gap: 36px;
+  }
+  .grp + .grp {
+    border-left: 0;
+    padding-left: 0;
+    margin-left: 0;
+  }
+}
+
+@media (max-width: 420px) {
+  .card-foot {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+  }
+}

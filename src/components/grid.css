@@ -17,6 +17,13 @@
      whatever it sets */
 }
 
+/* the page sheet: the same backdrop, held to the viewport so the drawing runs
+   under the whole document rather than stopping with the hero */
+.backdrop.is-fixed {
+  position: fixed;
+  inset: -80px;
+}
+
 /* 1px blueprint grid */
 .backdrop-grid {
   position: absolute;

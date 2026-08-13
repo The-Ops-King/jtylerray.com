@@ -71,6 +71,14 @@
 
 html, body, #root { height: 100%; }
 
+/* the ground is painted on the root as well as the body: when a page-level
+   element takes a stacking context of its own, some engines stop propagating
+   the body's background to the canvas, and the window paints white outside
+   whatever box that element covers */
+html {
+  background: var(--ink);
+}
+
 body {
   background: var(--ink);
   color: var(--bone);
@@ -447,6 +455,9 @@ hr.rule.accent-rule { border-top-color: var(--accent-line); }
    pulse rather than decoration. */
 .scanline {
   position: fixed;
+  /* declared, so the compositor promotes this 1px strip rather than guessing
+     at a larger tile on the page behind it */
+  will-change: transform;
   left: 0;
   bottom: 0;
   height: 1px;

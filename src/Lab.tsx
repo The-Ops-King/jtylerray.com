@@ -24,7 +24,7 @@ const MARK_KEY = "jtr-mark";
 const EYEBROW_KEY = "jtr-eyebrow";
 const SCAN_KEY = "jtr-scan";
 
-const LAYOUTS: { id: string; name: string; render: (s: StyleDef) => JSX.Element }[] = [
+const LAYOUTS: { id: string; name: string; render: (s: StyleDef) => React.JSX.Element }[] = [
   { id: "rail", name: "rail", render: (s) => <V1Rail style={s} /> },
   { id: "bleed", name: "bleed", render: (s) => <L9Bleed style={s} /> },
   { id: "portrait", name: "portrait", render: (s) => <L2Portrait style={s} /> },
