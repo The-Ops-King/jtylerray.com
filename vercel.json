@@ -4,6 +4,8 @@
     { "source": "/work", "destination": "/resume.html" },
     { "source": "/brand-1", "destination": "/brand-1/index.html" },
     { "source": "/brand-1/", "destination": "/brand-1/index.html" },
+    { "source": "/new-home", "destination": "/new-home/index.html" },
+    { "source": "/new-home/", "destination": "/new-home/index.html" },
     { "source": "/(.*)", "destination": "/index.html" }
   ]
 }
