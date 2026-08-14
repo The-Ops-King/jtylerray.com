@@ -693,10 +693,41 @@ html:has(.site) body {
   max-width: 66%;
 }
 
+/* Narrow: the bleed has nowhere to bleed to. Held at 24% behind the timeline
+   it was a smudge on the ground that nobody could read as a person, so on a
+   phone it leaves the background entirely and becomes a picture in the flow,
+   below the timeline, at full strength. */
 @media (max-width: 900px) {
+  .site .about {
+    display: flex;
+    flex-direction: column;
+  }
+  .about-col {
+    order: 1;
+  }
   .about-bleed {
-    width: 100vw;
-    opacity: 0.24;
+    order: 2;
+    position: relative;
+    width: 100%;
+    height: auto;
+    opacity: 1;
+    margin-top: 48px;
+    border-radius: 8px;
+    overflow: hidden;
+    border: 0.5px solid rgba(138, 133, 124, 0.14);
+  }
+  .about-bleed img {
+    width: 100%;
+    height: auto;
+    /* the desktop bleed is masked into the ground on two edges and dimmed to
+       sit under type. Nothing is on top of it here, so it carries its own
+       contrast and keeps only the grey the rest of the page is drawn in. */
+    aspect-ratio: 4 / 3;
+    object-fit: cover;
+    object-position: 50% 22%;
+    filter: grayscale(1) contrast(1.04) brightness(0.86);
+    -webkit-mask-image: none;
+    mask-image: none;
   }
   .site .about .timeline {
     max-width: 100%;

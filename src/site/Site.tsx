@@ -197,10 +197,15 @@ function Work() {
 function WhoIAm() {
   return (
     <section className="section about" id="about">
-      {/* the portrait holds the full height of the plate and bleeds off the
-          right edge of the window; the timeline is drawn to match it */}
-      <figure className="about-bleed" aria-hidden="true">
-        <img src={portrait} alt="" />
+      {/* Desktop: the portrait holds the full height of the plate and bleeds
+          off the right edge, and the timeline is drawn to match it.
+
+          Narrow: there is no right edge to bleed into, so it stops being a
+          field behind the text and becomes a picture below it — which is why
+          it carries alt text rather than aria-hidden. A decorative bleed and
+          a portrait of me are not the same element to a screen reader. */}
+      <figure className="about-bleed">
+        <img src={portrait} alt="J. Tyler Ray" />
       </figure>
       <div className="col about-col">
         <SectionLabel n="03">Who I am</SectionLabel>

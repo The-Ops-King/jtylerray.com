@@ -194,7 +194,7 @@ export const TIMELINE: Era[] = [
   },
 ];
 
-/* ── 04 · contact ──────────────────────────────────────────────────── */
+/* ── 05 · contact ──────────────────────────────────────────────────── */
 
 export const CONTACT = {
   headline: "How can I help?",

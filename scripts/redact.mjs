@@ -25,6 +25,38 @@ import { join } from "node:path";
 const SRC = "redaction/originals";
 const OUT = "src/assets/reviews";
 
+/**
+ * Redactions are flat bars, not blur. A blurred name reads as a smudge — as
+ * something that went wrong in the capture — and it still carries the word
+ * shape and length. A bar reads as a decision, and carries nothing.
+ *
+ * Each bar takes a grey lifted off its own screenshot's ground, so it sits in
+ * the image rather than on top of it.
+ */
+const BAR = {
+  dark: { r: 58, g: 58, b: 64 },
+  light: { r: 198, g: 195, b: 189 },
+};
+
+/** which ground each capture came on, so its bars match it */
+const TONE = {
+  "admin-notes.png": "light",
+  "assassin.png": "light",
+  "better-than-jm.png": "light",
+  "cheat-code.png": "light",
+  "devin-power-outage.png": "dark",
+  "leaderboard-approved.png": "dark",
+  "leaderboard-hires.png": "dark",
+  "light-in-the-dark.jpg": "dark",
+  "like-gold.png": "light",
+  "niann-outbound.png": "dark",
+  "niann-pipeline.png": "dark",
+  "nyree-recommendations.png": "dark",
+  "results-of-training.png": "light",
+  "second-mentor.png": "light",
+  "zach-any-closer-role.jpg": "dark",
+};
+
 /** [x, y, w, h] as fractions of width/height */
 const REDACTIONS = {
   // ── Slack: avatar and author line top-left, mentions inside the body ──
@@ -121,15 +153,14 @@ for (const file of files) {
     const h = Math.min(Math.round(fh * height), height - top);
     if (w <= 0 || h <= 0) continue;
 
-    // blur radius scales with the region: a 12px-tall name needs less than a
-    // 100px avatar, and both need enough that nothing is readable through it
-    const sigma = Math.max(6, Math.min(w, h) / 3);
-    const patch = await sharp(src)
-      .extract({ left, top, width: w, height: h })
-      .blur(sigma)
+    const tone = TONE[file] || "dark";
+    const patch = await sharp({
+      create: { width: w, height: h, channels: 4, background: { ...BAR[tone], alpha: 1 } },
+    })
+      .png()
       .toBuffer();
     parts.push({ input: patch, left, top });
-    if (check) console.log(`  ${file}  ${left},${top} ${w}x${h}  sigma ${sigma.toFixed(1)}`);
+    if (check) console.log(`  ${file}  ${left},${top} ${w}x${h}  ${tone} bar`);
   }
 
   if (check) continue;

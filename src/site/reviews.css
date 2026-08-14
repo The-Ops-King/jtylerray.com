@@ -1,16 +1,14 @@
 /* ═══════════════════════════════════════════════════════════════════
    Section 04 · the wall of receipts.
 
-   A bento of the screenshots themselves. The tiles are artifacts pinned to
-   the sheet, not brand surfaces, so each one keeps the ground its screenshot
-   was captured on — dark for Slack and Messenger, bone for WhatsApp and the
-   Facebook comment. Making the light ones dark would mean editing what
-   somebody else wrote, and a wall of receipts that has been retouched is
-   worth nothing.
+   Justified rows, packed in Reviews.tsx: every tile is the shape of its own
+   screenshot and every row fills the measure exactly, so the wall is a solid
+   block with no gaps and no ragged corner. Nothing is cropped and nothing
+   floats in a cell built for something bigger.
 
-   Everything else is the page's: hairline borders, 8px rhythm, grey
-   structure, no accent. The screenshots carry all the colour this section
-   is allowed.
+   The tiles are artifacts pinned to the sheet, not brand surfaces, so each
+   keeps the ground its capture came on. The light ones are held back a step
+   so five bone rectangles do not outrank the words above them.
    ═══════════════════════════════════════════════════════════════════ */
 
 /* .col holds its children to the 720px measure; the wall is the exception,
@@ -20,112 +18,73 @@
 }
 
 .wallboard {
-  max-width: 1280px;
+  width: 100%;
   margin-top: 40px;
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  grid-auto-rows: 132px;
-  /* the dense packer fills the holes a mixed-span bento leaves behind */
-  grid-auto-flow: row dense;
-  gap: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 }
 
+.wall-row {
+  display: flex;
+  gap: 10px;
+  /* the row's height is set inline: it is the packing result, not a constant */
+}
+
+/* the tile's ground is the capture's own colour, sampled from its edge and
+   set inline — so a strip padded out to a workable shape reads as more of the
+   same screenshot rather than as a screenshot in a box */
 .rev {
   position: relative;
   margin: 0;
+  flex: none;
   overflow: hidden;
-  border: 0.5px solid rgba(138, 133, 124, 0.14);
-  border-radius: 8px;
+  border-radius: 6px;
+  border: 0.5px solid rgba(138, 133, 124, 0.16);
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 12px;
-  transition: border-color 0.2s ease, transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: border-color 0.2s ease;
 }
-.rev[data-tone="dark"] {
-  background: #16161a;
-}
-/* the light shots sit on their own ground, dimmed a step so a white rectangle
-   does not punch a hole in the page */
-.rev[data-tone="light"] {
-  background: #e8e6e1;
-}
-.rev[data-tone="light"] .rev-img {
-  /* the screenshots' own white is brighter than the page's bone */
-  filter: saturate(0.92);
-}
-
-.rev-span-note {
-  display: none;
-}
-
-.rev[data-span="wide"] {
-  grid-column: span 2;
-}
-.rev[data-span="tall"] {
-  grid-row: span 2;
-}
-.rev[data-span="big"] {
-  grid-column: span 2;
-  grid-row: span 2;
+/* the light captures are lit for a white page. A scrim of the page's own ink
+   settles them into this one without touching what they say. */
+.rev[data-tone="light"]::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: rgba(12, 11, 10, 0.14);
+  pointer-events: none;
 }
 
 .rev-img {
   display: block;
-  max-width: 100%;
-  max-height: 100%;
-  width: auto;
-  height: auto;
+  width: 100%;
+  height: 100%;
+  /* contain, never cover: cropping a screenshot cuts words off the end of
+     somebody's sentence. A strip sits centred on the tile's ground instead. */
   object-fit: contain;
 }
 
-/* a pointer can look closer; a finger cannot, so nothing here depends on it */
+/* a pointer can look closer: the scrim lifts and the hairline brightens.
+   Nothing moves, because a wall of receipts that jumps is a carousel. */
 @media (hover: hover) {
   .rev:hover {
-    border-color: rgba(138, 133, 124, 0.34);
-    transform: translateY(-2px);
+    border-color: rgba(138, 133, 124, 0.4);
   }
-}
-@media (prefers-reduced-motion: reduce) {
-  .rev {
-    transition: none;
+  .rev[data-tone="light"]:hover::after {
+    background: rgba(12, 11, 10, 0.04);
   }
-  .rev:hover {
-    transform: none;
+  .rev[data-tone="light"]::after {
+    transition: background 0.2s ease;
   }
 }
 
-/* ── narrow ───────────────────────────────────────────────────────── */
-
-@media (max-width: 1080px) {
-  .wallboard {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    grid-auto-rows: 124px;
-    gap: 12px;
-  }
-}
-
-/* one column on a phone: two columns of a chat screenshot is two columns of
-   type at four point */
 @media (max-width: 620px) {
   .wallboard {
-    grid-template-columns: minmax(0, 1fr);
-    grid-auto-rows: auto;
-    gap: 10px;
+    margin-top: 28px;
+    gap: 8px;
   }
-  /* spans mean nothing in one column, and a fixed row height crops the tall
-     ones — every tile is as tall as its own screenshot needs */
-  .rev[data-span="wide"],
-  .rev[data-span="tall"],
-  .rev[data-span="big"] {
-    grid-column: auto;
-    grid-row: auto;
-  }
-  .rev {
-    padding: 8px;
-  }
-  .rev-img {
-    width: 100%;
-    max-height: none;
+  .wall-row {
+    gap: 8px;
   }
 }
