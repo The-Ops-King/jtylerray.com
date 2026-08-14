@@ -1,15 +1,7 @@
 import { useEffect, useState } from "react";
 import GridBackdrop from "../components/GridBackdrop";
 import { ACCENTS, applyAccent } from "../accents";
-import {
-  BOOK_ENDPOINT,
-  CALLS,
-  CARD,
-  SOCIALS,
-  TIME_SLOTS,
-  type Call,
-  type Social,
-} from "./data";
+import { BOOK_ENDPOINT, CALLS, CARD, SOCIALS, type Call, type Social } from "./data";
 import "./card.css";
 
 /**
@@ -58,28 +50,34 @@ export default function Card() {
           <LocalTime />
         </header>
 
-        <section className="blk" aria-labelledby="blk-book">
-          <BlockHead n="01" title="Book a call" sub="30 or 60 minutes" id="blk-book" />
-          <div className="calls">
-            {CALLS.map((c) => (
-              <CallRow call={c} key={c.minutes} />
-            ))}
-          </div>
-        </section>
+        {/* DOM order is the phone's: the message comes first, because writing
+            one is the thing most people arrive here to do. The three columns
+            on a wide screen are placed by grid-area, so the desktop reads
+            calls · message · elsewhere without reordering the markup. */}
+        <div className="card-body">
+          <section className="blk blk-form" aria-labelledby="blk-form">
+            <BlockHead title="How can I help?" sub="I answer every one" id="blk-form" />
+            <BookForm />
+          </section>
 
-        <section className="blk" aria-labelledby="blk-form">
-          <BlockHead n="02" title="Tell me what's broken" sub="I answer every one" id="blk-form" />
-          <BookForm />
-        </section>
+          <section className="blk blk-calls" aria-labelledby="blk-book">
+            <BlockHead title="Book a call" sub="30 or 60 minutes" id="blk-book" />
+            <div className="calls">
+              {CALLS.map((c) => (
+                <CallRow call={c} key={c.minutes} />
+              ))}
+            </div>
+          </section>
 
-        <section className="blk" aria-labelledby="blk-social">
-          <BlockHead n="03" title="Elsewhere" sub="IG · LinkedIn · FB" id="blk-social" />
-          <div className="socials">
-            {SOCIALS.map((s) => (
-              <SocialRow social={s} key={s.name} />
-            ))}
-          </div>
-        </section>
+          <section className="blk blk-social" aria-labelledby="blk-social">
+            <BlockHead title="Elsewhere" sub="IG · LinkedIn · FB" id="blk-social" />
+            <div className="socials">
+              {SOCIALS.map((s) => (
+                <SocialRow social={s} key={s.name} />
+              ))}
+            </div>
+          </section>
+        </div>
 
         <footer className="card-foot">
           <a className="card-site mono" href={CARD.site.href}>
@@ -92,20 +90,12 @@ export default function Card() {
   );
 }
 
-function BlockHead({
-  n,
-  title,
-  sub,
-  id,
-}: {
-  n: string;
-  title: string;
-  sub: string;
-  id: string;
-}) {
+/* No index numerals here. The blocks sit in one order on a phone and another
+   on a desktop, so a printed 01/02/03 would have counted backwards at one of
+   the two widths. The hairline and the mono sub-line carry the same language. */
+function BlockHead({ title, sub, id }: { title: string; sub: string; id: string }) {
   return (
     <header className="blk-head">
-      <span className="blk-n mono">{n}</span>
       <h2 className="blk-title" id={id}>
         {title}
       </h2>
@@ -236,27 +226,16 @@ function BookForm() {
         <input className="field-i" name="email" type="email" required autoComplete="email" />
       </label>
 
-      <div className="field-pair">
-        <label className="field">
-          <span className="field-l mono">Phone</span>
-          <input
-            className="field-i"
-            name="phone"
-            type="tel"
-            inputMode="tel"
-            autoComplete="tel"
-          />
-        </label>
-
-        <label className="field">
-          <span className="field-l mono">Best time</span>
-          <select className="field-i field-s" name="bestTime" defaultValue={TIME_SLOTS[0]}>
-            {TIME_SLOTS.map((t) => (
-              <option key={t}>{t}</option>
-            ))}
-          </select>
-        </label>
-      </div>
+      <label className="field">
+        <span className="field-l mono">Phone</span>
+        <input
+          className="field-i"
+          name="phone"
+          type="tel"
+          inputMode="tel"
+          autoComplete="tel"
+        />
+      </label>
 
       {/* the honeypot: off-screen, unlabelled, never focusable. A bot fills
           it, the handler answers 200 and mails nothing. */}
@@ -270,7 +249,7 @@ function BookForm() {
       />
 
       <label className="field">
-        <span className="field-l mono">What's broken</span>
+        <span className="field-l mono">What you need</span>
         <textarea
           className="field-i field-t"
           name="message"

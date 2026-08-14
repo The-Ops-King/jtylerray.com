@@ -67,11 +67,3 @@ export const SOCIALS: Social[] = [
  *  jtylerray.com/card and the handler sits at jtylerray.com/api/book. */
 export const BOOK_ENDPOINT = "/api/book";
 
-/** the one select on the form. Kept to four coarse answers: a stranger can
- *  pick one without checking a calendar, which a time picker would force. */
-export const TIME_SLOTS = [
-  "Mornings",
-  "Afternoons",
-  "Evenings",
-  "Whenever you're free",
-];

@@ -197,6 +197,6 @@ export const TIMELINE: Era[] = [
 /* ── 04 · contact ──────────────────────────────────────────────────── */
 
 export const CONTACT = {
-  headline: "Let's talk about what's broken.",
+  headline: "How can I help?",
   line: "Bring the part of the operation you don't trust: a booking that never reaches the CRM, reporting nobody believes, or a launch the current setup will not survive.",
 };

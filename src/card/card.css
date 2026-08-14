@@ -80,9 +80,13 @@ html:has(.card-page) body {
 
 /* ── the head ─────────────────────────────────────────────────────── */
 
+/* centred on a phone: with the nav and the contact rows gone, the name is
+   alone at the top of the plate, and centred it reads as the card's own
+   masthead rather than as a line that ran out of things beside it */
 .card-head {
   padding-bottom: 24px;
   border-bottom: 0.5px solid rgba(138, 133, 124, 0.14);
+  text-align: center;
 }
 .card-eyebrow {
   font-size: 10px;
@@ -115,23 +119,37 @@ html:has(.card-page) body {
   color: var(--grey-dim);
 }
 
-/* ── a block ──────────────────────────────────────────────────────── */
+/* ── the three blocks ─────────────────────────────────────────────── */
+
+/* one column on a phone, in DOM order: message, calls, elsewhere */
+.card-body {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-areas:
+    "form"
+    "calls"
+    "social";
+}
+.blk-form {
+  grid-area: form;
+}
+.blk-calls {
+  grid-area: calls;
+}
+.blk-social {
+  grid-area: social;
+}
 
 .blk {
   margin-top: 40px;
+  min-width: 0;
 }
 .blk-head {
-  display: grid;
-  grid-template-columns: 30px minmax(0, 1fr);
-  gap: 4px 10px;
-  align-items: baseline;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
   padding-bottom: 16px;
   border-bottom: 0.5px solid rgba(138, 133, 124, 0.14);
-}
-.blk-n {
-  font-size: 11px;
-  letter-spacing: 0.08em;
-  color: var(--grey-dim);
 }
 .blk-title {
   font-family: var(--display);
@@ -142,7 +160,6 @@ html:has(.card-page) body {
   color: var(--bone);
 }
 .blk-sub {
-  grid-column: 2;
   font-size: 10px;
   letter-spacing: 0.14em;
   text-transform: uppercase;
@@ -259,11 +276,6 @@ html:has(.card-page) body {
   background-size: 5px 5px, 5px 5px;
   background-repeat: no-repeat;
   padding-right: 36px;
-}
-.field-pair {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 18px;
 }
 /* the honeypot. Off-screen rather than display:none — some bots skip fields
    they can tell are hidden. */
@@ -439,10 +451,8 @@ html:has(.card-page) body {
   color: var(--accent-text);
 }
 
-/* ── up from the phone ────────────────────────────────────────────── */
+/* ── the tablet: still one column, just more air ──────────────────── */
 
-/* nothing reflows: the card only gains air, type and gutter as the window
-   grows, because one column is the right answer at every width here */
 @media (min-width: 600px) {
   .card-page {
     padding: 56px 40px;
@@ -464,13 +474,68 @@ html:has(.card-page) body {
   .call-title {
     font-size: 18px;
   }
-  .field-pair {
-    grid-template-columns: 1fr 1fr;
-  }
   .form-send {
     width: auto;
     align-self: flex-start;
     padding-inline: 34px;
+  }
+}
+
+/* ── the desktop: three columns, the message in the middle ────────── */
+
+/* A phone reads top to bottom, so the message leads. A desktop reads across,
+   so the message takes the centre with the two ways of reaching me either
+   side of it. Same markup: only the grid areas move. */
+@media (min-width: 1000px) {
+  .card {
+    max-width: 1160px;
+  }
+  .card-head {
+    /* left again: at this width the name heads a three-column plate rather
+       than sitting alone at the top of a phone screen */
+    text-align: left;
+  }
+  .card-body {
+    grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.25fr) minmax(0, 0.85fr);
+    grid-template-areas: "calls form social";
+    gap: 0 56px;
+    align-items: start;
+  }
+  /* the two outer columns are hung off the middle one by a hairline, the same
+     device the page's own sections use */
+  .blk-form {
+    padding: 0 56px;
+    margin-inline: -56px;
+    border-left: 0.5px solid rgba(138, 133, 124, 0.12);
+    border-right: 0.5px solid rgba(138, 133, 124, 0.12);
+  }
+  .blk {
+    margin-top: 48px;
+  }
+  .blk-title {
+    font-size: 26px;
+  }
+  /* the numeral column costs too much of a narrow outer column here */
+  .call {
+    grid-template-columns: 46px minmax(0, 1fr) 14px;
+    gap: 12px;
+  }
+  .call-n {
+    font-size: 32px;
+  }
+  .call-title {
+    font-size: 17px;
+  }
+  .form-send {
+    width: 100%;
+    align-self: stretch;
+  }
+  /* the handle would crowd the name in a third of the plate */
+  .social {
+    grid-template-columns: 18px minmax(0, 1fr) 14px;
+  }
+  .social-handle {
+    display: none;
   }
 }
 
