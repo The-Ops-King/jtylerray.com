@@ -4,7 +4,7 @@
     { "source": "/new-home/", "destination": "/", "permanent": true }
   ],
   "rewrites": [
-    { "source": "/", "destination": "/new-home/index.html" },
+    { "source": "/legacy", "destination": "/legacy.html" },
     { "source": "/resume", "destination": "/resume.html" },
     { "source": "/work", "destination": "/resume.html" },
     { "source": "/brand-1", "destination": "/brand-1/index.html" },
