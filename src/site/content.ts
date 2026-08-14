@@ -9,6 +9,13 @@
 
 export const EMAIL = "jt@jtylerray.com";
 
+/** Where every "Get in touch" goes. The card carries email, SMS, WhatsApp and
+ *  both booking lengths, so it answers the question a mailto: only half
+ *  answers — and it opens in the browser rather than in a mail client the
+ *  visitor may not have set up. Root-relative: the card ships to
+ *  jtylerray.com/card from this same repo's card build. */
+export const CONTACT_URL = "/card/";
+
 export const BOOKING =
   "https://calendar.google.com/calendar/u/0/appointments/schedules/AcZssZ1sNdq-fawbkAreIeJGRBENL0uXrpEAvGVGj6JXNZv8B00hdPgkoYIDvSotwQotDPXGe_LL5drV";
 

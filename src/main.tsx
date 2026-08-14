@@ -12,9 +12,16 @@ import "./themes.css";
  * With static imports the card shipped the whole site — portrait, logo wall
  * and all — because every root sat in the same module graph.
  */
-const load = import.meta.env.VITE_CARD
+/* In dev there is one server at base '/', so the path picks the root and
+   localhost/card, /brand-1 and /new-home are all the same port. In a build the
+   env flag decides, because each target ships alone. */
+const path = location.pathname;
+const card = import.meta.env.VITE_CARD || path.startsWith("/card");
+const lab = import.meta.env.VITE_LAB || path.startsWith("/brand-1");
+
+const load = card
   ? () => import("./card/Card")
-  : import.meta.env.VITE_LAB
+  : lab
     ? () => import("./Lab")
     : () => import("./App");
 

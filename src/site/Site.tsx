@@ -6,6 +6,7 @@ import SmoothScroll from "./SmoothScroll";
 import portrait from "../assets/suit.jpeg";
 import {
   CONTACT,
+  CONTACT_URL,
   EMAIL,
   HERO,
   RAIL,
@@ -61,7 +62,7 @@ function SectionLabel({ n, children }: { n: string; children: string }) {
  *  same ask as the hero's, so it is drawn the same way. */
 function CtaLink({ children = "Get in touch" }: { children?: string }) {
   return (
-    <a className="btn btn-fill cta-btn" href={`mailto:${EMAIL}`}>
+    <a className="btn btn-fill cta-btn" href={CONTACT_URL}>
       {children}
     </a>
   );
@@ -85,7 +86,7 @@ function Hero() {
             <a href="#work">Work</a>
             <a href="#about">About</a>
             <a href="#contact">Contact</a>
-            <a className="btn btn-outline" href={`mailto:${EMAIL}`}>
+            <a className="btn btn-outline" href={CONTACT_URL}>
               Get in touch
             </a>
           </nav>
@@ -101,7 +102,7 @@ function Hero() {
             </h1>
             <p className="lede rise rise-3">{HERO.subtext}</p>
             <div className="btns rise rise-4">
-              <a className="btn btn-fill" href={`mailto:${EMAIL}`}>
+              <a className="btn btn-fill" href={CONTACT_URL}>
                 Get in touch
               </a>
               <a className="btn btn-outline" href="#work">
@@ -275,7 +276,7 @@ function Contact() {
         <h2 className="display contact-head">{CONTACT.headline}</h2>
         <p className="lede">{CONTACT.line}</p>
         {/* one wording for every ask on the page */}
-        <a className="btn btn-fill" href={`mailto:${EMAIL}`}>
+        <a className="btn btn-fill" href={CONTACT_URL}>
           Get in touch
         </a>
         {/* not everyone books a call, and they should not have to */}

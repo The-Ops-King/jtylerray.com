@@ -1,6 +1,11 @@
 /**
- * The card's content, lifted from card.jtylerray.com. Everything the old card
- * carried except the payment group, which does not belong on jtylerray.com.
+ * The card's content.
+ *
+ * The card is three things and nothing else: book a call, find me elsewhere,
+ * or tell me what's broken. Email, SMS and WhatsApp rows are deliberately
+ * gone — every one of them was a second way to say the thing the form asks
+ * for directly, and a card that lists five channels makes the reader choose
+ * before they can start.
  */
 
 export const CARD = {
@@ -10,103 +15,63 @@ export const CARD = {
   place: "Phoenix, Arizona",
   zone: "America/Phoenix",
   site: { label: "jtylerray.com", href: "https://jtylerray.com" },
-  /** for the downloadable contact file */
-  vcard: {
-    first: "Tyler",
-    last: "Ray",
-    org: "J. Tyler Ray",
-    title: "Founder · Builder · Operator",
-    email: "jt@jtylerray.com",
-    phone: "+14805163213",
-  },
 };
 
-export type Row = {
-  /** the kind of thing this is. Socials do not need one: the name is the row */
-  label?: string;
-  value: string;
-  note?: string;
+export type Call = {
+  /** the length, set as the row's own numeral */
+  minutes: string;
+  title: string;
+  note: string;
   href: string;
-  /** filename in card/marks, drawn beside the value */
-  mark?: string;
-  /** open in a new tab: true for the web, false for mail, sms and WhatsApp */
-  external?: boolean;
 };
 
-export type Group = { n: string; title: string; sub: string; rows: Row[] };
+export const CALLS: Call[] = [
+  {
+    minutes: "30",
+    title: "Quick call",
+    note: "Networking, intros, a question you want answered",
+    href: "https://30cal.jtylerray.com",
+  },
+  {
+    minutes: "60",
+    title: "Working session",
+    note: "Deep dives, advisory, walking through a system together",
+    href: "https://60cal.jtylerray.com",
+  },
+];
 
-export const GROUPS: Group[] = [
+export type Social = { name: string; handle: string; href: string; mark: string };
+
+export const SOCIALS: Social[] = [
   {
-    n: "01",
-    title: "Contact",
-    sub: "Email · SMS · WhatsApp",
-    rows: [
-      {
-        label: "Email",
-        value: "jt@jtylerray.com",
-        note: "Best for anything serious",
-        href: "mailto:jt@jtylerray.com",
-        mark: "gmail",
-      },
-      {
-        label: "SMS",
-        value: "+1 (480) 516-3213",
-        note: "Text only, I won't answer calls",
-        href: "sms:+14805163213",
-      },
-      {
-        label: "WhatsApp",
-        value: "+1 (480) 516-3213",
-        href: "https://wa.me/14805163213",
-        mark: "whatsapp",
-        external: true,
-      },
-    ],
+    name: "Instagram",
+    handle: "@jtylerray",
+    href: "https://instagram.com/jtylerray",
+    mark: "instagram",
   },
   {
-    n: "02",
-    title: "Book a call",
-    sub: "30 or 60 min",
-    rows: [
-      {
-        label: "30 minutes",
-        value: "Networking, intros, quick chats",
-        href: "https://30cal.jtylerray.com",
-        mark: "googlecalendar",
-        external: true,
-      },
-      {
-        label: "60 minutes",
-        value: "Deep dives, advisory, working sessions",
-        href: "https://60cal.jtylerray.com",
-        mark: "googlecalendar",
-        external: true,
-      },
-    ],
+    name: "LinkedIn",
+    handle: "in/jtylerray",
+    href: "https://linkedin.com/in/jtylerray",
+    mark: "linkedin",
   },
   {
-    n: "03",
-    title: "Socials",
-    sub: "IG · LinkedIn · FB",
-    rows: [
-      {
-        value: "Instagram",
-        href: "https://instagram.com/jtylerray",
-        mark: "instagram",
-        external: true,
-      },
-      {
-        value: "LinkedIn",
-        href: "https://linkedin.com/in/jtylerray",
-        mark: "linkedin",
-        external: true,
-      },
-      {
-        value: "Facebook",
-        href: "https://www.facebook.com/jtylerray",
-        mark: "facebook",
-        external: true,
-      },
-    ],
+    name: "Facebook",
+    handle: "jtylerray",
+    href: "https://www.facebook.com/jtylerray",
+    mark: "facebook",
   },
+];
+
+/** where the form posts. Same origin in production: the card ships into
+ *  jtylerray.com/card and the handler sits at jtylerray.com/api/book. */
+export const BOOK_ENDPOINT = "/api/book";
+
+/** the one select on the form. Kept to four coarse answers: a stranger can
+ *  pick one without checking a calendar, which a time picker would force. */
+export const TIME_SLOTS = [
+  "Mornings",
+  "Afternoons",
+  "Evenings",
+  "Whenever you're free",
 ];

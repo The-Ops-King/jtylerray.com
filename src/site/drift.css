@@ -140,3 +140,26 @@
     min-height: 300px;
   }
 }
+
+/* three columns on a phone leaves a 106px tile: the mark shrinks to nothing
+   and the name breaks across three lines. Two columns, taller tiles. */
+@media (max-width: 600px) {
+  .wall {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+  /* the third column would wrap to a second row inside an absolutely
+     positioned box. The wall is texture, so dropping it costs nothing. */
+  .wall-col[data-col="2"] {
+    display: none;
+  }
+  .wall-track {
+    gap: 10px;
+  }
+  .tile {
+    height: 92px;
+  }
+  .tile img {
+    max-height: 38px;
+  }
+}

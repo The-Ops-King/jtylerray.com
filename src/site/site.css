@@ -14,7 +14,9 @@
 .site {
   --col: 720px; /* text column, never wider */
   --pad: 104px; /* section padding, inside the guide's 96-128px band */
-  --edge: clamp(24px, 5vw, 72px);
+  /* the gutter takes the notch into account: on a landscape phone the safe
+     area is wider than the 24px floor, and text sat under the rounded corner */
+  --edge: max(clamp(24px, 5vw, 72px), env(safe-area-inset-left, 0px), env(safe-area-inset-right, 0px));
   --rule: rgba(var(--struct), 0.12);
 
   /* the drawing is the hero's: the page below it is plain ground. No stacking
@@ -115,6 +117,7 @@ html:has(.site) body {
 .site .btn {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   font-family: var(--sans);
   font-size: 16px;
   font-weight: 500;
@@ -229,10 +232,14 @@ html:has(.site) body {
   position: relative;
   height: auto;
   min-height: 100vh;
+  /* svh, not vh: on a phone 100vh is the tall viewport, so the hero ran a
+     browser-chrome's height past the fold and the scroll cue sat off screen */
+  min-height: 100svh;
   display: flex;
   flex-direction: column;
   overflow: hidden;
   padding: 28px var(--edge) 32px;
+  padding-bottom: max(32px, env(safe-area-inset-bottom, 0px));
 }
 .site .shell {
   position: relative;
@@ -377,11 +384,102 @@ html:has(.site) body {
   }
 }
 
+/* ── hero · tablet and phone ──────────────────────────────────────── */
+
+/* One column, and the rail comes with it. The lab hides the rail below 900
+   because there it is a layout demo; here it is the five things I build, so
+   it moves under the copy as a two-up list instead of leaving the page. */
 @media (max-width: 900px) {
   .site .hero-body {
     grid-template-columns: 1fr;
     align-items: start;
-    padding-top: 12vh;
+    /* centred as one block: spreading copy and rail to the two ends left a
+       400px hole down the middle of a tall tablet */
+    align-content: center;
+    padding-top: clamp(24px, 5vh, 56px);
+    padding-bottom: 24px;
+    gap: clamp(40px, 7vh, 80px);
+  }
+  .site .v1-rail {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 20px 28px;
+    border-left: 0;
+    border-top: 0.5px solid rgba(138, 133, 124, 0.12);
+    padding: 24px 0 0;
+  }
+  /* the rail is the fold marker now: five entries below the copy say the page
+     continues more plainly than a bouncing circle, which the rail overlapped */
+  .scroll-cue {
+    display: none;
+  }
+}
+
+/* the rail stays two-up on a phone — one column ran the hero 60px past the
+   fold. The sub-line drops to keep each cell to two lines. */
+@media (max-width: 520px) {
+  .site .v1-rail {
+    gap: 14px 20px;
+  }
+  .site .v1-row {
+    grid-template-columns: 20px minmax(0, 1fr);
+    gap: 8px;
+  }
+  .site .v1-k {
+    font-size: 14px;
+  }
+  .site .v1-t {
+    font-size: 10.5px;
+  }
+}
+
+/* the smallest phones still in use (320px, 568 tall): the rail's sub-lines
+   wrap to three lines each and carry the hero two screens deep. The labels
+   alone still say what gets built. */
+@media (max-width: 360px) {
+  .site .v1-t {
+    display: none;
+  }
+  .site .v1-rail {
+    gap: 12px 16px;
+  }
+}
+
+/* a short phone (SE, mini) runs the copy block into the rail: the stack
+   tightens rather than the type shrinking */
+@media (max-height: 700px) and (max-width: 900px) {
+  .site .hero-copy > * + * {
+    margin-top: 20px;
+  }
+  .hero-copy .btns {
+    margin-top: 28px;
+  }
+  .site .hero-body {
+    padding-top: 24px;
+    gap: 32px;
+  }
+}
+
+/* a landscape phone has no vertical room for a full-height hero: let it size
+   to its content and drop the cue, which would otherwise sit on the copy */
+@media (max-height: 560px) and (orientation: landscape) {
+  .site .hero {
+    min-height: 0;
+    padding-bottom: 56px;
+  }
+  .site .hero-body {
+    padding-top: 32px;
+  }
+  /* 6.4vw is 54px on a landscape phone — three lines of headline and the
+     buttons are below the fold before the copy starts */
+  .hero-copy .display {
+    font-size: clamp(30px, 4.6vw, 44px);
+  }
+  .site .hero-copy > * + * {
+    margin-top: 18px;
+  }
+  .scroll-cue {
+    display: none;
   }
 }
 
@@ -670,6 +768,17 @@ html:has(.site) body {
   .masthead-nav {
     gap: 20px;
   }
+  /* section 01 runs a step larger than body copy on a desktop measure; at 40
+     characters a line that setting reads as a poster, not as prose */
+  .site #what .prose p {
+    /* holds the measure near 66 characters across the whole band: 21px was a
+       poster setting at this width, 18px ran 71 characters on a tablet */
+    font-size: clamp(17.5px, 2.3vw, 19.5px);
+    line-height: 1.7;
+  }
+  .site #what .prose p + p {
+    margin-top: 22px;
+  }
   .register {
     grid-template-columns: 1fr;
     gap: 0;
@@ -717,7 +826,88 @@ html:has(.site) body {
 }
 
 @media (max-width: 620px) {
-  .masthead-nav a:not(.btn) {
+  /* the masthead CTA and the hero CTA sat two lines apart on a phone. One of
+     them goes, and it is the one that is chrome rather than content — which
+     leaves the wordmark alone on the top edge, so it takes the centre. */
+  .masthead-nav {
     display: none;
+  }
+  .masthead {
+    justify-content: center;
+  }
+  .wordmark-block {
+    align-items: center;
+    text-align: center;
+  }
+  /* section 04 is the closing plate: on one column it reads as a centred
+     card. The drafting label stays left, hung off the rule above it. */
+  .contact .col {
+    /* centres the button too: it is inline-flex, so auto margins are ignored
+       and only the line box can place it */
+    text-align: center;
+  }
+  .contact .col > *:not(.section-label) {
+    margin-left: auto;
+    margin-right: auto;
+  }
+  .contact .section-label {
+    text-align: left;
+  }
+  .contact .lede {
+    max-width: 40ch;
+  }
+  /* 6.4vw bottoms out at 42px, which is a four-line headline on a 360px
+     phone and pushes the rail a screen and a half down */
+  .hero-copy .display {
+    font-size: clamp(32px, 10vw, 44px);
+  }
+  /* the two hero buttons wrap rather than shrinking their labels */
+  .hero-copy .btns {
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  .hero-copy .btns .btn {
+    flex: 1 1 auto;
+  }
+  .site .lede {
+    font-size: 17px;
+  }
+  .era-title {
+    font-size: 21px;
+  }
+  .era-line {
+    font-size: 16.5px;
+  }
+  .contact-email {
+    font-size: 16px;
+    overflow-wrap: anywhere;
+  }
+}
+
+/* ── touch ────────────────────────────────────────────────────────── */
+
+/* a finger needs 44px; the masthead button was 40 and the register rows were
+   sized off type alone. Nothing here fires on a mouse. */
+@media (hover: none), (pointer: coarse) {
+  .site .btn {
+    min-height: 44px;
+  }
+  .masthead-nav .btn-outline {
+    padding: 12px 18px;
+  }
+  .site .masthead-nav a:not(.btn) {
+    padding: 6px 0;
+  }
+  .spl-row {
+    min-height: 48px;
+  }
+  /* hover states never resolve on touch: they stick after a tap instead */
+  .spl-row:hover .spl-t {
+    color: var(--grey-mid);
+    transform: none;
+  }
+  .spl-row[data-on="true"] .spl-t {
+    color: var(--bone);
+    transform: translateX(6px);
   }
 }

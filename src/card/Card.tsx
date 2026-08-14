@@ -1,28 +1,35 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import GridBackdrop from "../components/GridBackdrop";
 import { ACCENTS, applyAccent } from "../accents";
-import { CARD, GROUPS, type Row } from "./data";
+import {
+  BOOK_ENDPOINT,
+  CALLS,
+  CARD,
+  SOCIALS,
+  TIME_SLOTS,
+  type Call,
+  type Social,
+} from "./data";
 import "./card.css";
 
 /**
  * jtylerray.com/card — the contact card, drawn in the site's own language:
  * the blueprint sheet, corner registration, mono labels, one accent.
  *
- * Content is the old card at card.jtylerray.com without the payment group.
- * Every row is a real link, so a phone opens mail, messages or WhatsApp
- * directly rather than routing through a script.
+ * Built phone-first and read top to bottom: book a call, find me elsewhere,
+ * or say what's broken. One layout at every width — the card is opened on a
+ * phone nearly every time, so the phone gets the design and the desktop gets
+ * the same card with more air around it.
  *
- * Three columns, everything open. The card is handed over and read at arm's
- * length: nothing should need a tap to reveal itself, and nothing animates —
- * the collapsing panels this replaced were repainting the whole card.
+ * Nothing here hides behind a tap. The three-column version this replaced put
+ * five contact channels side by side, which made the reader choose a channel
+ * before they could say anything.
  */
 
 /* the platform marks, monochrome, resolved by filename */
 const marks = import.meta.glob<{ default: string }>("./marks/*.svg", { eager: true });
-const markSrc = (name?: string) =>
-  name
-    ? Object.entries(marks).find(([p]) => p.endsWith(`/${name}.svg`))?.[1].default
-    : undefined;
+const markSrc = (name: string) =>
+  Object.entries(marks).find(([p]) => p.endsWith(`/${name}.svg`))?.[1].default;
 
 export default function Card() {
   useEffect(() => {
@@ -45,54 +52,70 @@ export default function Card() {
 
       <main className="card">
         <header className="card-head">
-          <div className="card-head-main">
-            <p className="mono card-eyebrow">Contact card</p>
-            <h1 className="card-name">{CARD.name}</h1>
-            <p className="mono card-role">{CARD.role}</p>
-          </div>
+          <p className="mono card-eyebrow">Contact card</p>
+          <h1 className="card-name">{CARD.name}</h1>
+          <p className="mono card-role">{CARD.role}</p>
           <LocalTime />
         </header>
 
-        <div className="card-cols">
-          {GROUPS.map((g) => (
-            <section className="grp" key={g.title}>
-              <header className="grp-head">
-                <span className="grp-n mono">{g.n}</span>
-                <h2 className="grp-title">{g.title}</h2>
-                <span className="grp-sub mono">{g.sub}</span>
-              </header>
-              <div className="grp-rows">
-                {g.rows.map((r) => (
-                  <CardRow row={r} key={r.value + r.href} />
-                ))}
-              </div>
-            </section>
-          ))}
-        </div>
+        <section className="blk" aria-labelledby="blk-book">
+          <BlockHead n="01" title="Book a call" sub="30 or 60 minutes" id="blk-book" />
+          <div className="calls">
+            {CALLS.map((c) => (
+              <CallRow call={c} key={c.minutes} />
+            ))}
+          </div>
+        </section>
+
+        <section className="blk" aria-labelledby="blk-form">
+          <BlockHead n="02" title="Tell me what's broken" sub="I answer every one" id="blk-form" />
+          <BookForm />
+        </section>
+
+        <section className="blk" aria-labelledby="blk-social">
+          <BlockHead n="03" title="Elsewhere" sub="IG · LinkedIn · FB" id="blk-social" />
+          <div className="socials">
+            {SOCIALS.map((s) => (
+              <SocialRow social={s} key={s.name} />
+            ))}
+          </div>
+        </section>
 
         <footer className="card-foot">
-          <div className="card-actions">
-            <a className="btn btn-fill" href={`mailto:${CARD.vcard.email}`}>
-              Get in touch
-            </a>
-            <SaveContact />
-          </div>
-          <a
-            className="card-site mono"
-            href={CARD.site.href}
-            target="_blank"
-            rel="noreferrer"
-          >
+          <a className="card-site mono" href={CARD.site.href}>
             {CARD.site.label}
           </a>
+          <span className="mono card-year">2026</span>
         </footer>
       </main>
     </div>
   );
 }
 
+function BlockHead({
+  n,
+  title,
+  sub,
+  id,
+}: {
+  n: string;
+  title: string;
+  sub: string;
+  id: string;
+}) {
+  return (
+    <header className="blk-head">
+      <span className="blk-n mono">{n}</span>
+      <h2 className="blk-title" id={id}>
+        {title}
+      </h2>
+      <span className="blk-sub mono">{sub}</span>
+    </header>
+  );
+}
+
 /** The one live detail on the card: my local time, so a stranger in another
- *  timezone knows whether a text lands at nine in the morning or at three. */
+ *  timezone knows whether a message lands at nine in the morning or at three. */
 function LocalTime() {
   const [now, setNow] = useState(() => new Date());
   useEffect(() => {
@@ -107,57 +130,165 @@ function LocalTime() {
   }).format(now);
 
   return (
-    <div className="card-meta mono">
-      <span>{CARD.place}</span>
-      <span>{time} local</span>
-    </div>
+    <p className="card-meta mono">
+      {CARD.place} · {time} local
+    </p>
   );
 }
 
-/** A .vcf built in the browser, so the card can be saved to a phone rather
- *  than retyped off it. No library, no network. */
-function SaveContact() {
-  const href = useMemo(() => {
-    const v = CARD.vcard;
-    const lines = [
-      "BEGIN:VCARD",
-      "VERSION:3.0",
-      `N:${v.last};${v.first};;;`,
-      `FN:${v.org}`,
-      `TITLE:${v.title}`,
-      `EMAIL;TYPE=INTERNET:${v.email}`,
-      `TEL;TYPE=CELL:${v.phone}`,
-      `URL:${CARD.site.href}`,
-      "END:VCARD",
-    ];
-    return `data:text/vcard;charset=utf-8,${encodeURIComponent(lines.join("\r\n"))}`;
-  }, []);
-
+/** A booking link, drawn as its own length. The numeral is the row: at arm's
+ *  length "30" and "60" are what the reader is choosing between. */
+function CallRow({ call }: { call: Call }) {
   return (
-    <a className="btn btn-ghost" href={href} download="j-tyler-ray.vcf">
-      Save contact
+    <a className="call" href={call.href} target="_blank" rel="noreferrer">
+      <span className="call-n">{call.minutes}</span>
+      <span className="call-body">
+        <span className="call-title">{call.title}</span>
+        <span className="call-note">{call.note}</span>
+      </span>
+      <span className="call-go mono" aria-hidden="true">
+        ↗
+      </span>
     </a>
   );
 }
 
-function CardRow({ row }: { row: Row }) {
-  const src = markSrc(row.mark);
+function SocialRow({ social }: { social: Social }) {
+  const src = markSrc(social.mark);
   return (
-    <a
-      className="crow"
-      href={row.href}
-      {...(row.external ? { target: "_blank", rel: "noreferrer" } : {})}
-    >
-      <span className="crow-cursor" aria-hidden="true" />
-      {row.label && <span className="crow-label mono">{row.label}</span>}
-      <span className="crow-value">
-        {src && <img className="crow-mark" src={src} alt="" />}
-        {row.value}
-      </span>
-      {row.note && <span className="crow-note">{row.note}</span>}
-      <span className="crow-go mono" aria-hidden="true">
-        {row.external ? "↗" : "→"}
+    <a className="social" href={social.href} target="_blank" rel="noreferrer">
+      {src && <img className="social-mark" src={src} alt="" />}
+      <span className="social-name">{social.name}</span>
+      <span className="social-handle mono">{social.handle}</span>
+      <span className="social-go mono" aria-hidden="true">
+        ↗
       </span>
     </a>
+  );
+}
+
+type State = "idle" | "sending" | "sent" | "error";
+
+/**
+ * The form. Five fields, one of them a select, and the whole thing posts to
+ * /api/book, which mails it on with the sender as the reply-to address.
+ *
+ * Validation is the browser's: required and type=email do the work, so a
+ * mistyped address is caught before the request rather than after it. The
+ * error state keeps every value — a failed send that clears the form is worse
+ * than no form.
+ */
+function BookForm() {
+  const [state, setState] = useState<State>("idle");
+  const [error, setError] = useState("");
+
+  async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    const form = e.currentTarget;
+    const data = Object.fromEntries(new FormData(form));
+    setState("sending");
+    setError("");
+
+    try {
+      const res = await fetch(BOOK_ENDPOINT, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+      const body = await res.json().catch(() => ({}));
+      if (!res.ok || body.ok === false) {
+        throw new Error(body.error || `Send failed (${res.status})`);
+      }
+      setState("sent");
+      form.reset();
+    } catch (err) {
+      setState("error");
+      setError(err instanceof Error ? err.message : String(err));
+    }
+  }
+
+  if (state === "sent") {
+    return (
+      <div className="form-done">
+        <p className="form-done-t">Sent.</p>
+        <p className="form-done-l">
+          It lands in my inbox as it is. I reply from the address you gave, usually
+          the same day.
+        </p>
+        <button className="btn btn-ghost" type="button" onClick={() => setState("idle")}>
+          Send another
+        </button>
+      </div>
+    );
+  }
+
+  const busy = state === "sending";
+
+  return (
+    <form className="form" onSubmit={onSubmit} noValidate={false}>
+      <label className="field">
+        <span className="field-l mono">Name</span>
+        <input className="field-i" name="name" type="text" required autoComplete="name" />
+      </label>
+
+      <label className="field">
+        <span className="field-l mono">Email</span>
+        <input className="field-i" name="email" type="email" required autoComplete="email" />
+      </label>
+
+      <div className="field-pair">
+        <label className="field">
+          <span className="field-l mono">Phone</span>
+          <input
+            className="field-i"
+            name="phone"
+            type="tel"
+            inputMode="tel"
+            autoComplete="tel"
+          />
+        </label>
+
+        <label className="field">
+          <span className="field-l mono">Best time</span>
+          <select className="field-i field-s" name="bestTime" defaultValue={TIME_SLOTS[0]}>
+            {TIME_SLOTS.map((t) => (
+              <option key={t}>{t}</option>
+            ))}
+          </select>
+        </label>
+      </div>
+
+      {/* the honeypot: off-screen, unlabelled, never focusable. A bot fills
+          it, the handler answers 200 and mails nothing. */}
+      <input
+        className="field-hp"
+        name="company"
+        type="text"
+        tabIndex={-1}
+        autoComplete="off"
+        aria-hidden="true"
+      />
+
+      <label className="field">
+        <span className="field-l mono">What's broken</span>
+        <textarea
+          className="field-i field-t"
+          name="message"
+          rows={4}
+          required
+          placeholder="The booking that never reaches the CRM, the report nobody believes, the launch the current setup will not survive."
+        />
+      </label>
+
+      {state === "error" && (
+        <p className="form-err" role="alert">
+          {error} — or mail it to jt@jtylerray.com instead.
+        </p>
+      )}
+
+      <button className="btn btn-fill form-send" type="submit" disabled={busy}>
+        {busy ? "Sending…" : "Send it"}
+      </button>
+    </form>
   );
 }
