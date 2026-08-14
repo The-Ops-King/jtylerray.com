@@ -1,12 +1,16 @@
 {
   "redirects": [
     { "source": "/new-home", "destination": "/", "permanent": true },
-    { "source": "/new-home/", "destination": "/", "permanent": true }
+    { "source": "/new-home/", "destination": "/", "permanent": true },
+    { "source": "/resume", "destination": "/", "permanent": true },
+    { "source": "/resume/", "destination": "/", "permanent": true },
+    { "source": "/resume.html", "destination": "/", "permanent": true },
+    { "source": "/work", "destination": "/", "permanent": true }
   ],
   "rewrites": [
     { "source": "/legacy", "destination": "/legacy.html" },
-    { "source": "/resume", "destination": "/resume.html" },
-    { "source": "/work", "destination": "/resume.html" },
+    { "source": "/apply", "destination": "/legacy.html" },
+    { "source": "/real-estate", "destination": "/legacy.html" },
     { "source": "/brand-1", "destination": "/brand-1/index.html" },
     { "source": "/brand-1/", "destination": "/brand-1/index.html" },
     { "source": "/card", "destination": "/card/index.html" },
