@@ -169,22 +169,39 @@ function SocialRow({ social }: { social: Social }) {
 type State = "idle" | "sending" | "sent" | "error";
 
 /**
- * The form. Five fields, one of them a select, and the whole thing posts to
- * /api/book, which mails it on with the sender as the reply-to address.
+ * The form. Four fields, posting to /api/book, which mails it on with the
+ * sender as the reply-to address.
  *
- * Validation is the browser's: required and type=email do the work, so a
- * mistyped address is caught before the request rather than after it. The
- * error state keeps every value — a failed send that clears the form is worse
- * than no form.
+ * Name and the message are required outright. Email and phone are required as
+ * a pair — either one is enough, because the only thing I actually need is a
+ * way back to you, and insisting on both is asking for something I will not
+ * use. HTML cannot say "one of these two", so that rule is checked here and
+ * again on the server; `required` and `type=email` still do the rest.
+ *
+ * The error state keeps every value — a failed send that clears the form is
+ * worse than no form.
  */
 function BookForm() {
   const [state, setState] = useState<State>("idle");
   const [error, setError] = useState("");
+  const [needsReach, setNeedsReach] = useState(false);
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const form = e.currentTarget;
     const data = Object.fromEntries(new FormData(form));
+
+    const email = String(data.email || "").trim();
+    const phone = String(data.phone || "").trim();
+    if (!email && !phone) {
+      setNeedsReach(true);
+      setState("idle");
+      setError("");
+      form.querySelector<HTMLInputElement>('input[name="email"]')?.focus();
+      return;
+    }
+    setNeedsReach(false);
+
     setState("sending");
     setError("");
 
@@ -211,7 +228,7 @@ function BookForm() {
       <div className="form-done">
         <p className="form-done-t">Sent.</p>
         <p className="form-done-l">
-          It lands in my inbox as it is. I reply from the address you gave, usually
+          It lands in my inbox as it is. I answer on whichever you left me, usually
           the same day.
         </p>
         <button className="btn btn-ghost" type="button" onClick={() => setState("idle")}>
@@ -232,7 +249,14 @@ function BookForm() {
 
       <label className="field">
         <span className="field-l mono">Email</span>
-        <input className="field-i" name="email" type="email" required autoComplete="email" />
+        <input
+          className="field-i"
+          name="email"
+          type="email"
+          autoComplete="email"
+          aria-describedby="reach-note"
+          onInput={() => setNeedsReach(false)}
+        />
       </label>
 
       <label className="field">
@@ -243,8 +267,22 @@ function BookForm() {
           type="tel"
           inputMode="tel"
           autoComplete="tel"
+          aria-describedby="reach-note"
+          onInput={() => setNeedsReach(false)}
         />
       </label>
+
+      {/* the pair's rule, stated once under both fields rather than as an
+          asterisk on each */}
+      <p
+        className={`reach-note mono${needsReach ? " is-missing" : ""}`}
+        id="reach-note"
+        role={needsReach ? "alert" : undefined}
+      >
+        {needsReach
+          ? "Leave me one of the two — email or phone."
+          : "Email or phone. Either one is enough."}
+      </p>
 
       {/* the honeypot: off-screen, unlabelled, never focusable. A bot fills
           it, the handler answers 200 and mails nothing. */}

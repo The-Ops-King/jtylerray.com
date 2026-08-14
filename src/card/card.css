@@ -291,6 +291,25 @@ html:has(.card-page) body {
   margin-top: 4px;
   width: 100%;
 }
+/* the either/or rule for email and phone, and where it turns into the
+   complaint when neither was filled in */
+.reach-note {
+  margin-top: -8px;
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--grey-dim);
+  transition: color 0.16s ease;
+}
+.reach-note.is-missing {
+  color: #d98b7a;
+}
+.reach-note.is-missing ~ .field .field-i,
+.form:has(.reach-note.is-missing) input[name="email"],
+.form:has(.reach-note.is-missing) input[name="phone"] {
+  border-color: rgba(200, 90, 70, 0.5);
+}
+
 .form-err {
   font-size: 13px;
   line-height: 1.5;
