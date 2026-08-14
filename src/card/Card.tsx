@@ -34,7 +34,11 @@ export default function Card() {
 
   return (
     <div className="card-page" data-mark="color" data-eyebrow="wide">
-      <GridBackdrop cell={48} crosshairs={4} drift={10} ticks={false} />
+      {/* the sheet is drawn once and left alone here. A card is read, not
+          explored, so the pointer parallax and the lens bought nothing and
+          cost a full-viewport repaint on every mouse move — which is what set
+          the grid and the text flickering. */}
+      <GridBackdrop cell={48} crosshairs={4} ticks={false} interactive={false} />
       <div className="corners" aria-hidden="true">
         <span />
         <span />

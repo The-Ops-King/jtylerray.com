@@ -24,6 +24,18 @@
   inset: -80px;
 }
 
+/* the drifting layers are composited, not repainted: each is a viewport-sized
+   raster of 1px rules, and repainting one per frame is what the grid's flicker
+   was made of */
+.backdrop-grid,
+.backdrop-nodes,
+.backdrop-axis,
+.backdrop-ticks,
+.backdrop-fine {
+  will-change: transform;
+  backface-visibility: hidden;
+}
+
 /* 1px blueprint grid */
 .backdrop-grid {
   position: absolute;
@@ -70,6 +82,11 @@
 }
 @media (prefers-reduced-motion: reduce) {
   .backdrop-lens { display: none; }
+}
+/* the pointer is over the copy column, where the lens is banned: the layer
+   leaves the tree rather than being masked to nothing every frame */
+.backdrop.lens-off .backdrop-lens {
+  display: none;
 }
 
 /* markers every Nth intersection — structure, so grey like every other rule */

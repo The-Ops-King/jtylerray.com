@@ -20,6 +20,9 @@ type Props = {
   /** hold the sheet to the viewport instead of to the parent, so one sheet
    *  can run behind the whole page rather than one per section */
   fixed?: boolean;
+  /** answer the pointer at all: drift and lens. Off means the sheet is drawn
+   *  once and never touched again — no listener, no frame loop, no repaint */
+  interactive?: boolean;
 };
 
 export default function GridBackdrop({
@@ -31,12 +34,14 @@ export default function GridBackdrop({
   axis = false,
   ticks = true,
   fixed = false,
+  interactive = true,
 }: Props) {
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
+    if (!interactive) return;
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
 
     let raf = 0;
@@ -47,6 +52,8 @@ export default function GridBackdrop({
     let mx = -9999;
     let my = -9999;
     let gate = 0;
+    let lensWasOn = true;
+    el.classList.add("lens-off");
 
     // The lens is kept off the text by measuring the column it must clear,
     // not by a viewport percentage — the copy is content-width, so on a
@@ -70,6 +77,19 @@ export default function GridBackdrop({
       // fade the lens in over the 160px past the column, rather than clipping
       const t = (e.clientX - guard) / 160;
       gate = t < 0 ? 0 : t > 1 ? 1 : t;
+
+      // The lens is a viewport-sized layer under a radial mask, and the mask
+      // is recomputed on any frame its position changes — the most expensive
+      // thing on the page by a wide margin. Off the right of the column it is
+      // invisible anyway, so it leaves the tree entirely rather than being
+      // painted at zero strength. This is what was making the grid strobe:
+      // the mask repaint was costing whole frames and the 1px rules only got
+      // drawn on some of them.
+      const lensOn = gate > 0;
+      if (lensOn !== lensWasOn) {
+        el.classList.toggle("lens-off", !lensOn);
+        lensWasOn = lensOn;
+      }
       if (!raf) raf = requestAnimationFrame(tick);
     };
 
@@ -80,11 +100,17 @@ export default function GridBackdrop({
     const tick = () => {
       cx += (tx - cx) * 0.06;
       cy += (ty - cy) * 0.06;
-      el.style.setProperty("--px", `${cx.toFixed(2)}px`);
-      el.style.setProperty("--py", `${cy.toFixed(2)}px`);
-      el.style.setProperty("--mx", `${mx}px`);
-      el.style.setProperty("--my", `${my}px`);
-      el.style.setProperty("--lens-gate", gate.toFixed(3));
+      // whole pixels only. A 1px rule and a 1.15px marker moved by a fraction
+      // of a pixel are resampled every frame, which reads as the grid and the
+      // markers flickering rather than as motion. At 14px of drift nobody can
+      // tell the difference between a rounded offset and an exact one.
+      el.style.setProperty("--px", `${Math.round(cx)}px`);
+      el.style.setProperty("--py", `${Math.round(cy)}px`);
+      if (gate > 0) {
+        el.style.setProperty("--mx", `${mx}px`);
+        el.style.setProperty("--my", `${my}px`);
+        el.style.setProperty("--lens-gate", gate.toFixed(3));
+      }
       raf = Math.abs(tx - cx) > 0.05 || Math.abs(ty - cy) > 0.05 ? requestAnimationFrame(tick) : 0;
     };
 
@@ -95,7 +121,7 @@ export default function GridBackdrop({
       window.removeEventListener("resize", measure);
       if (raf) cancelAnimationFrame(raf);
     };
-  }, [drift]);
+  }, [drift, interactive]);
 
   const showGrid = mode === "grid";
 
@@ -114,7 +140,7 @@ export default function GridBackdrop({
     >
       {showGrid && <div className="backdrop-grid" />}
       {/* the same grid again, revealed only within an inch of the pointer */}
-      {showGrid && <div className="backdrop-lens" />}
+      {showGrid && interactive && <div className="backdrop-lens" />}
       {showGrid && crosshairs !== false && <div className="backdrop-nodes" />}
       {showGrid && axis !== false && <div className="backdrop-axis" style={{ left: `${axis}%` }} />}
 
