@@ -1,0 +1,578 @@
+/* ── tokens ───────────────────────────────────────────────────────── */
+:root {
+  /* surfaces */
+  --ink: #0c0b0a;
+  --ink-deep: #070605;
+  --raised: #141312;
+  --raised-2: #1c1b19;
+
+  /* text */
+  --bone: #f5f3ee;
+  --bone-rgb: 245, 243, 238;
+  --grey-mid: #8a857c;
+  --grey-dim: #5e5a54;
+
+  /* accent — fills use --accent, type uses --accent-text (lifted so a word
+     still reads on the dark ground). Nothing structural is ever accent. */
+  --accent: #3f7d5c;
+  --accent-text: #5e9e78;
+  --accent-soft: rgba(63, 125, 92, 0.16);
+  --accent-line: rgba(63, 125, 92, 0.28);
+  --accent-glowless: rgba(63, 125, 92, 0.08);
+  --accent-hover: #4a8e6a;
+  --accent-ink: #f5f3ee;
+
+  /* structure — one grey, three weights. No accent lives here. */
+  --struct: 138, 133, 124;
+  --hair: rgba(var(--struct), 0.12);
+  --hair-soft: rgba(var(--struct), 0.07);
+
+  /* the sheet and the lens set their line alpha directly — a layer opacity
+     could only ever scale *down* from the colour it was painting, which put a
+     hard ceiling on how bright the lens could get */
+  --grid-a: 0.028;
+  --grid-line: rgba(var(--struct), var(--grid-a));
+
+  /* type */
+  --display: "Inter Tight", ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --sans: "Inter", ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  /* display register — themes override */
+  --display-weight: 500;
+  --display-tracking: -0.032em;
+  --display-leading: 0.98;
+  --display-size: clamp(44px, 7.4vw, 92px);
+  --lede-size: 18px;
+  --lede-color: var(--grey-mid);
+
+  /* shape — themes override */
+  --radius-btn: 6px;
+  --radius-card: 8px;
+  --radius-tag: 9999px;
+
+  /* primary button — themes override */
+  --btn-bg: var(--accent);
+  --btn-fg: var(--accent-ink);
+  --btn-bg-hover: var(--accent-hover);
+
+  /* the pointer lens on the grid — both driven by the tuner */
+  --lens-r: 320px;
+  --lens-a: 0.17;
+  /* --lens-gate is written on the backdrop element, so the line colour is
+     composed there (see grid.css) rather than here */
+
+  /* rhythm */
+  --gutter: clamp(24px, 5vw, 72px);
+  --maxw: 1280px;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body, #root { height: 100%; }
+
+/* the ground is painted on the root as well as the body: when a page-level
+   element takes a stacking context of its own, some engines stop propagating
+   the body's background to the canvas, and the window paints white outside
+   whatever box that element covers */
+html {
+  background: var(--ink);
+}
+
+body {
+  background: var(--ink);
+  color: var(--bone);
+  font-family: var(--sans);
+  font-weight: 400;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  overflow: hidden;
+}
+
+/* ── shared primitives ────────────────────────────────────────────── */
+.hero {
+  position: relative;
+  height: 100vh;
+  width: 100%;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  padding: 28px var(--gutter) 32px;
+}
+
+.shell {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  max-width: var(--maxw);
+  margin: 0 auto;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+/* nav */
+.nav { display: flex; align-items: center; gap: 24px; font-size: 14px; letter-spacing: -0.01em; }
+.nav .wordmark { font-family: var(--display); font-weight: 500; font-size: 15px; letter-spacing: -0.02em; }
+.nav .desc { font-family: var(--mono); font-weight: 400; font-size: 11px; letter-spacing: 0.1em; color: var(--grey-dim); text-transform: uppercase; }
+.nav .links { margin-left: auto; display: flex; gap: 26px; align-items: center; }
+.nav a { color: var(--grey-mid); text-decoration: none; transition: color 0.18s ease; }
+.nav a:hover { color: var(--bone); }
+
+/* type */
+.eyebrow {
+  font-family: var(--mono);
+  font-size: calc(12px * var(--type-scale, 1));
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  /* every mono element on the page is grey — no exceptions */
+  color: var(--grey-dim);
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  /* long eyebrows wrap instead of running off the edge */
+  flex-wrap: wrap;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  line-height: 1.5;
+}
+.eyebrow::before {
+  content: "";
+  width: 18px;
+  height: 1px;
+  background: rgba(var(--struct), 0.28);
+}
+.eyebrow.plain::before { display: none; }
+
+h1.display {
+  font-family: var(--display);
+  font-weight: var(--display-weight);
+  letter-spacing: var(--display-tracking);
+  line-height: var(--display-leading);
+  font-size: calc(var(--display-size) * var(--type-scale, 1));
+}
+h1.display.md { font-size: clamp(42px, 6.4vw, 84px); line-height: 1.0; }
+
+.lede {
+  font-size: calc(var(--lede-size) * var(--type-scale, 1));
+  line-height: 1.6;
+  /* contrast slider mixes secondary text toward the primary text colour */
+  color: color-mix(in srgb, var(--bone) calc(var(--contrast, 0) * 1%), var(--lede-color));
+  max-width: 58ch;
+  letter-spacing: -0.01em;
+}
+.lede strong { color: var(--bone); font-weight: 400; }
+
+.mono { font-family: var(--mono); font-weight: 500; color: var(--grey-dim); }
+.accent { color: var(--accent-text); }
+
+/* ── mark treatments ──────────────────────────────────────────────
+   Each layout picks one via data-mark on its wrapper, so the emphasis
+   device changes with the composition instead of always being a rule. */
+.mark {
+  color: var(--bone);
+  position: relative;
+  white-space: nowrap;
+}
+
+/* rule — hairline under the phrase */
+[data-mark="rule"] .mark::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0.06em;
+  height: 2px;
+  background: var(--accent);
+  background-image: var(--accent-gradient, none);
+}
+
+/* color — the phrase itself takes the accent, no glow, no stroke */
+[data-mark="color"] .mark {
+  color: var(--accent-text);
+  text-shadow: none;
+}
+[data-accent-gradient="on"] [data-mark="color"] .mark {
+  background-image: var(--accent-gradient);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  /* the clipped box ends at the glyph box — pad it so nothing is shaved off */
+  display: inline-block;
+  padding: 0 0.08em;
+  margin: 0 -0.08em;
+}
+
+/* wash — a low-alpha accent panel behind the phrase */
+[data-mark="wash"] .mark {
+  background: var(--accent-soft);
+  box-shadow: 0 0 0 0.14em var(--accent-soft);
+  border-radius: 2px;
+}
+
+/* italic — the only place the system leans, paired with accent */
+[data-mark="italic"] .mark {
+  font-style: italic;
+  color: var(--accent-text);
+}
+[data-accent-gradient="on"] [data-mark="italic"] .mark {
+  background-image: var(--accent-gradient);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  /* italics lean past their box — pad both sides or the last glyph clips */
+  display: inline-block;
+  padding: 0 0.14em;
+  margin: 0 -0.14em;
+}
+
+/* echo — an offset accent duplicate sitting behind the phrase */
+[data-mark="echo"] .mark {
+  text-shadow: 0.055em 0.055em 0 var(--accent);
+}
+
+/* bracket — mono brackets in accent, phrase stays bone */
+[data-mark="bracket"] .mark::before,
+[data-mark="bracket"] .mark::after {
+  color: var(--accent);
+  font-family: var(--mono);
+  font-size: 0.62em;
+  vertical-align: 0.18em;
+  font-weight: 400;
+}
+[data-mark="bracket"] .mark::before { content: "["; margin-right: 0.16em; }
+[data-mark="bracket"] .mark::after { content: "]"; margin-left: 0.16em; }
+
+/* box — a hairline accent outline around the phrase */
+[data-mark="box"] .mark {
+  box-shadow: inset 0 0 0 1px var(--accent-line);
+  border-radius: var(--radius-tag);
+  padding: 0 0.16em;
+}
+
+/* ── eyebrow treatments ───────────────────────────────────────────
+   Fixed per layout, so each composition introduces itself differently. */
+/* eyebrow size now scales with --type-scale (see base rule) */
+
+/* 01 rail — the default: accent rule, accent text */
+/* 02 portrait — outlined plate */
+
+
+
+[data-eyebrow="underscore"] .eyebrow {
+  display: flex;
+  width: 100%;
+  /* clipped to the text column — a rule that runs off into nothing reads as
+     an unfinished edge */
+  max-width: 720px;
+  border-bottom: 1px solid rgba(var(--struct), 0.12);
+  padding-bottom: 12px;
+  color: var(--grey-dim);
+}
+[data-eyebrow="underscore"] .eyebrow::before { display: none; }
+
+/* plate — outlined */
+[data-eyebrow="plate"] .eyebrow {
+  border: 1px solid var(--accent-line);
+  border-radius: var(--radius-tag);
+  padding: 6px 12px;
+  color: var(--grey-mid);
+}
+[data-eyebrow="plate"] .eyebrow::before { display: none; }
+
+/* wide — no rule, wide tracking, quiet */
+[data-eyebrow="wide"] .eyebrow {
+  letter-spacing: 0.26em;
+  color: var(--grey-mid);
+  font-size: calc(11px * var(--type-scale, 1));
+}
+[data-eyebrow="wide"] .eyebrow::before { display: none; }
+
+/* slashes — a code comment header */
+[data-eyebrow="slash"] .eyebrow { color: var(--grey-mid); }
+[data-eyebrow="slash"] .eyebrow::before {
+  content: "//";
+  width: auto;
+  height: auto;
+  background: none;
+  color: var(--accent);
+  opacity: 1;
+  letter-spacing: 0;
+}
+
+/* pill — soft accent field */
+[data-eyebrow="pill"] .eyebrow {
+  background: var(--accent-glowless);
+  border-radius: var(--radius-tag);
+  padding: 7px 14px;
+}
+
+/* bracket — [ … ] in accent */
+[data-eyebrow="bracket"] .eyebrow::before { content: "["; width: auto; height: auto; background: none; opacity: 1; }
+[data-eyebrow="bracket"] .eyebrow::after { content: "]"; color: var(--accent); margin-left: 10px; }
+
+/* trailing — the rule follows the text */
+[data-eyebrow="trail"] .eyebrow::before { display: none; }
+[data-eyebrow="trail"] .eyebrow::after {
+  content: "";
+  width: 56px;
+  height: 1px;
+  background: var(--accent);
+  opacity: 0.7;
+}
+
+/* bar — vertical accent bar */
+[data-eyebrow="bar"] .eyebrow {
+  border-left: 2px solid var(--accent);
+  padding-left: 12px;
+  color: var(--grey-mid);
+}
+[data-eyebrow="bar"] .eyebrow::before { display: none; }
+
+/* plain — largest and quietest, no rule */
+[data-eyebrow="plainer"] .eyebrow {
+  font-size: calc(13px * var(--type-scale, 1));
+  letter-spacing: 0.1em;
+  color: var(--bone);
+  opacity: 0.72;
+}
+[data-eyebrow="plainer"] .eyebrow::before { display: none; }
+
+
+
+
+
+
+
+hr.rule { border: 0; border-top: 1px solid var(--hair); }
+hr.rule.accent-rule { border-top-color: var(--accent-line); }
+
+/* buttons */
+.btns { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 16px;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  padding: 15px 26px;
+  border-radius: var(--radius-btn);
+  text-decoration: none;
+  border: 1px solid transparent;
+  transition: background 0.18s ease, border-color 0.18s ease, color 0.18s ease, transform 0.18s ease;
+}
+.btn:active { transform: translateY(1px); }
+/* -webkit-text-fill-color wins over any inherited background-clip:text —
+   without it a gradient text rule can bleed into button labels */
+.btn-accent {
+  background: var(--btn-bg);
+  color: var(--btn-fg);
+  -webkit-text-fill-color: var(--btn-fg);
+  background-clip: border-box;
+  -webkit-background-clip: border-box;
+}
+.btn-accent:hover { background: var(--btn-bg-hover); }
+.btn-solid { background: var(--bone); color: var(--ink); }
+.btn-solid:hover { background: #fffdf8; }
+/* secondary — no fill, hairline edge, type stays bone */
+.btn-ghost {
+  background: none;
+  border-width: 0.5px;
+  border-color: rgba(var(--struct), 0.12);
+  color: var(--bone);
+}
+.btn-ghost:hover { border-color: rgba(var(--struct), 0.26); color: var(--bone); }
+.btn-link { color: var(--grey-mid); font-size: 15px; text-decoration: none; border-bottom: 1px solid var(--hair); padding-bottom: 3px; }
+.btn-link:hover { color: var(--bone); border-bottom-color: rgba(var(--struct), 0.26); }
+.btn.pill, .pill { border-radius: 9999px; }
+/* nav CTA — secondary, but findable: bone type on a 24% bone edge. The hero's
+   filled button still leads. */
+/* `.nav a` sets a grey — this has to outrank it or the CTA disappears */
+.nav a.nav-cta {
+  padding: 11px 20px;
+  font-size: 14px;
+  color: var(--bone);
+  border-color: rgba(var(--bone-rgb), 0.24);
+}
+.nav a.nav-cta:hover { border-color: rgba(var(--bone-rgb), 0.48); color: var(--bone); }
+
+/* status dot */
+.dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); display: inline-block; }
+.dot.pulse { animation: pulse 2.4s ease-in-out infinite; }
+@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
+
+/* fade-in */
+.rise { animation: rise 0.7s cubic-bezier(0.16, 1, 0.3, 1) both; }
+.rise-1 { animation-delay: 0.05s; }
+.rise-2 { animation-delay: 0.12s; }
+.rise-3 { animation-delay: 0.19s; }
+.rise-4 { animation-delay: 0.26s; }
+@keyframes rise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+
+/* ── gradient accent ──────────────────────────────────────────────
+   Only the elements that can carry an image switch to the gradient:
+   accent text, the filled CTA, marks, dots, and rules. Borders and
+   hairlines keep the solid --accent stand-in. */
+[data-accent-gradient="on"] .accent,
+[data-accent-gradient="on"] .eyebrow,
+[data-accent-gradient="on"] .v1-idx,
+[data-accent-gradient="on"] .v6-v,
+[data-accent-gradient="on"] .v4-k,
+[data-accent-gradient="on"] .v5-n,
+[data-accent-gradient="on"] .v5-mid {
+  background-image: var(--accent-gradient);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+[data-accent-gradient="on"] .eyebrow::before,
+[data-accent-gradient="on"] .mark::after,
+[data-accent-gradient="on"] .dot,
+[data-accent-gradient="on"] .btn-accent,
+[data-accent-gradient="on"] .backdrop-frame-inner {
+  background-image: var(--accent-gradient);
+}
+[data-accent-gradient="on"] .backdrop-frame-inner {
+  border: 0;
+  padding: 1px;
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  opacity: 0.55;
+}
+[data-accent-gradient="on"] .btn-accent {
+  color: var(--accent-ink);
+  -webkit-text-fill-color: var(--accent-ink);
+}
+[data-accent-gradient="on"] .btn-accent:hover { filter: brightness(1.08); }
+[data-accent-gradient="on"] .btn-ghost:hover { color: var(--accent); }
+
+/* ── scan line ────────────────────────────────────────────────────
+   Signal's sweep, promoted to a page-level trait: a short accent beam
+   travelling the bottom edge, on a long cycle so it reads as a system
+   pulse rather than decoration. */
+.scanline {
+  position: fixed;
+  /* declared, so the compositor promotes this 1px strip rather than guessing
+     at a larger tile on the page behind it */
+  will-change: transform;
+  left: 0;
+  bottom: 0;
+  height: 1px;
+  width: 20%;
+  z-index: 4;
+  pointer-events: none;
+  background: linear-gradient(to right, transparent, var(--accent), transparent);
+  animation: scan 7s cubic-bezier(0.65, 0, 0.35, 1) infinite;
+}
+@keyframes scan {
+  0% { transform: translateX(-40%); opacity: 0; }
+  12% { opacity: 1; }
+  88% { opacity: 1; }
+  100% { transform: translateX(520%); opacity: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .scanline { animation: none; opacity: 0.5; }
+}
+
+/* ── variant switcher ─────────────────────────────────────────────── */
+.switcher {
+  width: max-content;
+  position: fixed;
+  bottom: 18px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 60;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 4px;
+  padding: 8px;
+  background: rgba(12, 11, 10, 0.82);
+  backdrop-filter: blur(8px);
+  border: 1px solid var(--hair);
+  border-radius: 10px;
+}
+.switcher button {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  color: var(--grey-dim);
+  background: transparent;
+  border: 0;
+  border-radius: 6px;
+  padding: 7px 10px;
+  cursor: pointer;
+  transition: color 0.15s ease, background 0.15s ease;
+  white-space: nowrap;
+}
+.switcher button:hover { color: var(--bone); }
+.switcher button[data-on="true"] { color: var(--accent); background: var(--accent-glowless); }
+.switcher .sep { width: 1px; height: 18px; background: rgba(245, 243, 238, 0.14); margin: 0 4px; }
+/* rows: color on top, then style, then layout — a fixed 5-column table so
+   every group lines up and 10 layouts wrap into two even rows */
+.switcher-row {
+  display: grid;
+  grid-template-columns: 52px auto;
+  align-items: center;
+  gap: 8px;
+}
+.switcher-row + .switcher-row {
+  border-top: 1px solid rgba(245, 243, 238, 0.07);
+  padding-top: 5px;
+  margin-top: 1px;
+}
+.row-items {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+/* labels can wrap to two lines so a name never has to be abbreviated */
+.switcher-row .row-items > button {
+  min-width: 104px;
+  text-align: center;
+  white-space: nowrap;
+  line-height: 1.25;
+  padding: 7px 12px;
+}
+.switcher .group-label {
+  font-size: 9px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #55555a;
+  flex: none;
+  padding-left: 4px;
+}
+@media (max-width: 900px) {
+  .switcher { flex-wrap: wrap; max-width: 94vw; justify-content: center; }
+}
+.switcher .name { font-family: var(--mono); font-size: 11px; color: var(--grey-dim); padding: 0 4px; letter-spacing: 0.06em; }
+.switcher .swatches {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+/* the row-items width:100% rule outranks .swatch — keep swatches square */
+.switcher-row .row-items > button.swatch { min-width: 0; width: 22px; height: 22px; padding: 0; }
+.switcher .swatch {
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  border-radius: 4px;
+  background-color: var(--sw);
+  background-image: var(--sw-image, none);
+  border: 1px solid rgba(245, 243, 238, 0.14);
+  cursor: pointer;
+  opacity: 0.45;
+  transition: opacity 0.15s ease, box-shadow 0.15s ease;
+}
+.switcher .swatch:hover { opacity: 0.85; transform: translateY(-1px); }
+/* selected: a bone ring with a dark gap, readable on any canvas tone */
+.switcher .swatch[data-on="true"] {
+  opacity: 1;
+  border-color: transparent;
+  box-shadow: 0 0 0 2px rgba(12, 11, 10, 0.95), 0 0 0 3.5px #f5f3ee;
+}
+

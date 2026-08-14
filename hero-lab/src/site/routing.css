@@ -1,0 +1,137 @@
+/* ── the routing demo ─────────────────────────────────────────────
+   Idle is entirely grey. Accent appears only where a lead currently
+   is, and drains back out behind it. Every node carries a grey base
+   and a forest copy at opacity --lit, so nothing has to be recoloured
+   per frame. */
+
+.routing {
+  width: 100%;
+  max-width: 1100px;
+}
+.routing-frame {
+  width: 100%;
+}
+.routing-svg {
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+/* below this the labels would compress out of legibility, so the graph
+   scrolls inside its own frame instead of shrinking */
+@media (max-width: 1000px) {
+  .routing-frame {
+    overflow-x: auto;
+    padding-bottom: 8px;
+  }
+  .routing-svg {
+    min-width: 860px;
+  }
+}
+
+.wires path {
+  fill: none;
+  stroke: rgba(var(--struct), 0.15);
+  stroke-width: 1;
+}
+.wire-live {
+  fill: none;
+  stroke: rgba(var(--struct), 0.28);
+  stroke-width: 1;
+}
+
+.node {
+  --lit: 0;
+}
+.node-base {
+  fill: #16150f;
+  stroke: rgba(var(--struct), 0.15);
+  stroke-width: 0.5;
+}
+.node-live {
+  fill: var(--accent);
+  fill-opacity: calc(var(--lit) * 0.12);
+  stroke: var(--accent-text);
+  stroke-width: 0.5;
+  stroke-opacity: var(--lit);
+}
+.node-label {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  fill: var(--grey-mid);
+}
+.node-label-live {
+  fill: var(--accent-text);
+  opacity: var(--lit);
+}
+
+.dot {
+  fill: var(--accent);
+}
+
+/* ── controls ─────────────────────────────────────────────────── */
+
+.routing-controls {
+  display: flex;
+  align-items: center;
+  gap: 32px;
+  flex-wrap: wrap;
+  margin-top: 32px;
+}
+.routing-btn {
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--bone);
+  background: none;
+  border: 0.5px solid rgba(var(--struct), 0.24);
+  border-radius: 4px;
+  padding: 10px 16px;
+  cursor: pointer;
+  transition: border-color 0.18s ease;
+}
+.routing-btn:hover {
+  border-color: rgba(var(--struct), 0.44);
+}
+
+.toggle {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.toggle-label {
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+.toggle-set {
+  display: flex;
+  border: 0.5px solid rgba(var(--struct), 0.16);
+  border-radius: 4px;
+  overflow: hidden;
+}
+.toggle-opt {
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--grey-dim);
+  background: none;
+  border: 0;
+  padding: 9px 14px;
+  cursor: pointer;
+  transition: color 0.18s ease, background 0.18s ease;
+}
+.toggle-opt + .toggle-opt {
+  border-left: 0.5px solid rgba(var(--struct), 0.16);
+}
+.toggle-opt[data-on="true"] {
+  color: var(--bone);
+  background: rgba(var(--struct), 0.08);
+}
+
+@media (max-width: 620px) {
+  .routing-controls {
+    gap: 20px;
+  }
+}

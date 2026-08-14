@@ -1,0 +1,110 @@
+/* ═══════════════════════════════════════════════════════════════════
+   The scroll cue — two chevrons, cascading down.
+
+   The glow is a drop-shadow on the stroke rather than a blurred copy
+   underneath: one element, one layer, and it never repaints the sheet behind
+   it. Both chevrons run the same keyframes half a cycle apart, so the pair
+   reads as one movement travelling downward instead of two marks blinking.
+   ═══════════════════════════════════════════════════════════════════ */
+
+.scroll-cue {
+  position: absolute;
+  left: 50%;
+  bottom: 34px;
+  z-index: 3;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  /* the two chevrons overlap: a gap between them reads as two separate marks */
+  gap: 1px;
+  padding: 8px 16px;
+  color: var(--bone);
+  text-decoration: none;
+  transition: opacity 0.35s ease;
+  /* it arrives three seconds in, so it arrives rather than appears */
+  animation: cue-arrive 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes cue-arrive {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+}
+/* on the card there is no hero to hang it from, so it rides the window */
+.scroll-cue.is-fixed {
+  position: fixed;
+  bottom: max(20px, env(safe-area-inset-bottom, 0px));
+  /* clear of the page's own content: this sits over the sheet, not on it */
+  pointer-events: none;
+  /* the card scrolls under it, so the chevrons need ground of their own or
+     they land on a heading and read as part of it */
+  padding: 14px 26px 10px;
+  background: radial-gradient(
+    60% 70% at 50% 60%,
+    var(--ink) 0%,
+    rgba(12, 11, 10, 0.82) 45%,
+    rgba(12, 11, 10, 0) 100%
+  );
+}
+.scroll-cue.is-gone {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.scroll-cue svg {
+  display: block;
+  filter: drop-shadow(0 0 6px rgba(var(--bone-rgb), 0.45));
+  animation: cue-fall 2.2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+/* the trailing chevron: dimmer, and half a cycle behind, so the movement
+   reads as one thing falling rather than as two marks flashing together */
+.scroll-cue .cue-2 {
+  margin-top: -3px;
+  opacity: 0.45;
+  animation-delay: 0.18s;
+}
+
+@keyframes cue-fall {
+  0% {
+    opacity: 0.15;
+    transform: translateY(-3px);
+  }
+  35% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  70% {
+    opacity: 0.2;
+    transform: translateY(4px);
+  }
+  100% {
+    opacity: 0.15;
+    transform: translateY(-3px);
+  }
+}
+
+/* a pointer can hover it: brighten the whole pair, do not move it */
+@media (hover: hover) {
+  a.scroll-cue:hover svg {
+    filter: drop-shadow(0 0 9px rgba(var(--bone-rgb), 0.7));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .scroll-cue {
+    animation: none;
+  }
+  .scroll-cue svg {
+    animation: none;
+    opacity: 0.7;
+  }
+  .scroll-cue .cue-2 {
+    opacity: 0.3;
+  }
+}

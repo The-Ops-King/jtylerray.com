@@ -1,0 +1,296 @@
+/* ═══════════════════════════════════════════════════════════════════
+   Section 02 · the work, as the split.
+
+   The list is structure and stays grey — #8A857C at three weights. Accent
+   appears twice: the cursor that travels down the list to the live row, and
+   the progress fill beside the pane. Both are content, not decoration.
+   ═══════════════════════════════════════════════════════════════════ */
+
+.work-head {
+  max-width: none;
+  padding-bottom: 20px;
+  border-bottom: 0.5px solid rgba(138, 133, 124, 0.12);
+}
+.work-head-in {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 32px;
+}
+.work .work-count {
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+/* ── the split ────────────────────────────────────────────────────── */
+
+/* Both columns run the same height. The list fills its column, the pane sits
+   at the top of the other and pins there. Equal columns is what bought the
+   larger type: the list no longer has to be short to keep the pane in view. */
+.work .split {
+  margin-top: 48px;
+  max-width: 1280px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 440px;
+  gap: 0 72px;
+  align-items: stretch;
+}
+.spl-list {
+  display: flex;
+  flex-direction: column;
+}
+
+/* the list. Nothing here reflows while the pane changes, so the reading
+   position holds still under the reader. */
+.spl-group + .spl-group {
+  margin-top: 40px;
+}
+.work .spl-cat {
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--bone);
+  padding-bottom: 16px;
+}
+.spl-row {
+  position: relative;
+  width: 100%;
+  display: grid;
+  grid-template-columns: 52px minmax(0, 1fr);
+  gap: 12px;
+  align-items: start;
+  padding: 16px 8px 16px 14px;
+  background: none;
+  border: 0;
+  border-bottom: 0.5px solid rgba(138, 133, 124, 0.08);
+  text-align: left;
+  cursor: pointer;
+}
+.spl-n {
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  color: var(--grey-dim);
+  padding-top: 3px;
+  transition: color 0.2s ease;
+}
+.spl-t {
+  font-size: 17px;
+  line-height: 1.45;
+  letter-spacing: -0.01em;
+  color: var(--grey-mid);
+  transition: color 0.2s ease, transform 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.spl-row:hover .spl-t {
+  color: var(--bone);
+  transform: translateX(3px);
+}
+.spl-row[data-on="true"] .spl-t {
+  color: var(--bone);
+  transform: translateX(6px);
+}
+.spl-row[data-on="true"] .spl-n {
+  color: var(--accent-text);
+}
+/* the travelling cursor: one element for the whole list, moved by layout
+   animation rather than shown and hidden per row */
+.spl-cursor {
+  position: absolute;
+  left: 0;
+  top: 8px;
+  bottom: 8px;
+  width: 2px;
+  border-radius: 2px;
+  background: var(--accent);
+}
+
+/* ── the pane ─────────────────────────────────────────────────────── */
+
+/* the pane opens level with the top of the list and holds there for the
+   length of the section. Centring it in the column read as the explanation
+   starting halfway down the page. */
+.spl-detail {
+  position: sticky;
+  top: 108px;
+  align-self: start;
+}
+.spl-detail-in {
+  position: relative;
+  border-left: 0.5px solid rgba(138, 133, 124, 0.12);
+  padding: 6px 0 6px 32px;
+  min-height: 300px;
+  /* the gauge label sits in this gutter */
+}
+/* the card stack: both cards sit in the same box so a crossfade never
+   shifts the pane's height */
+.spl-d-body {
+  position: relative;
+  min-height: 300px;
+}
+.spl-d-card {
+  position: absolute;
+  inset: 0;
+}
+.work .spl-d-cat {
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+/* the numeral rolls inside a clip, so it arrives from below and leaves
+   upward instead of cross-fading in place */
+.spl-d-n-clip {
+  overflow: hidden;
+  margin-top: 20px;
+  height: 74px;
+}
+.work .spl-d-n {
+  font-family: var(--display);
+  font-weight: 500;
+  font-size: 76px;
+  line-height: 1;
+  letter-spacing: -0.04em;
+  color: rgba(138, 133, 124, 0.18);
+}
+.spl-d-t {
+  margin-top: 16px;
+  font-family: var(--display);
+  font-weight: 500;
+  font-size: 31px;
+  line-height: 1.16;
+  letter-spacing: -0.028em;
+  color: var(--bone);
+}
+.spl-d-rule {
+  display: block;
+  height: 1px;
+  margin: 18px 0;
+  background: linear-gradient(
+    to right,
+    var(--accent-line),
+    rgba(138, 133, 124, 0.12) 60%,
+    transparent
+  );
+  transform-origin: 0 50%;
+}
+.spl-d-line {
+  font-size: 17px;
+  line-height: 1.65;
+  color: var(--grey-mid);
+}
+
+/* where the reader is in the list, drawn as a gauge beside the pane */
+.spl-progress {
+  position: absolute;
+  left: -1px;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+}
+.spl-progress-track {
+  position: absolute;
+  inset: 0;
+  background: rgba(138, 133, 124, 0.1);
+}
+.spl-progress-fill {
+  position: absolute;
+  inset: 0;
+  background: var(--accent);
+  opacity: 0.7;
+}
+.work .spl-progress-n {
+  position: absolute;
+  left: -46px;
+  bottom: 0;
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  color: var(--grey-dim);
+  white-space: nowrap;
+}
+
+/* ── narrow ───────────────────────────────────────────────────────── */
+
+@media (max-width: 900px) {
+  .work .split {
+    grid-template-columns: 1fr;
+    gap: 40px;
+  }
+  /* the pane leads on a narrow screen: it sits above the list and holds */
+  .spl-detail {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    order: -1;
+    background: var(--ink);
+    padding-bottom: 16px;
+  }
+  .spl-detail-in {
+    border-left: 0;
+    border-bottom: 0.5px solid rgba(138, 133, 124, 0.12);
+    padding: 0 0 14px;
+    min-height: 0;
+  }
+  /* the cards are stacked absolutely so a crossfade never shifts the pane, so
+     the box needs a floor. 300px was the desktop figure and left 70px of dead
+     ground under every entry; 234 is the tallest card in this band (226) plus
+     slack for a font fallback. */
+  .spl-d-body {
+    min-height: 234px;
+  }
+  .spl-progress {
+    display: none;
+  }
+  .spl-d-n-clip {
+    height: 46px;
+  }
+  .work .spl-d-n {
+    font-size: 46px;
+  }
+}
+
+/* ── phone ────────────────────────────────────────────────────────── */
+
+@media (max-width: 620px) {
+  .work-head-in {
+    /* the count sat on the same baseline as the heading and forced it to wrap
+       mid-word at this measure */
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+  .work .split {
+    margin-top: 36px;
+    gap: 28px;
+  }
+  /* the pinned pane is a third of a phone screen before the list can move
+     under it, so it gives up the numeral and runs tighter */
+  .spl-d-n-clip {
+    height: 34px;
+    margin-top: 14px;
+  }
+  .work .spl-d-n {
+    font-size: 34px;
+  }
+  .spl-d-t {
+    font-size: 24px;
+    margin-top: 12px;
+  }
+  .spl-d-line {
+    font-size: 15.5px;
+  }
+  .spl-d-rule {
+    margin: 14px 0;
+  }
+  /* smaller type, but a narrower measure: the longest line wraps further, so
+     the phone's tallest card (236) runs past the tablet's */
+  .spl-d-body {
+    min-height: 244px;
+  }
+  .spl-row {
+    grid-template-columns: 34px minmax(0, 1fr);
+    gap: 8px;
+    padding: 14px 4px 14px 12px;
+  }
+  .spl-t {
+    font-size: 15.5px;
+  }
+}

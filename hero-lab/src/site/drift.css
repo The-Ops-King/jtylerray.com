@@ -1,0 +1,165 @@
+/* ═══════════════════════════════════════════════════════════════════
+   The drift wall — section 01, right column.
+
+   Everything here is grey. The wall is texture, not content, so it never
+   takes accent and never outranks the prose beside it.
+   ═══════════════════════════════════════════════════════════════════ */
+
+.wall-slot {
+  position: relative;
+  /* the prose sets the height exactly: no floor of its own, or the wall hangs
+     below the last line again */
+  min-height: 0;
+}
+.wall {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  overflow: hidden;
+  /* the wall fades at the top and bottom only, so tiles arrive and leave
+     rather than being cut off by a box. A horizontal fade as well clipped the
+     outer columns' names, which made the wall look broken rather than soft. */
+  -webkit-mask-image: linear-gradient(
+    to bottom,
+    transparent,
+    #000 14%,
+    #000 86%,
+    transparent
+  );
+  mask-image: linear-gradient(to bottom, transparent, #000 14%, #000 86%, transparent);
+}
+
+.wall-col {
+  overflow: hidden;
+}
+.wall-track {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  animation: drift 46s linear infinite;
+}
+/* each column runs at its own pace, and the middle one runs the other way:
+   three tracks moving together read as one sheet sliding, not as a wall */
+.wall-col[data-col="1"] .wall-track {
+  animation-duration: 62s;
+  animation-direction: reverse;
+}
+.wall-col[data-col="2"] .wall-track {
+  animation-duration: 54s;
+}
+/* the track holds two copies of its column, so -50% lands exactly on the
+   seam and the loop has no visible jump */
+@keyframes drift {
+  from {
+    transform: translate3d(0, 0, 0);
+  }
+  to {
+    transform: translate3d(0, -50%, 0);
+  }
+}
+
+.tile {
+  flex: none;
+  height: 84px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px;
+  border: 0.5px solid rgba(138, 133, 124, 0.1);
+  border-radius: 6px;
+  background: rgba(138, 133, 124, 0.02);
+  transition: border-color 0.24s ease, background 0.24s ease;
+}
+.tile:hover {
+  border-color: rgba(138, 133, 124, 0.26);
+  background: rgba(138, 133, 124, 0.05);
+}
+/* monochrome, always: a wall of brand colours would pull rank on the copy */
+.tile img {
+  width: 100%;
+  max-height: 34px;
+  object-fit: contain;
+  filter: grayscale(1) brightness(0) invert(1);
+  opacity: 0.42;
+  transition: opacity 0.24s ease;
+}
+.tile:hover img {
+  opacity: 0.78;
+}
+.tile-name {
+  font-size: 10.5px;
+  letter-spacing: 0.06em;
+  overflow-wrap: anywhere;
+  text-transform: uppercase;
+  color: var(--grey-dim);
+  text-align: center;
+  line-height: 1.4;
+  transition: color 0.24s ease;
+}
+.tile:hover .tile-name {
+  color: var(--grey-mid);
+}
+
+.wall-label {
+  position: absolute;
+  left: 0;
+  top: -26px;
+  z-index: 2;
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--grey-dim);
+}
+
+/* ── section 01 gets a second column for it ───────────────────────── */
+
+/* the same 1280px page block every other section sits on, so the wall's
+   right edge lands on the same pixel as the header rule above it and the
+   register below */
+.site .what-grid {
+  max-width: 1280px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 440px;
+  gap: clamp(32px, 5vw, 72px);
+  align-items: stretch;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wall-track {
+    animation: none;
+  }
+}
+
+@media (max-width: 900px) {
+  .site .what-grid {
+    grid-template-columns: 1fr;
+  }
+  .wall-slot {
+    min-height: 300px;
+  }
+}
+
+/* three columns on a phone leaves a 106px tile: the mark shrinks to nothing
+   and the name breaks across three lines. Two columns, taller tiles. */
+@media (max-width: 600px) {
+  .wall {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+  /* the third column would wrap to a second row inside an absolutely
+     positioned box. The wall is texture, so dropping it costs nothing. */
+  .wall-col[data-col="2"] {
+    display: none;
+  }
+  .wall-track {
+    gap: 10px;
+  }
+  .tile {
+    height: 92px;
+  }
+  .tile img {
+    max-height: 38px;
+  }
+}

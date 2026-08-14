@@ -1,0 +1,932 @@
+/* ═══════════════════════════════════════════════════════════════════
+   jtylerray.com — the page.
+
+   Colour, type and the frame come from the brand guide (tokens live in
+   index.css). This file is layout only: section rhythm, the 720px text
+   column, the one sticky moment in section 02, and the scroll cue.
+
+   Two rules carried through every block below:
+   · accent is a fill on content, never a line. Every rule, border and
+     hairline here is grey.
+   · 8px vertical rhythm. Section padding 120px desktop, 72px mobile.
+   ═══════════════════════════════════════════════════════════════════ */
+
+.site {
+  --col: 720px; /* text column, never wider */
+  --pad: 104px; /* section padding, inside the guide's 96-128px band */
+  /* the gutter takes the notch into account: on a landscape phone the safe
+     area is wider than the 24px floor, and text sat under the rounded corner */
+  --edge: max(clamp(24px, 5vw, 72px), env(safe-area-inset-left, 0px), env(safe-area-inset-right, 0px));
+  --rule: rgba(var(--struct), 0.12);
+
+  /* the drawing is the hero's: the page below it is plain ground. No stacking
+     context of its own here — one was enough to leave the window painting
+     white outside this element's box. */
+  background-color: var(--ink);
+  min-height: 100%;
+}
+
+/* the page scrolls; the hero is no longer the whole document */
+html:has(.site),
+html:has(.site) body,
+html:has(.site) #root {
+  height: auto;
+  min-height: 100%;
+  overflow: visible;
+}
+html:has(.site) body {
+  overflow-x: hidden;
+}
+
+/* ── type, held to the brand guide's scale ────────────────────────── */
+
+.site .display {
+  font-family: var(--display);
+  font-weight: 500;
+  font-size: clamp(40px, 5.6vw, 72px);
+  line-height: 1;
+  letter-spacing: -0.034em;
+}
+.site .mark {
+  color: var(--accent-text);
+  text-shadow: none;
+}
+.site .lede {
+  font-size: 18px;
+  line-height: 1.65;
+  color: var(--grey-mid);
+  max-width: 58ch;
+}
+.site .mono {
+  font-family: var(--mono);
+  font-weight: 400;
+  color: var(--grey-dim);
+}
+.site .prose p {
+  font-size: 17.5px;
+  line-height: 1.65;
+  color: var(--grey-mid);
+}
+.site .prose p + p {
+  margin-top: 20px;
+}
+.site .prose strong {
+  color: var(--bone);
+  font-weight: 400;
+}
+
+/* ── sections ─────────────────────────────────────────────────────── */
+
+.section {
+  padding: var(--pad) var(--edge);
+}
+/* Every section sits on the same 1280px page block as the hero's shell, so
+   the text column starts on exactly the pixel the headline starts on. The
+   720px measure is applied to the children, not to this wrapper. */
+.col {
+  width: 100%;
+  max-width: 1280px;
+  margin: 0 auto;
+}
+.col > *,
+.col .prose {
+  max-width: var(--col);
+}
+
+.section-label {
+  margin-bottom: 40px;
+}
+.section-rule {
+  border: 0;
+  border-top: 0.5px solid var(--rule);
+  margin: 0 0 16px;
+}
+.section-label .mono {
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+/* the section CTA: the primary button, not a link dressed as one */
+.cta-btn {
+  margin-top: 56px;
+}
+
+/* ── buttons ──────────────────────────────────────────────────────── */
+
+.site .btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--sans);
+  font-size: 16px;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  padding: 14px 24px;
+  border-radius: 6px;
+  text-decoration: none;
+  border: 0.5px solid transparent;
+  transition: background 0.18s ease, border-color 0.18s ease;
+}
+.site .btn-fill {
+  background: var(--accent);
+  color: var(--bone);
+}
+.site .btn-fill:hover {
+  background: var(--accent-hover);
+}
+.site .btn-outline {
+  color: var(--bone);
+  border-color: var(--rule);
+}
+.site .btn-outline:hover {
+  border-color: rgba(var(--struct), 0.28);
+}
+
+/* sections stay transparent so the page sheet reads through them; the opaque
+   ground lives on .site, which is what closed the compositing seam */
+.site .section,
+.site .hero,
+.site .foot {
+  position: relative;
+}
+
+/* ── the drawing, carried through the page ────────────────────────── */
+
+.site .hero,
+.site .section,
+.site .foot,
+.site .scanline {
+  z-index: 1;
+}
+
+/* registration marks are the hero's alone: brackets on every section read as
+   chrome following the reader down the page */
+.corners span {
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  z-index: 3;
+  pointer-events: none;
+  border-color: rgba(138, 133, 124, 0.16);
+}
+.corners span:nth-child(1) {
+  left: 20px;
+  top: 20px;
+  border-left: 1px solid;
+  border-top: 1px solid;
+}
+.corners span:nth-child(2) {
+  right: 20px;
+  top: 20px;
+  border-right: 1px solid;
+  border-top: 1px solid;
+}
+.corners span:nth-child(3) {
+  left: 20px;
+  bottom: 20px;
+  border-left: 1px solid;
+  border-bottom: 1px solid;
+}
+.corners span:nth-child(4) {
+  right: 20px;
+  bottom: 20px;
+  border-right: 1px solid;
+  border-bottom: 1px solid;
+}
+/* the blueprint theme pins its own crop marks to the viewport; the hero draws
+   the four above instead, so nothing rides down the page */
+.site .hero::before,
+.site .hero::after,
+.site .shell::before,
+.site .shell::after {
+  content: none;
+}
+
+/* the hero draws the whole sheet: grid, crosshairs, lens, vignette and both
+   ruled edges. Nothing below the hero carries it. */
+.site .ticks-left {
+  display: block;
+  opacity: 1;
+  background-image:
+    linear-gradient(to bottom, rgba(138, 133, 124, 0.42) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(138, 133, 124, 0.22) 1px, transparent 1px);
+}
+.site .ticks-left::after {
+  background: rgba(138, 133, 124, 0.16);
+}
+.site .ticks-top {
+  display: block;
+  opacity: 1;
+  background-image:
+    linear-gradient(to right, rgba(138, 133, 124, 0.42) 1px, transparent 1px),
+    linear-gradient(to right, rgba(138, 133, 124, 0.22) 1px, transparent 1px);
+}
+.site .ticks-top::after {
+  background: rgba(138, 133, 124, 0.16);
+}
+
+/* ── hero ─────────────────────────────────────────────────────────── */
+
+.site .hero {
+  position: relative;
+  height: auto;
+  min-height: 100vh;
+  /* svh, not vh: on a phone 100vh is the tall viewport, so the hero ran a
+     browser-chrome's height past the fold and the scroll cue sat off screen */
+  min-height: 100svh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding: 28px var(--edge) 32px;
+  padding-bottom: max(32px, env(safe-area-inset-bottom, 0px));
+}
+.site .shell {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  max-width: 1280px;
+  margin: 0 auto;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.masthead {
+  display: flex;
+  align-items: center;
+  gap: 32px;
+  /* both sides may shrink. Without this the wordmark holds its full width and
+     the nav is pushed off the right edge, where body's overflow-x: hidden
+     swallows it rather than showing a scrollbar — the failure looks like the
+     page is not responsive when it is the row that will not give. */
+  min-width: 0;
+}
+.masthead > * {
+  min-width: 0;
+}
+.wordmark-block {
+  flex: 0 1 auto;
+}
+.wordmark-block {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  text-decoration: none;
+  color: var(--bone);
+}
+.wordmark {
+  font-family: var(--display);
+  font-weight: 500;
+  font-size: 16px;
+  letter-spacing: -0.022em;
+}
+.descriptor {
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+.masthead-nav {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: clamp(16px, 2.4vw, 32px);
+  flex: 0 0 auto;
+}
+.masthead-nav a {
+  font-size: 15px;
+  color: var(--grey-mid);
+  text-decoration: none;
+  transition: color 0.18s ease;
+}
+.masthead-nav a:hover {
+  color: var(--bone);
+}
+/* the header CTA has to be findable: bone type on a bone edge */
+.masthead-nav .btn-outline {
+  padding: 11px 20px;
+  font-size: 14px;
+  color: var(--bone);
+  border-color: rgba(var(--bone-rgb), 0.24);
+}
+.masthead-nav .btn-outline:hover {
+  border-color: rgba(var(--bone-rgb), 0.48);
+}
+
+/* the rail composition: copy left, the five things I build held on a hairline
+   right. Geometry is the lab's V1 rail; the measure is the page's. */
+.site .hero-body {
+  flex: 1;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 300px;
+  gap: clamp(32px, 6vw, 88px);
+  align-items: center;
+  padding-top: 4vh;
+}
+.hero-copy {
+  max-width: var(--col);
+}
+.site .hero-copy > * + * {
+  margin-top: 28px;
+}
+.hero-copy .display {
+  /* the rail hero's own register, one step above the section headings */
+  font-size: clamp(42px, 6.4vw, 84px);
+  line-height: 1;
+  max-width: 15ch;
+}
+.hero-copy .btns {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 40px;
+}
+.hero-note {
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+/* the rail numerals are index numbering, which is structure: grey, never
+   accent. The hero's accent budget is the headline word and the button. */
+.site .v1-idx {
+  color: var(--grey-dim);
+}
+/* the datum the rail hangs from, 24px left of the numerals */
+.site .v1-rail {
+  border-left: 0.5px solid rgba(138, 133, 124, 0.12);
+  padding-left: 24px;
+}
+
+/* the cue itself lives in components/scrollcue.css: the card carries the same
+   one, so it is not the page's to own */
+
+/* ── hero · tablet and phone ──────────────────────────────────────── */
+
+/* One column, and the rail comes with it. The lab hides the rail below 900
+   because there it is a layout demo; here it is the five things I build, so
+   it moves under the copy as a two-up list instead of leaving the page.
+
+   1080, not 900: the rail is a fixed 300px column and the headline runs at
+   6.4vw, so between those two widths the copy column was down to about 480px
+   and the rail's own labels were breaking mid-phrase. The hero gets two
+   columns when there is room for two columns. */
+@media (max-width: 1080px) {
+  .site .hero-body,
+  .site .hero-body.v1-body {
+    grid-template-columns: 1fr;
+    align-items: start;
+    /* centred as one block: spreading copy and rail to the two ends left a
+       400px hole down the middle of a tall tablet */
+    align-content: center;
+    padding-top: clamp(24px, 5vh, 56px);
+    padding-bottom: 24px;
+    gap: clamp(40px, 7vh, 80px);
+  }
+  .site .v1-rail {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 20px 28px;
+    border-left: 0;
+    border-top: 0.5px solid rgba(138, 133, 124, 0.12);
+    padding: 24px 0 0;
+  }
+}
+
+/* the rail runs close to the bottom edge on a phone, so the cue sits in the
+   gutter below it rather than on top of it */
+@media (max-width: 620px) {
+  .scroll-cue {
+    bottom: 12px;
+  }
+  .site .hero-body {
+    padding-bottom: 44px;
+  }
+}
+
+/* the rail stays two-up on a phone — one column ran the hero 60px past the
+   fold. The sub-line drops to keep each cell to two lines. */
+@media (max-width: 520px) {
+  .site .v1-rail {
+    gap: 14px 20px;
+  }
+  .site .v1-row {
+    grid-template-columns: 20px minmax(0, 1fr);
+    gap: 8px;
+  }
+  .site .v1-k {
+    font-size: 14px;
+  }
+  .site .v1-t {
+    font-size: 10.5px;
+  }
+}
+
+/* the smallest phones still in use (320px, 568 tall): the rail's sub-lines
+   wrap to three lines each and carry the hero two screens deep. The labels
+   alone still say what gets built. */
+@media (max-width: 360px) {
+  .site .v1-t {
+    display: none;
+  }
+  .site .v1-rail {
+    gap: 12px 16px;
+  }
+}
+
+/* a short phone (SE, mini) runs the copy block into the rail: the stack
+   tightens rather than the type shrinking */
+@media (max-height: 700px) and (max-width: 900px) {
+  .site .hero-copy > * + * {
+    margin-top: 20px;
+  }
+  .hero-copy .btns {
+    margin-top: 28px;
+  }
+  .site .hero-body {
+    padding-top: 24px;
+    gap: 32px;
+  }
+}
+
+/* a landscape phone has no vertical room for a full-height hero: let it size
+   to its content and drop the cue, which would otherwise sit on the copy */
+@media (max-height: 560px) and (orientation: landscape) {
+  .site .hero {
+    min-height: 0;
+    padding-bottom: 56px;
+  }
+  .site .hero-body {
+    padding-top: 32px;
+  }
+  /* 6.4vw is 54px on a landscape phone — three lines of headline and the
+     buttons are below the fold before the copy starts */
+  .hero-copy .display {
+    font-size: clamp(30px, 4.6vw, 44px);
+  }
+  .site .hero-copy > * + * {
+    margin-top: 18px;
+  }
+  .scroll-cue {
+    display: none;
+  }
+}
+
+/* ── 01 · what I do ───────────────────────────────────────────────── */
+
+/* prose only. The rail said what gets built; this says how it gets done.
+   Section 01 runs a step larger than body copy and a step looser: it is the
+   only prose on the page, and it sets the height the wall beside it takes. */
+.site .prose p {
+  max-width: 66ch;
+}
+.site #what .prose p {
+  font-size: 21px;
+  line-height: 1.75;
+  max-width: 60ch;
+}
+.site #what .prose p + p {
+  margin-top: 28px;
+}
+
+/* ── 02 · the work ────────────────────────────────────────────────── */
+
+/* header, featured entries and register are one pinning block: the panel
+   releases the moment the last register row passes, not at the CTA */
+.work-flow {
+  max-width: none;
+}
+
+/* Part 1 — the header. Nothing pins here: the framing line was the only
+   reason the pin existed, and it is gone. */
+.work-head {
+  max-width: none;
+  padding-bottom: 24px;
+  border-bottom: 0.5px solid rgba(138, 133, 124, 0.12);
+}
+.work-head .section-label {
+  margin-bottom: 24px;
+}
+.work .register-caption {
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+/* Part 2 — the parts schedule. Dense, numbered, static. */
+.register {
+  margin-top: 56px;
+  max-width: 1200px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0 64px;
+  align-items: start;
+}
+.register-col > .reg-group + .reg-group {
+  margin-top: 48px;
+}
+.work .reg-cat {
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--bone);
+  padding-bottom: 24px;
+}
+.reg-group:first-child .reg-cat {
+  padding-top: 0;
+}
+.reg-row {
+  display: grid;
+  grid-template-columns: 48px minmax(0, 1fr);
+  align-items: start;
+  min-height: 44px;
+  padding: 14px 0;
+  border-bottom: 0.5px solid rgba(138, 133, 124, 0.08);
+}
+.work .reg-n {
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  color: var(--grey-dim);
+  padding-top: 2px;
+}
+.work .reg-t {
+  font-family: var(--sans);
+  font-weight: 400;
+  font-size: 14px;
+  line-height: 1.5;
+  letter-spacing: 0;
+  color: var(--grey-mid);
+}
+.work .cta-link {
+  margin-top: 96px;
+}
+/* ── 03 · who I am ────────────────────────────────────────────────── */
+
+/* The datum runs down the centre and the eras alternate across it, each one
+   dropped half a step from the last so the column reads as staggered rather
+   than as two lists. The rule draws downward as the section arrives. */
+.timeline {
+  position: relative;
+  max-width: 1100px;
+  padding: 8px 0 8px;
+}
+.timeline-track {
+  position: absolute;
+  left: 50%;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  margin-left: -0.5px;
+  background: rgba(138, 133, 124, 0.07);
+}
+.timeline-rule {
+  display: block;
+  width: 1px;
+  background: rgba(138, 133, 124, 0.2);
+}
+.era {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+}
+.era + .era {
+  margin-top: 34px;
+}
+.era[data-side="left"] .era-body {
+  grid-column: 1;
+  padding-right: 48px;
+  text-align: right;
+}
+.era[data-side="right"] .era-body {
+  grid-column: 2;
+  padding-left: 48px;
+}
+/* 7px square on the rule, rotated to read as a survey marker, not a bullet */
+.era-node {
+  position: absolute;
+  left: 50%;
+  margin-left: -4px;
+  top: 8px;
+  width: 7px;
+  height: 7px;
+  background: var(--ink);
+  border: 1px solid rgba(138, 133, 124, 0.5);
+  transform: rotate(45deg);
+  z-index: 1;
+}
+.era-tick {
+  position: absolute;
+  top: 11px;
+  width: 26px;
+  height: 1px;
+  background: rgba(138, 133, 124, 0.2);
+}
+.era[data-side="left"] .era-tick {
+  right: 50%;
+  margin-right: 5px;
+}
+.era[data-side="right"] .era-tick {
+  left: 50%;
+  margin-left: 5px;
+}
+.about .era-period {
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  padding-bottom: 12px;
+}
+.era-title {
+  font-size: 24px;
+  font-weight: 500;
+  letter-spacing: -0.022em;
+  line-height: 1.2;
+  color: var(--bone);
+}
+.era-line {
+  margin-top: 12px;
+  font-size: 18px;
+  line-height: 1.65;
+  color: var(--grey-mid);
+}
+
+/* the photograph, bled off the right edge for the height of the section and
+   faded into the ground on two sides. No frame, no border: a framed picture
+   reads as a headshot, a bleed reads as the section's own field. */
+.site .about {
+  position: relative;
+  overflow: hidden;
+}
+.about-bleed {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 36%;
+  z-index: 0;
+  pointer-events: none;
+}
+.about-bleed img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 42% 28%;
+  filter: grayscale(1) contrast(1.06) brightness(0.62);
+  -webkit-mask-image:
+    linear-gradient(to right, transparent, #000 70%),
+    linear-gradient(to bottom, transparent, #000 18%, #000 76%, transparent);
+  mask-image:
+    linear-gradient(to right, transparent, #000 70%),
+    linear-gradient(to bottom, transparent, #000 18%, #000 76%, transparent);
+  -webkit-mask-composite: source-in;
+  mask-composite: intersect;
+}
+/* the timeline holds two thirds of the plate, clear of the picture */
+.about-col {
+  position: relative;
+  max-width: 1280px;
+}
+.about-col > .section-label,
+.about-col > .timeline {
+  position: relative;
+  z-index: 1;
+}
+.site .about .timeline {
+  max-width: 66%;
+}
+
+/* Narrow: the bleed has nowhere to bleed to. Held at 24% behind the timeline
+   it was a smudge on the ground that nobody could read as a person, so on a
+   phone it leaves the background entirely and becomes a picture in the flow,
+   below the timeline, at full strength. */
+@media (max-width: 900px) {
+  .site .about {
+    display: flex;
+    flex-direction: column;
+  }
+  .about-col {
+    order: 1;
+  }
+  .about-bleed {
+    order: 2;
+    position: relative;
+    width: 100%;
+    height: auto;
+    opacity: 1;
+    margin-top: 48px;
+    border-radius: 8px;
+    overflow: hidden;
+    border: 0.5px solid rgba(138, 133, 124, 0.14);
+  }
+  .about-bleed img {
+    width: 100%;
+    height: auto;
+    /* the desktop bleed is masked into the ground on two edges and dimmed to
+       sit under type. Nothing is on top of it here, so it carries its own
+       contrast and keeps only the grey the rest of the page is drawn in. */
+    aspect-ratio: 4 / 3;
+    object-fit: cover;
+    object-position: 50% 22%;
+    filter: grayscale(1) contrast(1.04) brightness(0.86);
+    -webkit-mask-image: none;
+    mask-image: none;
+  }
+  .site .about .timeline {
+    max-width: 100%;
+  }
+}
+
+/* ── 04 · contact ─────────────────────────────────────────────────── */
+
+.contact {
+  padding-top: var(--pad);
+  padding-bottom: var(--pad);
+}
+.contact-head {
+  font-size: clamp(32px, 4.4vw, 56px);
+  max-width: 18ch;
+}
+.contact .lede {
+  margin-top: 20px;
+}
+.contact .btn-fill {
+  margin-top: 32px;
+}
+.contact-email {
+  margin-top: 20px;
+  font-size: 17px;
+  color: var(--bone);
+  user-select: all;
+}
+
+.foot {
+  padding: 32px var(--edge) 48px;
+  border-top: 0.5px solid var(--rule);
+}
+.foot-in {
+  display: flex;
+  align-items: baseline;
+  gap: 20px;
+  font-size: 14px;
+  color: var(--grey-mid);
+}
+.foot-in .mono {
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+.foot-in .mono:last-child {
+  margin-left: auto;
+}
+
+
+/* ── narrow ───────────────────────────────────────────────────────── */
+
+@media (max-width: 900px) {
+  .site {
+    --pad: 72px;
+  }
+  .masthead-nav {
+    gap: 20px;
+  }
+  /* section 01 runs a step larger than body copy on a desktop measure; at 40
+     characters a line that setting reads as a poster, not as prose */
+  .site #what .prose p {
+    /* holds the measure near 66 characters across the whole band: 21px was a
+       poster setting at this width, 18px ran 71 characters on a tablet */
+    font-size: clamp(17.5px, 2.3vw, 19.5px);
+    line-height: 1.7;
+  }
+  .site #what .prose p + p {
+    margin-top: 22px;
+  }
+  .register {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+  .register-col + .register-col {
+    /* the differential offset is meaningless in one column */
+    transform: none !important;
+    margin-top: 44px;
+  }
+  .timeline-track {
+    left: 0;
+  }
+  .era {
+    grid-template-columns: 1fr;
+  }
+  .era + .era {
+    margin-top: 34px;
+  }
+  .era[data-side="left"] .era-body,
+  .era[data-side="right"] .era-body {
+    grid-column: 1;
+    text-align: left;
+    padding: 0 0 0 36px;
+  }
+  .era-node {
+    left: 0;
+  }
+  .era[data-side="left"] .era-tick,
+  .era[data-side="right"] .era-tick {
+    left: 5px;
+    right: auto;
+    margin: 0;
+    width: 18px;
+  }
+  .about-portrait {
+    width: 120px;
+  }
+  .foot-in {
+    flex-direction: column;
+    gap: 10px;
+  }
+  .foot-in .mono:last-child {
+    margin-left: 0;
+  }
+}
+
+@media (max-width: 620px) {
+  /* the masthead CTA and the hero CTA sat two lines apart on a phone. One of
+     them goes, and it is the one that is chrome rather than content — which
+     leaves the wordmark alone on the top edge, so it takes the centre. */
+  .masthead-nav {
+    display: none;
+  }
+  .masthead {
+    justify-content: center;
+  }
+  .wordmark-block {
+    align-items: center;
+    text-align: center;
+  }
+  /* section 04 is the closing plate: on one column it reads as a centred
+     card. The drafting label stays left, hung off the rule above it. */
+  .contact .col {
+    /* centres the button too: it is inline-flex, so auto margins are ignored
+       and only the line box can place it */
+    text-align: center;
+  }
+  .contact .col > *:not(.section-label) {
+    margin-left: auto;
+    margin-right: auto;
+  }
+  .contact .section-label {
+    text-align: left;
+  }
+  .contact .lede {
+    max-width: 40ch;
+  }
+  /* 6.4vw bottoms out at 42px, which is a four-line headline on a 360px
+     phone and pushes the rail a screen and a half down */
+  .hero-copy .display {
+    font-size: clamp(32px, 10vw, 44px);
+  }
+  /* the two hero buttons wrap rather than shrinking their labels */
+  .hero-copy .btns {
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  .hero-copy .btns .btn {
+    flex: 1 1 auto;
+  }
+  .site .lede {
+    font-size: 17px;
+  }
+  .era-title {
+    font-size: 21px;
+  }
+  .era-line {
+    font-size: 16.5px;
+  }
+  .contact-email {
+    font-size: 16px;
+    overflow-wrap: anywhere;
+  }
+}
+
+/* ── touch ────────────────────────────────────────────────────────── */
+
+/* a finger needs 44px; the masthead button was 40 and the register rows were
+   sized off type alone. Nothing here fires on a mouse. */
+@media (hover: none), (pointer: coarse) {
+  .site .btn {
+    min-height: 44px;
+  }
+  .masthead-nav .btn-outline {
+    padding: 12px 18px;
+  }
+  .site .masthead-nav a:not(.btn) {
+    padding: 6px 0;
+  }
+  .spl-row {
+    min-height: 48px;
+  }
+  /* hover states never resolve on touch: they stick after a tap instead */
+  .spl-row:hover .spl-t {
+    color: var(--grey-mid);
+    transform: none;
+  }
+  .spl-row[data-on="true"] .spl-t {
+    color: var(--bone);
+    transform: translateX(6px);
+  }
+}

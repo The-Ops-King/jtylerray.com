@@ -1,0 +1,90 @@
+/* ═══════════════════════════════════════════════════════════════════
+   Section 04 · the wall of receipts.
+
+   Justified rows, packed in Reviews.tsx: every tile is the shape of its own
+   screenshot and every row fills the measure exactly, so the wall is a solid
+   block with no gaps and no ragged corner. Nothing is cropped and nothing
+   floats in a cell built for something bigger.
+
+   The tiles are artifacts pinned to the sheet, not brand surfaces, so each
+   keeps the ground its capture came on. The light ones are held back a step
+   so five bone rectangles do not outrank the words above them.
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* .col holds its children to the 720px measure; the wall is the exception,
+   and it has to outrank that rule rather than tie with it */
+.site .says .col > .wallboard {
+  max-width: 1280px;
+}
+
+.wallboard {
+  width: 100%;
+  margin-top: 40px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.wall-row {
+  display: flex;
+  gap: 10px;
+  /* the row's height is set inline: it is the packing result, not a constant */
+}
+
+/* the tile's ground is the capture's own colour, sampled from its edge and
+   set inline — so a strip padded out to a workable shape reads as more of the
+   same screenshot rather than as a screenshot in a box */
+.rev {
+  position: relative;
+  margin: 0;
+  flex: none;
+  overflow: hidden;
+  border-radius: 6px;
+  border: 0.5px solid rgba(138, 133, 124, 0.16);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: border-color 0.2s ease;
+}
+/* the light captures are lit for a white page. A scrim of the page's own ink
+   settles them into this one without touching what they say. */
+.rev[data-tone="light"]::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: rgba(12, 11, 10, 0.14);
+  pointer-events: none;
+}
+
+.rev-img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  /* contain, never cover: cropping a screenshot cuts words off the end of
+     somebody's sentence. A strip sits centred on the tile's ground instead. */
+  object-fit: contain;
+}
+
+/* a pointer can look closer: the scrim lifts and the hairline brightens.
+   Nothing moves, because a wall of receipts that jumps is a carousel. */
+@media (hover: hover) {
+  .rev:hover {
+    border-color: rgba(138, 133, 124, 0.4);
+  }
+  .rev[data-tone="light"]:hover::after {
+    background: rgba(12, 11, 10, 0.04);
+  }
+  .rev[data-tone="light"]::after {
+    transition: background 0.2s ease;
+  }
+}
+
+@media (max-width: 620px) {
+  .wallboard {
+    margin-top: 28px;
+    gap: 8px;
+  }
+  .wall-row {
+    gap: 8px;
+  }
+}
