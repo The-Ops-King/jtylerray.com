@@ -16,6 +16,7 @@ import {
 } from "./content";
 import WorkSuite from "./WorkSuite";
 import DriftWall from "./DriftWall";
+import Reviews from "./Reviews";
 /* the rail's own rules, borrowed from the lab layout of the same name */
 import "../variants/variants.css";
 import "./site.css";
@@ -39,6 +40,7 @@ export default function Site() {
       <WhatIDo />
       <Work />
       <WhoIAm />
+      <WhatPeopleSay />
       <Contact />
       <Footer />
       <div className="scanline" aria-hidden="true" />
@@ -241,11 +243,27 @@ function Timeline() {
 
 /* ── 04 ────────────────────────────────────────────────────────────── */
 
+/** The receipts, below the timeline: the section says what I did, this says
+ *  what it looked like from the other side of it. Screenshots as captured —
+ *  see reviews.ts for why they are not set as pull quotes. */
+function WhatPeopleSay() {
+  return (
+    <section className="section says" id="says">
+      <div className="col">
+        <SectionLabel n="04">What people say</SectionLabel>
+        <Reviews />
+      </div>
+    </section>
+  );
+}
+
+/* ── 05 ────────────────────────────────────────────────────────────── */
+
 function Contact() {
   return (
     <section className="section contact" id="contact">
       <div className="col">
-        <SectionLabel n="04">Get in touch</SectionLabel>
+        <SectionLabel n="05">Get in touch</SectionLabel>
         <h2 className="display contact-head">{CONTACT.headline}</h2>
         <p className="lede">{CONTACT.line}</p>
         {/* one wording for every ask on the page */}
