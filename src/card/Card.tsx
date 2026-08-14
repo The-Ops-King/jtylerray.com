@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import GridBackdrop from "../components/GridBackdrop";
+import ScrollCue from "../components/ScrollCue";
 import { ACCENTS, applyAccent } from "../accents";
 import { BOOK_ENDPOINT, CALLS, CARD, SOCIALS, type Call, type Social } from "./data";
 import "./card.css";
@@ -82,6 +83,10 @@ export default function Card() {
             </div>
           </section>
         </div>
+
+        {/* the card runs past the fold on a phone: the calls and the socials
+            are below the form, and nothing above the fold said so */}
+        <ScrollCue fixed />
 
         <footer className="card-foot">
           <a className="card-site mono" href={CARD.site.href}>

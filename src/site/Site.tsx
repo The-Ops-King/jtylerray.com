@@ -1,5 +1,6 @@
-import { useEffect, useRef, useState } from "react";
+import { useRef } from "react";
 import GridBackdrop from "../components/GridBackdrop";
+import ScrollCue from "../components/ScrollCue";
 import Proof, { HAS_PROOF } from "../components/Proof";
 import { motion, useScroll, useTransform } from "framer-motion";
 import SmoothScroll from "./SmoothScroll";
@@ -130,7 +131,7 @@ function Hero() {
           )}
         </div>
       </div>
-      <ScrollCue />
+      <ScrollCue href="#what" label="Scroll to what I do" />
     </section>
   );
 }
@@ -145,34 +146,6 @@ function Corners() {
       <span />
       <span />
     </div>
-  );
-}
-
-/** Fades out for good once the reader is 12vh in. Opacity only: no bounce,
- *  no chevron travel. */
-function ScrollCue() {
-  const [gone, setGone] = useState(false);
-  useEffect(() => {
-    if (gone) return;
-    const onScroll = () => {
-      if (window.scrollY > window.innerHeight * 0.12) setGone(true);
-    };
-    window.addEventListener("scroll", onScroll, { passive: true });
-    onScroll();
-    return () => window.removeEventListener("scroll", onScroll);
-  }, [gone]);
-
-  return (
-    <a
-      className={`scroll-cue${gone ? " is-gone" : ""}`}
-      href="#what"
-      aria-label="Scroll to what I do"
-      tabIndex={gone ? -1 : 0}
-    >
-      <svg viewBox="0 0 12 8" width="12" height="8" aria-hidden="true">
-        <path d="M1 1 L6 6 L11 1" fill="none" stroke="currentColor" strokeWidth="1.2" />
-      </svg>
-    </a>
   );
 }
 

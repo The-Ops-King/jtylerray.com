@@ -256,6 +256,17 @@ html:has(.site) body {
   display: flex;
   align-items: center;
   gap: 32px;
+  /* both sides may shrink. Without this the wordmark holds its full width and
+     the nav is pushed off the right edge, where body's overflow-x: hidden
+     swallows it rather than showing a scrollbar — the failure looks like the
+     page is not responsive when it is the row that will not give. */
+  min-width: 0;
+}
+.masthead > * {
+  min-width: 0;
+}
+.wordmark-block {
+  flex: 0 1 auto;
 }
 .wordmark-block {
   display: flex;
@@ -279,7 +290,8 @@ html:has(.site) body {
   margin-left: auto;
   display: flex;
   align-items: center;
-  gap: 32px;
+  gap: clamp(16px, 2.4vw, 32px);
+  flex: 0 0 auto;
 }
 .masthead-nav a {
   font-size: 15px;
@@ -345,52 +357,22 @@ html:has(.site) body {
   padding-left: 24px;
 }
 
-/* the hero's one looping animation, and it leaves for good after 12vh */
-.scroll-cue {
-  position: absolute;
-  left: 50%;
-  bottom: 48px;
-  margin-left: -16px;
-  z-index: 3;
-  width: 32px;
-  height: 32px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border: 1px solid rgba(var(--struct), 0.25);
-  border-radius: 50%;
-  color: var(--grey-dim);
-  animation: cue 2.4s ease-in-out infinite;
-  transition: opacity 0.3s ease;
-}
-.scroll-cue.is-gone {
-  opacity: 0;
-  animation: none;
-  pointer-events: none;
-}
-@keyframes cue {
-  0%,
-  100% {
-    opacity: 0.3;
-  }
-  50% {
-    opacity: 0.75;
-  }
-}
-@media (prefers-reduced-motion: reduce) {
-  .scroll-cue {
-    animation: none;
-    opacity: 0.6;
-  }
-}
+/* the cue itself lives in components/scrollcue.css: the card carries the same
+   one, so it is not the page's to own */
 
 /* ── hero · tablet and phone ──────────────────────────────────────── */
 
 /* One column, and the rail comes with it. The lab hides the rail below 900
    because there it is a layout demo; here it is the five things I build, so
-   it moves under the copy as a two-up list instead of leaving the page. */
-@media (max-width: 900px) {
-  .site .hero-body {
+   it moves under the copy as a two-up list instead of leaving the page.
+
+   1080, not 900: the rail is a fixed 300px column and the headline runs at
+   6.4vw, so between those two widths the copy column was down to about 480px
+   and the rail's own labels were breaking mid-phrase. The hero gets two
+   columns when there is room for two columns. */
+@media (max-width: 1080px) {
+  .site .hero-body,
+  .site .hero-body.v1-body {
     grid-template-columns: 1fr;
     align-items: start;
     /* centred as one block: spreading copy and rail to the two ends left a
@@ -408,10 +390,16 @@ html:has(.site) body {
     border-top: 0.5px solid rgba(138, 133, 124, 0.12);
     padding: 24px 0 0;
   }
-  /* the rail is the fold marker now: five entries below the copy say the page
-     continues more plainly than a bouncing circle, which the rail overlapped */
+}
+
+/* the rail runs close to the bottom edge on a phone, so the cue sits in the
+   gutter below it rather than on top of it */
+@media (max-width: 620px) {
   .scroll-cue {
-    display: none;
+    bottom: 12px;
+  }
+  .site .hero-body {
+    padding-bottom: 44px;
   }
 }
 
