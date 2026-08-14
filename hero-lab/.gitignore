@@ -27,3 +27,9 @@ dist-ssr
 # These hold names and faces that are blurred out of everything shipped, so
 # they stay on disk and never enter a repo that could become public.
 redaction/
+
+# Build output. Each target is copied into ../public/ by scripts/build-pages.sh,
+# so keeping a second copy here would be the same bundle tracked twice.
+dist-new-home/
+dist-card/
+dist-lab/
