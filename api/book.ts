@@ -50,7 +50,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(200).json({ ok: true });
   }
 
-  const missing = (['name', 'email', 'message'] as (keyof Payload)[]).filter(
+  const missing = (['name', 'message'] as (keyof Payload)[]).filter(
     (k) => !(data[k] || '').toString().trim()
   );
   if (missing.length) {
@@ -59,8 +59,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       .json({ ok: false, error: `Missing required fields: ${missing.join(', ')}` });
   }
 
+  // email and phone are required as a pair: either one is a way back to them,
+  // and neither is a message I can answer
   const email = (data.email || '').toString().trim();
-  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
+  const phone = (data.phone || '').toString().trim();
+  if (!email && !phone) {
+    return res.status(400).json({ ok: false, error: 'Leave an email address or a phone number' });
+  }
+  if (email && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
     return res.status(400).json({ ok: false, error: 'That email address looks wrong' });
   }
 
@@ -81,8 +87,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const { error } = await resend.emails.send({
       from: FROM,
       to: TO,
-      replyTo: email,
-      subject: `Card: ${(data.name || '').toString().trim()}`,
+      // only when they left one: an empty reply-to would make the mail look
+      // answerable when the way back is a phone number in the body
+      ...(email ? { replyTo: email } : {}),
+      subject: `Card: ${(data.name || '').toString().trim()}${email ? '' : ' (phone only)'}`,
       html,
     });
     if (error) {
