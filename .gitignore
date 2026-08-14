@@ -22,3 +22,8 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Un-redacted review screenshots and the sheets used to check them.
+# These hold names and faces that are blurred out of everything shipped, so
+# they stay on disk and never enter a repo that could become public.
+redaction/
