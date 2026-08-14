@@ -17,7 +17,6 @@ type Payload = {
   name?: string;
   email?: string;
   phone?: string;
-  bestTime?: string;
   message?: string;
   /** honeypot: a real person never fills a field they cannot see */
   company?: string;
@@ -27,8 +26,7 @@ const FIELDS: [keyof Payload, string][] = [
   ['name', 'Name'],
   ['email', 'Email'],
   ['phone', 'Phone'],
-  ['bestTime', 'Best time'],
-  ['message', "What's broken"],
+  ['message', 'What they need'],
 ];
 
 function escapeHtml(s: string): string {
