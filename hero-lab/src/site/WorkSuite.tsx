@@ -89,8 +89,10 @@ export default function WorkSuite() {
             <hr className="section-rule" />
             <span className="mono">02 · The work</span>
           </div>
+          {/* the areas are ordered the way a lead moves through them, so the
+              meta line says so rather than leaving it to be noticed */}
           <p className="mono work-count">
-            {COUNT} builds · {SUITE.length} areas
+            {COUNT} builds · {SUITE.length} areas · in the order a lead moves through them
           </p>
         </div>
       </div>

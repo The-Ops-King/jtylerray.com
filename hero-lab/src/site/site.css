@@ -930,3 +930,51 @@ html:has(.site) body {
     transform: translateX(6px);
   }
 }
+
+/* ── the argument ─────────────────────────────────────────────────── */
+
+/* The thesis, held between the hero and 01. No index numeral and no section
+   rule: those belong to the register below it, and borrowing them would file
+   this as another section about the work rather than the reason for it. */
+.pov {
+  padding-top: calc(var(--pad) * 0.6);
+}
+/* scoped to .site so it beats `.site .display`, which is two classes and
+   would otherwise set this at the hero's own size */
+.site .pov-head {
+  font-size: clamp(28px, 3.9vw, 50px);
+  max-width: 20ch;
+}
+.site .pov-prose {
+  margin-top: 28px;
+}
+.pov-sym-head {
+  margin-top: 48px;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.pov-sym {
+  margin: 16px 0 0;
+  padding: 0;
+  list-style: none;
+  max-width: var(--col);
+}
+/* a symptom list is a checklist the reader runs down, so each line gets its
+   own rule rather than a bullet: the same hairline the drawing uses elsewhere */
+.pov-sym li {
+  padding: 14px 0;
+  border-top: 0.5px solid var(--rule);
+  color: var(--bone);
+  font-size: 17px;
+}
+.pov-sym li:last-child {
+  border-bottom: 0.5px solid var(--rule);
+}
+
+.contact-qualifier {
+  margin-top: 28px;
+  max-width: 46ch;
+  font-size: 15px;
+  color: var(--grey-dim);
+}

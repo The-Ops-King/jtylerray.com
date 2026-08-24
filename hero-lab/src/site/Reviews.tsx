@@ -121,11 +121,18 @@ function build(width: number): Row[] {
     Math.max(72, Math.min(150, width / 9))
   );
 
+  // Deal alternating, opening with whichever group the first entry in REVIEWS
+  // belongs to. The order in receipts.ts is editorial — the receipts that
+  // evidence the work lead, see the note there — and those are all strips, so
+  // always opening on a block row threw that ordering away at the one place a
+  // reader could see it.
+  const [first, second] = isStrip(REVIEWS[0]) ? [strips, blocks] : [blocks, strips];
+
   const out: Row[] = [];
-  const max = Math.max(blocks.length, strips.length);
+  const max = Math.max(first.length, second.length);
   for (let i = 0; i < max; i++) {
-    if (blocks[i]) out.push(blocks[i]);
-    if (strips[i]) out.push(strips[i]);
+    if (first[i]) out.push(first[i]);
+    if (second[i]) out.push(second[i]);
   }
   return out;
 }

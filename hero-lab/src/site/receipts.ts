@@ -14,11 +14,15 @@
  * `w` and `h` are the capture's real pixel size. Reviews.tsx packs the wall
  * from those ratios, so the layout follows the screenshots rather than the
  * screenshots being cropped to fit a layout.
+ *
+ * Order matters here. The first five are people describing a system of mine
+ * and what it changed about their day, which is the only kind of receipt that
+ * evidences the work. The rest are colleagues on how I sold and recruited:
+ * true, and worth keeping, but they argue for a different job than this one.
  */
 
 import adminNotes from "../assets/reviews/admin-notes.png";
 import assassin from "../assets/reviews/assassin.png";
-import betterThanJm from "../assets/reviews/better-than-jm.png";
 import cheatCode from "../assets/reviews/cheat-code.png";
 import devinPowerOutage from "../assets/reviews/devin-power-outage.png";
 import leaderboardApproved from "../assets/reviews/leaderboard-approved.png";
@@ -49,6 +53,45 @@ export type Review = {
 
 export const REVIEWS: Review[] = [
   {
+    src: resultsOfTraining,
+    bg: "#d9dfd1",
+    alt: "WhatsApp: honestly nice, Juraj caught on to me using AI for my notes and call flows and asked how I was getting as many hires as I was. This is now the results of your training.",
+    tone: "light",
+    w: 490,
+    h: 79,
+  },
+  {
+    src: secondMentor,
+    bg: "#f0f0f0",
+    alt: "WhatsApp: Honestly, could replace even needing a second mentor.",
+    tone: "light",
+    w: 471,
+    h: 72,
+  },
+  {
+    src: adminNotes,
+    bg: "#dae3d5",
+    alt: "WhatsApp: dude it's the only way. With how much they expect out of us, no way am I spending hours doing admin notes.",
+    tone: "light",
+    w: 531,
+    h: 98,
+  },
+  {
+    src: likeGold,
+    bg: "#e9eaeb",
+    alt: "WhatsApp: oh yeah, absolutely not, I'm holding onto this thing like gold.",
+    tone: "light",
+    w: 501,
+    h: 72,
+  },
+  {
+    src: cheatCode,
+    bg: "#e0e1e3",
+    alt: "Message: But real talk it's your prompt. As long as I have a structured call, make a few mistakes and fix it, it's a cheat code.",
+    tone: "light",
+    w: 452,
+    h: 61,
+  },  {
     src: devinPowerOutage,
     bg: "#282b2f",
     alt: "Slack core value shoutout from Devin Bray: Tyler and Brendan stepped up during a power outage, covering interviews and keeping candidates in the loop. Kate Enriquez replies, world class right there.",
@@ -97,14 +140,6 @@ export const REVIEWS: Review[] = [
     h: 243,
   },
   {
-    src: betterThanJm,
-    bg: "#e0e1e1",
-    alt: "Facebook comment from Harinder Singh: J Tyler Ray is better than Jeremy Miner.",
-    tone: "light",
-    w: 377,
-    h: 60,
-  },
-  {
     src: zachAnyCloserRole,
     bg: "#1e1f21",
     alt: "Messenger from Zach Brown: I think pretty much any closer role I would submit you for, that I have you that kind of G.",
@@ -121,22 +156,6 @@ export const REVIEWS: Review[] = [
     h: 178,
   },
   {
-    src: resultsOfTraining,
-    bg: "#d9dfd1",
-    alt: "WhatsApp: honestly nice, Juraj caught on to me using AI for my notes and call flows and asked how I was getting as many hires as I was. This is now the results of your training.",
-    tone: "light",
-    w: 490,
-    h: 79,
-  },
-  {
-    src: secondMentor,
-    bg: "#f0f0f0",
-    alt: "WhatsApp: Honestly, could replace even needing a second mentor.",
-    tone: "light",
-    w: 471,
-    h: 72,
-  },
-  {
     src: leaderboardHires,
     bg: "#323235",
     alt: "Slack recruiting leaderboard: Most RC Hires, Tyler Ray with 21.",
@@ -144,28 +163,5 @@ export const REVIEWS: Review[] = [
     w: 603,
     h: 184,
   },
-  {
-    src: adminNotes,
-    bg: "#dae3d5",
-    alt: "WhatsApp: dude it's the only way. With how much they expect out of us, no way am I spending hours doing admin notes.",
-    tone: "light",
-    w: 531,
-    h: 98,
-  },
-  {
-    src: likeGold,
-    bg: "#e9eaeb",
-    alt: "WhatsApp: oh yeah, absolutely not, I'm holding onto this thing like gold.",
-    tone: "light",
-    w: 501,
-    h: 72,
-  },
-  {
-    src: cheatCode,
-    bg: "#e0e1e3",
-    alt: "Message: But real talk it's your prompt. As long as I have a structured call, make a few mistakes and fix it, it's a cheat code.",
-    tone: "light",
-    w: 452,
-    h: 61,
-  },
+
 ];

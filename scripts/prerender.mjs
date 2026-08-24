@@ -84,7 +84,7 @@ async function findPortrait(dist) {
 /* ── the block that goes in #root ──────────────────────────────────── */
 
 function body(c, reviews) {
-  const { HERO, RAIL, WHAT_I_DO, SUITE, TIMELINE, CONTACT, CONTACT_URL, EMAIL, BOOKING } = c;
+  const { HERO, POV, RAIL, WHAT_I_DO, SUITE, TIMELINE, CONTACT, CONTACT_URL, EMAIL, BOOKING } = c;
 
   const rail = RAIL.map(
     (r) => `<li><strong>${esc(r.label)}</strong> — ${esc(r.sub)}</li>`
@@ -137,6 +137,11 @@ function body(c, reviews) {
           <a class="pre-cta pre-cta-ghost" href="${esc(BOOKING)}">Book a call</a>
         </p>
 
+        <h2>${esc(POV.headline)}</h2>
+        ${POV.prose.map((p) => `<p>${esc(p)}</p>`).join('')}
+        <p class="pre-note">${esc(POV.symptomsHead)}</p>
+        <ul>${POV.symptoms.map((sym) => `<li>${esc(sym)}</li>`).join('')}</ul>
+
         <h2>What I build</h2>
         <ul>${rail}</ul>
 
@@ -153,6 +158,7 @@ function body(c, reviews) {
 
         <h2>05 · ${esc(CONTACT.headline)}</h2>
         <p>${esc(CONTACT.line)}</p>
+        <p>${esc(CONTACT.qualifier)}</p>
         <p><a href="mailto:${esc(EMAIL)}">${esc(EMAIL)}</a> · <a href="${esc(CONTACT_URL)}">Contact card</a></p>
       </main>`;
 }
@@ -160,7 +166,7 @@ function body(c, reviews) {
 /* ── the block that goes in <head> ─────────────────────────────────── */
 
 function head(c, description, portrait) {
-  const { HERO, RAIL, SUITE, WHAT_I_DO, EMAIL, CONTACT_URL } = c;
+  const { POV, RAIL, SUITE, WHAT_I_DO, EMAIL, CONTACT_URL } = c;
   const title = 'J. Tyler Ray — Systems & Operations';
 
   /* Claims are the page's own. Nothing is asserted here that a reader would
@@ -172,7 +178,7 @@ function head(c, description, portrait) {
     url: `${SITE}/`,
     description,
     areaServed: 'US',
-    slogan: HERO.eyebrow,
+    slogan: POV.headline,
     knowsAbout: RAIL.flatMap((r) => [r.label, ...r.sub.split(' · ')]),
     founder: {
       '@type': 'Person',

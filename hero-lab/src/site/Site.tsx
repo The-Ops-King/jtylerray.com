@@ -10,6 +10,7 @@ import {
   CONTACT_URL,
   EMAIL,
   HERO,
+  POV,
   RAIL,
   TIMELINE,
   WHAT_I_DO,
@@ -37,6 +38,7 @@ export default function Site() {
     <div className="site" data-mark="color" data-eyebrow="wide">
       <SmoothScroll />
       <Hero />
+      <Argument />
       <WhatIDo />
       <Work />
       <WhoIAm />
@@ -148,6 +150,35 @@ function Corners() {
       <span />
       <span />
     </div>
+  );
+}
+
+/* ── the argument ──────────────────────────────────────────────────── */
+
+/** The thesis, between the hero and the numbered sections.
+ *
+ * It carries no index numeral on purpose. The register from 01 to 05 answers
+ * questions about me; this answers the one the reader arrived with, so
+ * numbering it would file it as another section about the work.
+ */
+function Argument() {
+  return (
+    <section className="section pov" id="why">
+      <div className="col">
+        <h2 className="display pov-head">{POV.headline}</h2>
+        <div className="prose pov-prose">
+          {POV.prose.map((p) => (
+            <p key={p.slice(0, 32)}>{p}</p>
+          ))}
+        </div>
+        <p className="mono pov-sym-head">{POV.symptomsHead}</p>
+        <ul className="pov-sym">
+          {POV.symptoms.map((sym) => (
+            <li key={sym}>{sym}</li>
+          ))}
+        </ul>
+      </div>
+    </section>
   );
 }
 
@@ -277,6 +308,9 @@ function Contact() {
         </a>
         {/* not everyone books a call, and they should not have to */}
         <p className="contact-email">{EMAIL}</p>
+        {/* who this is sized for, so the wrong enquiry can rule itself out
+            before it reaches the calendar */}
+        <p className="contact-qualifier">{CONTACT.qualifier}</p>
       </div>
     </section>
   );
