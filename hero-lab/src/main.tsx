@@ -16,8 +16,12 @@ import "./themes.css";
    localhost/card, /brand-1 and /new-home are all the same port. In a build the
    env flag decides, because each target ships alone. */
 const path = location.pathname;
-const card = import.meta.env.VITE_CARD || path.startsWith("/card");
-const lab = import.meta.env.VITE_LAB || path.startsWith("/brand-1");
+/* Exact match, not a prefix. The site rewrites every unmatched URL to this
+   HTML, so `startsWith` meant /cardiology and /brand-1-old both booted a root
+   that does not belong at that address. */
+const at = (root: string) => path === root || path === root + "/";
+const card = import.meta.env.VITE_CARD || at("/card");
+const lab = import.meta.env.VITE_LAB || at("/brand-1");
 
 const load = card
   ? () => import("./card/Card")

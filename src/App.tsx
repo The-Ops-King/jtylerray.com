@@ -1,26 +1,14 @@
 import Hero from './components/Hero';
-import RealEstate from './components/RealEstate';
-import Apply from './components/Apply';
 
+/**
+ * The old landing page, served at /legacy.
+ *
+ * It used to route /apply and /real-estate to their own screens. Both of those
+ * paths have been permanently redirected to / in vercel.json since the
+ * applications were retired, so neither branch could run and both screens have
+ * been deleted. What is left is the page itself.
+ */
 function App() {
-  const path = window.location.pathname.replace(/\/$/, '');
-
-  if (path === '/real-estate') {
-    return (
-      <main className="min-h-screen bg-bg">
-        <RealEstate />
-      </main>
-    );
-  }
-
-  if (path === '/apply') {
-    return (
-      <main className="min-h-screen bg-bg">
-        <Apply />
-      </main>
-    );
-  }
-
   return (
     <main className="min-h-screen bg-bg">
       <Hero />

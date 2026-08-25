@@ -54,23 +54,8 @@ const alpha = (hex: string, a: number) => {
   return `rgba(${r}, ${g}, ${b}, ${a})`;
 };
 
-const hue = (hex: string) => {
-  const [r, g, b] = rgb(hex).map((v) => v / 255);
-  const max = Math.max(r, g, b);
-  const min = Math.min(r, g, b);
-  const d = max - min;
-  if (d === 0) return 0;
-  const h =
-    max === r ? ((g - b) / d) % 6 : max === g ? (b - r) / d + 2 : (r - g) / d + 4;
-  return (h * 60 + 360) % 360;
-};
 
 /** true when two accents read as the same colour on screen */
-export function sameFamily(a: string, b: string, tolerance = 30) {
-  const d = Math.abs(hue(a) - hue(b));
-  return Math.min(d, 360 - d) < tolerance;
-}
-
 export function applyAccent(hex: string, gradient?: string, text?: string) {
   const root = document.documentElement.style;
   // fills use the accent as-is; type uses the lifted variant when one exists

@@ -18,8 +18,6 @@ import {
 import WorkSuite from "./WorkSuite";
 import DriftWall from "./DriftWall";
 import Reviews from "./Reviews";
-/* the rail's own rules, borrowed from the lab layout of the same name */
-import "../variants/variants.css";
 import "./site.css";
 
 /**

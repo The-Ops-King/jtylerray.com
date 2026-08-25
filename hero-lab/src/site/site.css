@@ -75,6 +75,32 @@ html:has(.site) body {
   font-weight: 400;
 }
 
+/* ── the hero rail ────────────────────────────────────────────────── */
+
+/* Lifted out of variants/variants.css. The page used to import that whole
+   sheet for these seven rules, which meant every visitor downloaded the
+   styles for eleven lab layouts the page never renders. The lab keeps its
+   own copy there; this is the page's. The `.site .v1-*` rules further down
+   still refine what is set here. */
+.v1-body {
+  flex: 1;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 300px;
+  gap: clamp(32px, 6vw, 88px);
+  align-items: center;
+  padding-top: 4vh;
+}
+.v1-left > * + * { margin-top: 28px; }
+.v1-rail { border-left: 1px solid var(--hair); padding-left: 22px; display: flex; flex-direction: column; gap: 20px; }
+.v1-row { display: grid; grid-template-columns: 26px minmax(0, 1fr); gap: 12px; align-items: start; }
+.v1-idx { font-size: 11px; color: var(--accent); letter-spacing: 0.06em; padding-top: 2px; }
+.v1-k { font-size: 15px; letter-spacing: -0.01em; }
+.v1-t { font-size: 11px; color: var(--grey-dim); letter-spacing: 0.04em; margin-top: 4px; }
+@media (max-width: 900px) {
+  .v1-body { grid-template-columns: 1fr; align-items: start; }
+  .v1-rail { display: none; }
+}
+
 /* ── sections ─────────────────────────────────────────────────────── */
 
 .section {
@@ -492,9 +518,6 @@ html:has(.site) body {
 
 /* header, featured entries and register are one pinning block: the panel
    releases the moment the last register row passes, not at the CTA */
-.work-flow {
-  max-width: none;
-}
 
 /* Part 1 — the header. Nothing pins here: the framing line was the only
    reason the pin existed, and it is gone. */
@@ -506,11 +529,6 @@ html:has(.site) body {
 .work-head .section-label {
   margin-bottom: 24px;
 }
-.work .register-caption {
-  font-size: 11px;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
 
 /* Part 2 — the parts schedule. Dense, numbered, static. */
 .register {
@@ -520,44 +538,6 @@ html:has(.site) body {
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 0 64px;
   align-items: start;
-}
-.register-col > .reg-group + .reg-group {
-  margin-top: 48px;
-}
-.work .reg-cat {
-  font-size: 11px;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--bone);
-  padding-bottom: 24px;
-}
-.reg-group:first-child .reg-cat {
-  padding-top: 0;
-}
-.reg-row {
-  display: grid;
-  grid-template-columns: 48px minmax(0, 1fr);
-  align-items: start;
-  min-height: 44px;
-  padding: 14px 0;
-  border-bottom: 0.5px solid rgba(138, 133, 124, 0.08);
-}
-.work .reg-n {
-  font-size: 11px;
-  letter-spacing: 0.08em;
-  color: var(--grey-dim);
-  padding-top: 2px;
-}
-.work .reg-t {
-  font-family: var(--sans);
-  font-weight: 400;
-  font-size: 14px;
-  line-height: 1.5;
-  letter-spacing: 0;
-  color: var(--grey-mid);
-}
-.work .cta-link {
-  margin-top: 96px;
 }
 /* ── 03 · who I am ────────────────────────────────────────────────── */
 
@@ -802,11 +782,6 @@ html:has(.site) body {
     grid-template-columns: 1fr;
     gap: 0;
   }
-  .register-col + .register-col {
-    /* the differential offset is meaningless in one column */
-    transform: none !important;
-    margin-top: 44px;
-  }
   .timeline-track {
     left: 0;
   }
@@ -831,9 +806,6 @@ html:has(.site) body {
     right: auto;
     margin: 0;
     width: 18px;
-  }
-  .about-portrait {
-    width: 120px;
   }
   .foot-in {
     flex-direction: column;
