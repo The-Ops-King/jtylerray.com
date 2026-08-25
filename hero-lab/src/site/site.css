@@ -720,11 +720,11 @@ html:has(.site) body {
   padding-top: var(--pad);
   padding-bottom: var(--pad);
 }
-/* scoped to .site so it beats `.site .display`, which is two classes and was
-   silently overriding this with the hero's own size. The closing ask is not a
-   second hero: it sits below the point of view, not above it. */
-.site .contact-head {
-  font-size: clamp(32px, 4.4vw, 56px);
+/* No font-size here on purpose. The size is `.site .display`'s, which is two
+   classes and wins over anything set on this one alone: the contact head is
+   meant to land at the hero's weight. A declaration of its own would be
+   overridden and would read as though this were the smaller size. */
+.contact-head {
   max-width: 18ch;
 }
 .contact .lede {
