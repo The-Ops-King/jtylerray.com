@@ -1,8 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  Two pages, because there are two pages. /apply and /real-estate were
-  retired on 2026-08-13 and now redirect to the root; /brand-1 and /legacy
-  are reachable by direct URL only and are disallowed in robots.txt.
+  Two pages, because there are two pages. /apply, /real-estate and /resume
+  were retired and now redirect to the root; the old landing page at /legacy
+  was removed with them. /brand-1 is the design lab, reachable by direct URL
+  only and disallowed in robots.txt.
 -->
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>

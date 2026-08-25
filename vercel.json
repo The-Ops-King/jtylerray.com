@@ -1,4 +1,6 @@
 {
+  "framework": null,
+  "outputDirectory": "dist",
   "redirects": [
     { "source": "/new-home", "destination": "/", "permanent": true },
     { "source": "/new-home/", "destination": "/", "permanent": true },
@@ -12,7 +14,6 @@
     { "source": "/real-estate/", "destination": "/", "permanent": true }
   ],
   "rewrites": [
-    { "source": "/legacy", "destination": "/legacy.html" },
     { "source": "/brand-1", "destination": "/brand-1/index.html" },
     { "source": "/brand-1/", "destination": "/brand-1/index.html" },
     { "source": "/card", "destination": "/card/index.html" },

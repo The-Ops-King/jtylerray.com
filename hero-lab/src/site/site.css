@@ -720,7 +720,10 @@ html:has(.site) body {
   padding-top: var(--pad);
   padding-bottom: var(--pad);
 }
-.contact-head {
+/* scoped to .site so it beats `.site .display`, which is two classes and was
+   silently overriding this with the hero's own size. The closing ask is not a
+   second hero: it sits below the point of view, not above it. */
+.site .contact-head {
   font-size: clamp(32px, 4.4vw, 56px);
   max-width: 18ch;
 }

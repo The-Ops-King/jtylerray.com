@@ -5,9 +5,8 @@ import { Resend } from 'resend';
  * POST /api/book — the form on jtylerray.com/card.
  *
  * Five fields, mailed on as they were typed with the sender as the reply-to
- * address, so answering is a reply rather than a copy-paste. Same env vars as
- * /api/apply: RESEND_API_KEY (required), RESEND_FROM and NOTIFY_EMAIL
- * (optional).
+ * address, so answering is a reply rather than a copy-paste. Env vars:
+ * RESEND_API_KEY (required), RESEND_FROM and NOTIFY_EMAIL (optional).
  */
 
 const FROM = process.env.RESEND_FROM || 'Card <onboarding@resend.dev>';

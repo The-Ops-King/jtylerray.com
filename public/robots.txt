@@ -1,13 +1,11 @@
 # jtylerray.com — all crawlers and AI agents welcome
 #
-# Two pages are public: the page itself and /card. Everything disallowed
-# below is either a working file or a retired one, reachable by direct URL
-# but not worth indexing.
+# Two pages are public: the page itself and /card. /brand-1 is the design
+# lab: reachable by direct URL, not worth indexing.
 
 User-agent: *
 Allow: /
 Disallow: /brand-1
-Disallow: /legacy
 Disallow: /api/
 
 Sitemap: https://jtylerray.com/sitemap.xml
