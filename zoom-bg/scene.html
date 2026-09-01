@@ -1,0 +1,418 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>J. Tyler Ray — Zoom background</title>
+
+<!-- Fonts are vendored (latin subset only) so a render never depends on the
+     network and never silently falls back to a different face. -->
+<style>
+  @font-face {
+    font-family: "Inter Tight";
+    font-style: normal;
+    font-weight: 500;
+    font-display: block;
+    src: url("./fonts/InterTight-500-latin.woff2") format("woff2");
+  }
+  @font-face {
+    font-family: "JetBrains Mono";
+    font-style: normal;
+    font-weight: 400 500;
+    font-display: block;
+    src: url("./fonts/JetBrainsMono-latin.woff2") format("woff2");
+  }
+
+  /* ── the drawing ────────────────────────────────────────────────────
+     Same tokens as the site (hero-lab/src/index.css), with two deliberate
+     departures for video:
+
+       · the grid and ticks sit a couple of alpha steps brighter. H.264 at
+         4:2:0 throws away most of a 0.028-alpha hairline; on a call the
+         sheet has to survive the encoder, not a retina display.
+       · the beam core is 2px, not 1px. Chroma is subsampled 2x2 in
+         yuv420p, so a 1px green line arrives at the far end as a grey one.
+     ─────────────────────────────────────────────────────────────────── */
+  :root {
+    --ink: #0c0b0a;
+    --ink-deep: #070605;
+    --bone: #f5f3ee;
+    --accent: #3f7d5c;
+    --accent-text: #5e9e78;
+    --struct: 138, 133, 124;
+
+    /* the frame the corner brackets mark, and the track the beam runs.
+       Inset from the true edge so Zoom cannot crop the beam off if a call
+       is ever composited at anything but a clean 16:9. */
+    --fx: 66px;
+    --fy: 68px;
+    --fr: 66px;   /* right inset */
+    --fb: 68px;   /* bottom inset */
+
+    --cell: 160px;
+    /* grid origin: verticals key to the frame's left edge, horizontals to a
+       row that lands exactly on the ruler baseline, so ticks, grid and
+       brackets are all one drawing rather than three overlays */
+    --grid-x: 66px;
+    --grid-y: 96px;
+    --ruler-y: 256px;
+
+    --hair: rgba(var(--struct), 0.07);
+    --tick-major: rgba(var(--struct), 0.17);
+    --tick-minor: rgba(var(--struct), 0.10);
+    --bracket: rgba(var(--struct), 0.34);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html, body {
+    width: 1920px;
+    height: 1080px;
+    overflow: hidden;
+    background: var(--ink);
+  }
+
+  .stage {
+    position: relative;
+    width: 1920px;
+    height: 1080px;
+    background: var(--ink);
+    /* no font smoothing switches: the render is one fixed target, and the
+       default is what the reference frame was drawn against */
+  }
+
+  /* the sheet: 1px blueprint rules on a 160px cell */
+  .grid {
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(to right, var(--hair) 1px, transparent 1px),
+      linear-gradient(to bottom, var(--hair) 1px, transparent 1px);
+    background-size: var(--cell) var(--cell);
+    background-position: var(--grid-x) var(--grid-y);
+  }
+
+  /* the ruler along the top of the frame — major every cell, minor every
+     quarter cell, hanging from a hairline datum */
+  .ruler {
+    position: absolute;
+    left: var(--fx);
+    right: var(--fr);
+    top: var(--ruler-y);
+    height: 14px;
+  }
+  .ruler::before {
+    content: "";
+    position: absolute;
+    inset: 0 0 auto 0;
+    height: 1px;
+    background: rgba(var(--struct), 0.09);
+  }
+  .ruler-minor,
+  .ruler-major {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+  }
+  .ruler-minor {
+    height: 7px;
+    background-image: repeating-linear-gradient(
+      to right, var(--tick-minor) 0 1px, transparent 1px 40px);
+  }
+  .ruler-major {
+    height: 14px;
+    background-image: repeating-linear-gradient(
+      to right, var(--tick-major) 0 1px, transparent 1px 160px);
+  }
+
+  /* the side rulers — one dash per major row, on both inner edges */
+  .rail {
+    position: absolute;
+    top: var(--ruler-y);
+    height: 641px; /* 256 → 896, the five major rows inside the frame */
+    width: 16px;
+    background-image: repeating-linear-gradient(
+      to bottom, var(--tick-major) 0 1px, transparent 1px 160px);
+  }
+  .rail-l { left: var(--fx); }
+  .rail-r { right: var(--fr); }
+
+  /* registration brackets: the frame is implied by its corners, not drawn */
+  .bracket {
+    position: absolute;
+    width: 40px;
+    height: 40px;
+    border: 0 solid var(--bracket);
+  }
+  .bracket.tl { left: var(--fx);  top: var(--fy);    border-left-width: 1px; border-top-width: 1px; }
+  .bracket.tr { right: var(--fr); top: var(--fy);    border-right-width: 1px; border-top-width: 1px; }
+  .bracket.bl { left: var(--fx);  bottom: var(--fb); border-left-width: 1px; border-bottom-width: 1px; }
+  .bracket.br { right: var(--fr); bottom: var(--fb); border-right-width: 1px; border-bottom-width: 1px; }
+
+  /* ── type ─────────────────────────────────────────────────────────── */
+  .masthead {
+    position: absolute;
+    left: 138px;
+    top: 122px;
+  }
+  .wordmark {
+    display: block;
+    font-family: "Inter Tight", sans-serif;
+    font-weight: 500;
+    font-size: 58px;
+    line-height: 1;
+    letter-spacing: -0.028em;
+    color: var(--bone);
+  }
+  .descriptor {
+    display: block;
+    margin-top: 16px;
+    font-family: "JetBrains Mono", monospace;
+    font-weight: 500;
+    font-size: 15px;
+    letter-spacing: 0.42em;
+    text-transform: uppercase;
+    color: var(--accent-text);
+  }
+
+  .footline {
+    position: absolute;
+    left: 138px;
+    right: 138px;
+    bottom: 133px;
+    display: flex;
+    justify-content: space-between;
+    font-family: "JetBrains Mono", monospace;
+    font-weight: 500;
+    font-size: 15px;
+    letter-spacing: 0.36em;
+  }
+  .site { color: rgba(245, 243, 238, 0.62); }
+  /* letter-spacing leaves a trailing gap after the last glyph, which pulls a
+     right-aligned run off the margin it is supposed to sit on */
+  .handle { color: var(--accent-text); margin-right: -0.36em; }
+
+  /* ── ground ───────────────────────────────────────────────────────── */
+  /* a vignette, so the corners sit back and the sitter reads as lit */
+  .vignette {
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(
+      124% 104% at 50% 46%, transparent 42%, rgba(7, 6, 5, 0.74) 100%);
+  }
+
+  /* static grain. Two jobs: it dithers the vignette so H.264 cannot band it,
+     and because it never changes between frames the encoder pays for it once
+     in the keyframe and nothing after. */
+  .grain {
+    position: absolute;
+    inset: 0;
+    opacity: 0.05;
+    background-image: url("data:image/svg+xml;utf8,\
+<svg xmlns='http://www.w3.org/2000/svg' width='240' height='240'>\
+<filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' seed='7'/>\
+<feColorMatrix type='saturate' values='0'/></filter>\
+<rect width='240' height='240' filter='url(%23n)'/></svg>");
+    background-size: 240px 240px;
+  }
+
+  .beam {
+    position: absolute;
+    inset: 0;
+  }
+</style>
+</head>
+<body>
+<div class="stage">
+  <div class="grid"></div>
+
+  <div class="ruler">
+    <div class="ruler-minor"></div>
+    <div class="ruler-major"></div>
+  </div>
+  <div class="rail rail-l"></div>
+  <div class="rail rail-r"></div>
+
+  <span class="bracket tl"></span>
+  <span class="bracket tr"></span>
+  <span class="bracket bl"></span>
+  <span class="bracket br"></span>
+
+  <div class="masthead">
+    <span class="wordmark" id="wordmark">J. Tyler Ray</span>
+    <span class="descriptor" id="descriptor">Systems &amp; Operations</span>
+  </div>
+
+  <div class="footline">
+    <span class="site" id="site">jtylerray.com</span>
+    <span class="handle" id="handle">@jtylerray</span>
+  </div>
+
+  <!-- ── the beam ───────────────────────────────────────────────────────
+       The site's scan line, taken off the bottom edge and put on a circuit.
+
+       It is drawn as N short, exactly-abutting dashes on one rectangular
+       path rather than as a moving div, because that is the only version
+       that turns the corners properly: the dash follows the path, so the
+       head bends around a corner instead of a bar having to rotate at one.
+
+       Two things about the path are deliberate:
+
+       · it traces the rectangle TWICE and is left open (no `z`). An SVG dash
+         pattern does not wrap across a subpath's start, so a comet sitting on
+         the top-left corner of a closed rect would be sliced in half there.
+         Running two laps and keeping the comet in the middle of the path
+         means it is never near either end.
+       · pathLength="2000" normalises the geometry away, so every offset
+         below is in units of 1/1000th of a lap and none of this has to be
+         recomputed if the frame inset changes.
+       ─────────────────────────────────────────────────────────────────── -->
+  <svg class="beam" width="1920" height="1080" viewBox="0 0 1920 1080"
+       xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <defs>
+      <filter id="bloom-wide" filterUnits="userSpaceOnUse"
+              x="0" y="0" width="1920" height="1080">
+        <feGaussianBlur stdDeviation="14" />
+      </filter>
+      <filter id="bloom-tight" filterUnits="userSpaceOnUse"
+              x="0" y="0" width="1920" height="1080">
+        <feGaussianBlur stdDeviation="4" />
+      </filter>
+    </defs>
+    <g id="layer-wide"  filter="url(#bloom-wide)"></g>
+    <g id="layer-tight" filter="url(#bloom-tight)"></g>
+    <g id="layer-core"></g>
+  </svg>
+
+  <div class="vignette"></div>
+  <div class="grain"></div>
+</div>
+
+<script>
+/* ═══════════════════════════════════════════════════════════════════════
+   One source of truth for the render. render.mjs reads SCENE off the page
+   rather than carrying its own copy, so changing the loop here changes the
+   video and nothing has to be kept in sync by hand.
+   ═══════════════════════════════════════════════════════════════════════ */
+const SCENE = {
+  width: 1920,
+  height: 1080,
+  fps: 30,
+  /** one full circuit of the frame, in seconds */
+  durationSeconds: 14,
+
+  /** the track: must match --fx/--fy/--fr/--fb in the stylesheet */
+  frame: { x: 66, y: 68, w: 1788, h: 944 },
+
+  beam: {
+    /** head-to-tail length of the comet, in px of path travelled */
+    lengthPx: 480,
+    /** how many abutting dashes the comet is built from — more is smoother,
+        and this is an offline render, so the cost is not real */
+    segments: 64,
+    /** where the bright head sits, as a fraction back from the leading tip.
+        A short ramp in front and a long decay behind is what reads as
+        travelling rather than as a bar being dragged. */
+    headAt: 0.14,
+    /** decay exponent for the tail */
+    falloff: 2.0,
+    headColor: [0x9d, 0xe9, 0xbe],
+    tailColor: [0x2f, 0x5f, 0x45],
+  },
+};
+window.SCENE = SCENE;
+
+const PATH_LENGTH = 2000;             // two laps, normalised
+const LAP = PATH_LENGTH / 2;          // one lap in normalised units
+
+const { x, y, w, h } = SCENE.frame;
+const perimeterPx = 2 * (w + h);
+const unitsPerPx = LAP / perimeterPx;
+
+const beamUnits = SCENE.beam.lengthPx * unitsPerPx;
+const N = SCENE.beam.segments;
+const segUnits = beamUnits / N;
+
+/* the rectangle, twice, open. Clockwise from the top-left corner. */
+const lap = `H ${x + w} V ${y + h} H ${x} V ${y}`;
+const d = `M ${x} ${y} ${lap} ${lap}`;
+
+/** comet profile: quick ramp up to the head, long decay behind it.
+ *  p = 0 at the leading tip, 1 at the end of the tail. */
+function intensityAt(p) {
+  const { headAt, falloff } = SCENE.beam;
+  if (p < headAt) return p / headAt;
+  return Math.pow((1 - p) / (1 - headAt), falloff);
+}
+
+function mix(a, b, t) {
+  return `rgb(${a.map((c, i) => Math.round(c + (b[i] - c) * t)).join(",")})`;
+}
+
+/** One stack of dashes. Each layer draws the same comet at a different
+ *  width and opacity; the two blurred ones underneath are the glow. */
+function buildLayer(id, { width, alpha }) {
+  const g = document.getElementById(id);
+  const segs = [];
+  for (let i = 0; i < N; i++) {
+    // sample the profile at the middle of the segment
+    const p = (i + 0.5) / N;
+    const intensity = intensityAt(p);
+
+    const seg = document.createElementNS("http://www.w3.org/2000/svg", "path");
+    seg.setAttribute("d", d);
+    seg.setAttribute("pathLength", String(PATH_LENGTH));
+    seg.setAttribute("fill", "none");
+    seg.setAttribute("stroke", mix(SCENE.beam.tailColor, SCENE.beam.headColor, intensity));
+    seg.setAttribute("stroke-width", String(width));
+    // butt caps and an exact segUnits dash: the pieces abut without
+    // overlapping, so the tail is a smooth ramp rather than a stack of
+    // semi-transparent edges compositing into bright seams
+    seg.setAttribute("stroke-linecap", "butt");
+    seg.setAttribute("stroke-linejoin", "miter");
+    seg.setAttribute("stroke-miterlimit", "4");
+    seg.setAttribute("stroke-dasharray", `${segUnits} ${PATH_LENGTH - segUnits}`);
+    seg.setAttribute("opacity", String(intensity * alpha));
+    g.appendChild(seg);
+    segs.push(seg);
+  }
+  return segs;
+}
+
+const layers = [
+  buildLayer("layer-wide",  { width: 13, alpha: 0.30 }),
+  buildLayer("layer-tight", { width: 6,  alpha: 0.55 }),
+  buildLayer("layer-core",  { width: 2,  alpha: 1.0  }),
+];
+
+/**
+ * Place the comet for frame `f`.
+ *
+ * Nothing here reads a clock. The whole animation is a pure function of the
+ * frame index, which is what makes the render deterministic and the loop
+ * exact: frame 0 and frame totalFrames are the same picture, so Zoom's own
+ * loop has no seam to show.
+ */
+function setFrame(f) {
+  const total = SCENE.fps * SCENE.durationSeconds;
+  const phase = ((f % total) + total) % total / total;   // [0, 1)
+
+  // Keep the comet in the middle of the two-lap path, well clear of either
+  // end, so no dash is ever clipped by the start or finish of the path.
+  const head = LAP / 2 + phase * LAP;
+
+  for (const segs of layers) {
+    for (let i = 0; i < N; i++) {
+      // segment i occupies [head - (i+1)*segUnits, head - i*segUnits];
+      // dash-offset is the negation of where the dash begins
+      const start = head - (i + 1) * segUnits;
+      segs[i].setAttribute("stroke-dashoffset", String(-start));
+    }
+  }
+}
+window.setFrame = setFrame;
+
+setFrame(0);
+</script>
+</body>
+</html>
