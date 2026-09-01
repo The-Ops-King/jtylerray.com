@@ -46,6 +46,36 @@ function escapeHtml(s: string): string {
   return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
 
+/** the applicant-typed fields, in the order the Sheet's columns run */
+const SHEET_TEXT: (keyof Payload)[] = [
+  'firstName',
+  'lastName',
+  'email',
+  'phone',
+  'facebook',
+  'videoUrl',
+  'experience',
+];
+
+/**
+ * Google Sheets parses a cell opening with = + - or @ as a formula, so a phone
+ * typed as "+1 480-516-3213" landed as #ERROR!. This is the Sheet's problem
+ * and it is solved on the way out, so the Apps Script never has to change.
+ *
+ * Only the Sheet copy is put through here. The email keeps exactly what the
+ * applicant typed, which is what makes dropping the + safe: the country code
+ * still exists in the inbox, on the one copy anybody dials from.
+ *
+ * The other three are pushed behind a space rather than cut. An experience box
+ * that opens with a dash is a bullet, not a minus, and deleting the character
+ * would quietly change what someone wrote about themselves.
+ */
+function sheetSafe(value: unknown): string {
+  const s = (value ?? '').toString().trim();
+  if (s.startsWith('+')) return s.replace(/^\+\s*/, '');
+  return /^[=\-@]/.test(s) ? ` ${s}` : s;
+}
+
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST') {
     return res.status(405).json({ ok: false, error: 'Method not allowed' });
@@ -80,7 +110,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(400).json({ ok: false, error: 'That email address looks wrong' });
   }
 
-  const experience = (data.experience || '').toString().trim();
   const name = `${(data.firstName || '').toString().trim()} ${(data.lastName || '')
     .toString()
     .trim()}`.trim();
@@ -91,10 +120,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   let sheetError = 'GSHEET_WEBHOOK_URL is not set';
   if (process.env.GSHEET_WEBHOOK_URL) {
     try {
+      const cells = Object.fromEntries(SHEET_TEXT.map((k) => [k, sheetSafe(data[k])]));
       const sr = await fetch(process.env.GSHEET_WEBHOOK_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...data, name, experience, submittedAt, source: 'apply' }),
+        body: JSON.stringify({ ...data, ...cells, name, submittedAt, source: 'apply' }),
       });
       sheetOk = sr.ok;
       if (!sheetOk) sheetError = `Sheet responded ${sr.status}`;

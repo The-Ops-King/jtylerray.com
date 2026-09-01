@@ -5,6 +5,11 @@
  * row, and it is the record: if this is not deployed, GSHEET_WEBHOOK_URL is
  * unset and applications live only in the inbox.
  *
+ * The formula guard below is belt and braces. api/apply.ts already sanitises
+ * every applicant-typed value on the way out, so a deployment still running an
+ * older copy of this file is fine — this only matters if that handler ever
+ * stops doing it.
+ *
  * SETUP (one time):
  *  1. Create the Google Sheet you want applicants in — name it whatever you
  *     like; this writes to the first tab.
