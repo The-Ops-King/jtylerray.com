@@ -153,24 +153,24 @@
   .masthead {
     position: absolute;
     left: 138px;
-    top: 122px;
+    top: 116px;
   }
   .wordmark {
     display: block;
     font-family: "Inter Tight", sans-serif;
     font-weight: 500;
-    font-size: 58px;
+    font-size: 68px;
     line-height: 1;
     letter-spacing: -0.028em;
     color: var(--bone);
   }
   .descriptor {
     display: block;
-    margin-top: 16px;
+    margin-top: 18px;
     font-family: "JetBrains Mono", monospace;
     font-weight: 500;
-    font-size: 15px;
-    letter-spacing: 0.42em;
+    font-size: 20px;
+    letter-spacing: 0.34em;
     text-transform: uppercase;
     color: var(--accent-text);
   }
@@ -184,13 +184,15 @@
     justify-content: space-between;
     font-family: "JetBrains Mono", monospace;
     font-weight: 500;
-    font-size: 15px;
-    letter-spacing: 0.36em;
+    font-size: 20px;
+    letter-spacing: 0.28em;
   }
-  .site { color: rgba(245, 243, 238, 0.62); }
+  /* lifted off 0.62: thin mono on near-black is the first thing H.264 gives
+     back to the background */
+  .site { color: rgba(245, 243, 238, 0.74); }
   /* letter-spacing leaves a trailing gap after the last glyph, which pulls a
      right-aligned run off the margin it is supposed to sit on */
-  .handle { color: var(--accent-text); margin-right: -0.36em; }
+  .handle { color: var(--accent-text); margin-right: -0.28em; }
 
   /* ── ground ───────────────────────────────────────────────────────── */
   /* a vignette, so the corners sit back and the sitter reads as lit */
