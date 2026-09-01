@@ -140,3 +140,26 @@ That app is `/legacy` now. The live site is the black-and-green build in
 
 **Still to do by hand:** deploy the Apps Script and set `GSHEET_WEBHOOK_URL` in
 Vercel. Until then applications arrive by email only.
+
+## 2026-09-01 — /apply live, and the Apps Script access trap
+
+Shipped to production (`main` @ 8a8fc06). Live at jtylerray.com/apply.
+
+**The one thing that cost two rounds.** The first Apps Script deployment was
+scoped to the Workspace domain, not public. Its URL gave it away — a
+domain-scoped web app is served at
+`script.google.com/a/macros/<domain>/s/<id>/exec`, and a public one at
+`script.google.com/macros/s/<id>/exec`. A Vercel function has no Google login,
+so the domain-scoped one returned 401 on every POST, forever. The fix is
+**Who has access: Anyone** — not "Anyone with Google Account", not "Anyone
+within jtylerray.com". If a webhook ever goes quiet, POST to it directly
+before touching any code: a 401 with an HTML body is this, every time.
+
+**Vercel env (project kravok/jtylerray.com).** `GSHEET_WEBHOOK_URL` is set for
+Production and Development and points at the closer-application sheet. It had
+been sitting on the old real-estate sheet's webhook since ~June. `RESEND_FROM`
+and `RESEND_API_KEY` were already there. Env changes need a redeploy to take —
+`vercel redeploy <prod-url>` rebuilds without touching git.
+
+Verified end to end against production: `{"ok":true,"sheet":true,"email":true}`,
+and the honeypot returns a bare `{"ok":true}` having written nothing.
