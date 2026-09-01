@@ -6,8 +6,6 @@
     { "source": "/resume/", "destination": "/", "permanent": true },
     { "source": "/resume.html", "destination": "/", "permanent": true },
     { "source": "/work", "destination": "/", "permanent": true },
-    { "source": "/apply", "destination": "/", "permanent": true },
-    { "source": "/apply/", "destination": "/", "permanent": true },
     { "source": "/real-estate", "destination": "/", "permanent": true },
     { "source": "/real-estate/", "destination": "/", "permanent": true }
   ],
@@ -17,6 +15,8 @@
     { "source": "/brand-1/", "destination": "/brand-1/index.html" },
     { "source": "/card", "destination": "/card/index.html" },
     { "source": "/card/", "destination": "/card/index.html" },
+    { "source": "/apply", "destination": "/apply/index.html" },
+    { "source": "/apply/", "destination": "/apply/index.html" },
     { "source": "/(.*)", "destination": "/index.html" }
   ]
 }

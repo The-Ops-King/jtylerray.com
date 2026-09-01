@@ -94,3 +94,49 @@
    - Noise texture overlay for premium feel
    - All animations use Framer Motion with long, smooth easeInOut transitions
    - Updated Hero.tsx to use KingdomBackground instead of LightRays
+
+---
+
+## 2026-09-01 — /apply is back, as the closer application
+
+Branch: `feature/apply-closer`, cut from `origin/main` (850e55b).
+
+**Context first, because it matters.** The working copy in this folder was 20+
+commits behind `origin/main` and still held the black-and-gold Tailwind app.
+That app is `/legacy` now. The live site is the black-and-green build in
+`hero-lab/`, whose tokens are `--ink #0c0b0a`, `--bone #f5f3ee`, `--accent
+#3F7D5C`. `/apply` and `/real-estate` were retired on 2026-08-13 and
+`api/apply.ts` was deleted with them.
+
+**What was built**
+
+- `hero-lab/src/apply/` — a fourth build target next to the page, the card and
+  the lab. `Apply.tsx` imports `card/card.css` rather than restyling anything,
+  so the fields, buttons and block heads are literally the card's; `apply.css`
+  only adds the lede, the three terms, and the experience list.
+- Fields: first name, last name, email, phone, Facebook profile, and one
+  high-ticket experience box (all required), plus an intro-video link marked
+  optional and highly recommended, and an off-screen honeypot. The experience
+  started as a repeatable company/offer/dates list and was cut back to one box
+  on 2026-09-01 — a closer describing their own record beats the same person
+  filling in three date ranges.
+- Contrast is lifted over the card's, scoped to `.apply`: labels go from
+  `--grey-dim` (~3:1 on `--ink`, under AA) to `#b5afa4` (~9:1), inputs get a
+  visible edge and well, and focus adds a green ring. The card keeps its own
+  calibration — it is glanced at, this page is typed into.
+- `api/apply.ts` — appends to the hiring Google Sheet through an Apps Script
+  web app (`GSHEET_WEBHOOK_URL`) and mails a copy through Resend. A submission
+  succeeds if either sink took it; only both failing returns a 502, so one
+  service being down never loses an application.
+- `Resources/apply-sheet.gs` — the Apps Script, with its one-time setup. The
+  columns are Submitted At, First, Last, Email, Phone, Facebook, Intro Video,
+  Experience.
+- Routing: the `/apply` **301 to the root is removed** and replaced with a
+  rewrite to `/apply/index.html`. That redirect was permanent, so any browser
+  that hit `/apply` since 2026-08-13 has it cached and will need a hard reload.
+- `scripts/build-pages.sh`, `hero-lab/vite.config.ts`, `main.tsx` and
+  `package.json` all learned the fourth target; `public/apply/` is the
+  committed bundle, as the other targets are.
+
+**Still to do by hand:** deploy the Apps Script and set `GSHEET_WEBHOOK_URL` in
+Vercel. Until then applications arrive by email only.
