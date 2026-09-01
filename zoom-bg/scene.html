@@ -56,10 +56,15 @@
     --grid-y: 96px;
     --ruler-y: 256px;
 
-    --hair: rgba(var(--struct), 0.07);
-    --tick-major: rgba(var(--struct), 0.17);
-    --tick-minor: rgba(var(--struct), 0.10);
-    --bracket: rgba(var(--struct), 0.34);
+    /* All four are set for a video call, not for a screen: roughly double the
+       site's, because between H.264 and a background shown a few hundred
+       pixels wide there is almost nothing left of a hairline drawn at the
+       site's own alpha. Turn these down together if the drawing ever starts
+       competing with the person sitting in front of it. */
+    --hair: rgba(var(--struct), 0.17);
+    --tick-major: rgba(var(--struct), 0.38);
+    --tick-minor: rgba(var(--struct), 0.24);
+    --bracket: rgba(var(--struct), 0.68);
   }
 
   * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -105,7 +110,7 @@
     position: absolute;
     inset: 0 0 auto 0;
     height: 1px;
-    background: rgba(var(--struct), 0.09);
+    background: rgba(var(--struct), 0.22);
   }
   .ruler-minor,
   .ruler-major {
@@ -301,7 +306,7 @@ const SCENE = {
   height: 1080,
   fps: 30,
   /** one full circuit of the frame, in seconds */
-  durationSeconds: 14,
+  durationSeconds: 30,
 
   /** the track: must match --fx/--fy/--fr/--fb in the stylesheet */
   frame: { x: 66, y: 68, w: 1788, h: 944 },

@@ -2,7 +2,7 @@
 
 A 1920x1080 looping MP4 of the site's frame, with the accent scan line taken
 off the bottom edge and put on a circuit around the whole frame. One green
-comet, one lap every 14 seconds, no seam where the loop repeats.
+comet, one lap every 30 seconds, no seam where the loop repeats.
 
 Rendered output: `out/jtr-zoom-bg-1080p.mp4`
 
@@ -36,7 +36,7 @@ Flags, all optional:
 node render.mjs --out out/other.mp4 --fps 30 --seconds 20 --crf 16
 ```
 
-Roughly three minutes for 420 frames.
+Roughly six minutes for 900 frames.
 
 ## Changing it
 
@@ -58,13 +58,16 @@ grid and Add Video. Pick the MP4. Zoom loops it on its own.
 
 The loop has no seam because nothing in the pipeline reads a clock. The page
 exposes `setFrame(i)` and `render.mjs` calls it with an integer, so frame 0 and
-frame 420 are the same picture rather than nearly the same one. It also means
+frame 900 are the same picture rather than nearly the same one. It also means
 two runs produce identical output.
 
 Two things in the scene are drawn for the encoder rather than for a screen. The
 beam core is 2px instead of the site's 1px, because H.264 subsamples chroma
-2x2 and a 1px green line arrives at the other end of the call grey. The grid
-and ticks sit a few alpha steps brighter than the site's for the same reason.
+2x2 and a 1px green line arrives at the other end of the call grey. The grid,
+ticks and corner brackets are drawn at roughly double the site's alpha for the
+same reason, compounded by the background being shown a few hundred pixels
+wide in a gallery tile. Those four values sit together in `:root` if the
+drawing ever starts competing with the person in front of it.
 There is also a layer of static grain over the vignette, which stops the
 gradient banding into rings. Since the grain never changes between frames, the
 encoder pays for it once in the keyframe and nothing after.
