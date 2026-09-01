@@ -46,7 +46,7 @@ function doPost(e) {
       sheet.setFrozenRows(1);
     }
 
-    sheet.appendRow([
+    const values = [
       data.submittedAt || new Date().toISOString(),
       data.firstName || '',
       data.lastName || '',
@@ -56,7 +56,18 @@ function doPost(e) {
       data.videoUrl || '',
       // one box on the form, one cell here — the applicant's own words
       data.experience || '',
-    ]);
+    ];
+
+    // Everything an applicant typed is written as text, and it has to be
+    // formatted that way BEFORE the value lands. Sheets parses a cell that
+    // opens with + = - or @ as a formula, so "+1 480-516-3213" arrived as
+    // #ERROR! and an experience box that opened with a dash would have gone
+    // the same way. The timestamp is left alone — column A is ours, not
+    // theirs, and it is the one column worth having as a real value.
+    const row = sheet.getLastRow() + 1;
+    const rest = HEADERS.length - 1;
+    sheet.getRange(row, 2, 1, rest).setNumberFormat('@');
+    sheet.getRange(row, 1, 1, HEADERS.length).setValues([values]);
 
     return ContentService.createTextOutput(JSON.stringify({ ok: true })).setMimeType(
       ContentService.MimeType.JSON
