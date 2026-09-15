@@ -2,14 +2,15 @@
  * Step 2: resolve. Raw ads -> one row per advertiser page -> Instagram handle (primary key) + funnel URL + ad activity.
  * Handle sources, in order: the ad's instagram_actor_name, an instagram.com link in the ad, an instagram link on the
  * funnel page (free HTTP fetch, cached). Pages with no handle go to data/unresolved.ndjson with the reason.
- * Output: data/resolved.ndjson keyed by ig_handle. Cheap step: safe to rerun with --force.
- * Usage: node src/steps/resolve.js [--force] [--no-fetch]
+ * Output: data/resolved.ndjson keyed by ig_handle. Rebuilt in full on every run (free: HTML fetches are cached), so a
+ * change to the raw data or the ignore list is reflected immediately; date_sourced is preserved from the previous file.
+ * Usage: node src/steps/resolve.js [--force: refetch funnel pages] [--no-fetch]
  */
 import fs from 'node:fs';
 import path from 'node:path';
 import { parseArgs } from '../lib/cli.js';
 import { ensureDirs, readConfig, RAW_DIR, FILES } from '../lib/paths.js';
-import { readNdjsonMap, appendNdjson, writeNdjson } from '../lib/ndjson.js';
+import { readNdjsonMap, writeNdjson } from '../lib/ndjson.js';
 import { pick } from '../lib/fields.js';
 import { normalizeHandle, handleFromUrl, findHandleInHtml, igUrl } from '../lib/handles.js';
 import { cleanUrl, fetchHtml, isSocial } from '../lib/http.js';
@@ -60,8 +61,8 @@ for (const { item, source, source_detail } of loadRaw()) {
   const active = pick(item, F.is_active); if (active == null || truthy(active)) p.active++;
 }
 
-const existing = args.force ? new Map() : readNdjsonMap(FILES.resolved);
-if (args.force) { writeNdjson(FILES.resolved, []); writeNdjson(FILES.unresolved, []); }
+const previous = readNdjsonMap(FILES.resolved);
+const existing = new Map();
 const unresolvedRows = [];
 const progress = createProgress('resolve', pages.size);
 const limit = createLimiter(3);
@@ -71,7 +72,7 @@ await Promise.all([...pages.values()].map((p) => limit(async () => {
   const funnel_url = mostCommon(p.links);
   let handle_source = handle ? 'ad' : null;
   if (!handle && funnel_url && !args.noFetch) {
-    const page = await fetchHtml(funnel_url);
+    const page = await fetchHtml(funnel_url, { force: args.force });
     handle = findHandleInHtml(page.html, IGNORED);
     if (handle) handle_source = 'funnel_page';
   }
@@ -80,7 +81,7 @@ await Promise.all([...pages.values()].map((p) => limit(async () => {
     progress.fail(`${p.page_name} unresolved`);
     return;
   }
-  if (existing.has(handle)) { progress.skip(); return; }
+  if (existing.has(handle)) { progress.skip(); return; } // two pages resolving to one handle: first wins
   const firstStart = p.starts.length ? Math.min(...p.starts) : null;
   const row = {
     ig_handle: handle,
@@ -95,12 +96,12 @@ await Promise.all([...pages.values()].map((p) => limit(async () => {
     ad_days_active: daysBetween(firstStart),
     source: p.source,
     source_detail: [...p.terms].join('; '),
-    date_sourced: TODAY,
+    date_sourced: previous.get(handle)?.date_sourced ?? TODAY,
   };
   existing.set(handle, row);
-  appendNdjson(FILES.resolved, row);
   progress.tick(`@${handle} (${handle_source}) ads=${p.active}/${p.ads} days=${row.ad_days_active}`);
 })));
+writeNdjson(FILES.resolved, [...existing.values()]);
 writeNdjson(FILES.unresolved, unresolvedRows);
 progress.done();
 console.log(`resolved: ${existing.size} handles | unresolved pages: ${unresolvedRows.length} -> ${FILES.unresolved}`);
