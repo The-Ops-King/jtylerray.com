@@ -30,9 +30,11 @@ const discovered = readNdjsonMap(DISCOVERED, 'page_id');
 const unresolved = readNdjson(FILES.unresolved);
 
 // 1) Ingest answers.
-let ingested = 0, rejected = 0;
+let ingested = 0, rejected = 0, deferred = 0;
 for (const a of readNdjson(ANSWERS)) {
   if (!a.page_id || discovered.has(String(a.page_id))) continue;
+  // A low-confidence null means "could not check properly" (search budget, blocked page): keep it re-queueable.
+  if (a.ig_handle == null && a.confidence === 'low') { deferred++; continue; }
   const handle = a.ig_handle == null ? null : normalizeHandle(a.ig_handle);
   if (a.ig_handle != null && (!handle || IGNORED.has(handle))) { rejected++; appendNdjson(FILES.classifyFailures.replace('classify-failures', 'discover-failures'), { page_id: a.page_id, error: `invalid handle ${JSON.stringify(a.ig_handle)}`, ts: new Date().toISOString() }); continue; }
   const row = { page_id: String(a.page_id), page_name: a.page_name ?? null, ig_handle: handle, evidence: a.evidence ?? null, confidence: a.confidence ?? null, model: a.model ?? 'agent', discovered_at: new Date().toISOString() };
@@ -55,7 +57,7 @@ queue.sort((a, b) => (b.ads - a.ads) || ((b.ad_days_active ?? 0) - (a.ad_days_ac
 const limited = queue.slice(0, args.limit);
 writeNdjson(QUEUE, limited);
 fs.writeFileSync(INSTRUCTIONS, instructions(limited.length));
-console.log(`[discover] ingested ${ingested} answer(s), ${rejected} rejected; known pages ${discovered.size} (${[...discovered.values()].filter((d) => d.ig_handle).length} with a handle); skipped ${JSON.stringify(skipped)}; ${limited.length} queued${queue.length > limited.length ? ` of ${queue.length}` : ''}`);
+console.log(`[discover] ingested ${ingested} answer(s), ${rejected} rejected, ${deferred} low-confidence nulls left for a later wave; known pages ${discovered.size} (${[...discovered.values()].filter((d) => d.ig_handle).length} with a handle); skipped ${JSON.stringify(skipped)}; ${limited.length} queued${queue.length > limited.length ? ` of ${queue.length}` : ''}`);
 if (limited.length) console.log(`[discover] queue: ${QUEUE}\n[discover] write answers to ${ANSWERS} then rerun this step, then rerun resolve`);
 
 function instructions(n) {
