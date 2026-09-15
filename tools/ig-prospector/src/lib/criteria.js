@@ -22,7 +22,7 @@ export function loadCriteria() {
 /** Rules that need only resolve + profile data. Applied before classify (so hopeless rows are never classified) and in filter. */
 export function buildPreRules(C) {
   return [
-    ['profile_not_found', (r) => (r.profile_found === false ? `profile_error=${r.profile_error || 'not_returned'}` : null)],
+    ['profile_not_found', (r) => (r.profile_found !== true ? `profile_error=${r.profile_found === false ? (r.profile_error || 'not_returned') : 'not_enriched_yet'}` : null)],
     ['profile_private', (r) => (C.exclude_private_profiles && r.is_private ? 'private account' : null)],
     ['min_followers', (r) => (C.min_followers != null && r.follower_count < C.min_followers ? `follower_count=${r.follower_count}` : null)],
     ['max_followers', (r) => (C.max_followers != null && r.follower_count > C.max_followers ? `follower_count=${r.follower_count}` : null)],

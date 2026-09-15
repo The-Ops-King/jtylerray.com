@@ -1,6 +1,7 @@
 /**
  * Step 1: source. Pull advertisers from the Meta Ad Library via an Apify actor, one run per search term.
- * Output: data/raw/adlib/<term-slug>.json (raw dataset, untouched) + run metadata. Cached by (actor, input) hash.
+ * Output: data/raw/adlib/<term-slug>-<inputhash>.json (raw dataset, untouched) + run metadata. Cached by (actor, input) hash;
+ * every run gets its own file, so raw data only ever accumulates.
  * Hand-imported advertisers: drop JSON files into data/raw/manual/ (see README) - they are picked up by resolve.
  * Usage: node src/steps/source.js [--force] [--limit N terms]
  */
@@ -41,7 +42,8 @@ await Promise.all(todo.map((term) => limit(async () => {
   const search_url = adLibrarySearchUrl(term, terms);
   const input = fillTemplate(actorCfg.input_template, { search_url, max_ads: terms.max_ads_per_term, active_status: terms.active_status, country: terms.country, term });
   const cacheKey = sha({ actor: actorCfg.actor_id, input });
-  const outFile = path.join(outDir, `${slug(term)}.json`);
+  // One file per (term, input) so a rerun with a different count or a --force never overwrites an earlier sample.
+  const outFile = path.join(outDir, `${slug(term)}-${cacheKey.slice(0, 8)}.json`);
   if (!args.force && cacheGet('apify-adlib', cacheKey) && fs.existsSync(outFile)) { progress.skip(); return; }
   try {
     const { items, run } = await runActor(actorCfg.actor_id, input, { timeoutSecs: actorCfg.timeout_secs, maxTotalChargeUsd: actorCfg.max_total_charge_usd_per_run, maxItems: terms.max_ads_per_term, label: term });
