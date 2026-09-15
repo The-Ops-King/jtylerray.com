@@ -50,6 +50,8 @@ for (const u of unresolved) {
   if (MAX_PAGE_LIKES != null && u.page_like_count != null && u.page_like_count > MAX_PAGE_LIKES) { skipped.page_too_big = (skipped.page_too_big || 0) + 1; continue; }
   queue.push({ page_id: String(u.page_id), page_name: u.page_name, page_profile_uri: u.page_profile_uri ?? null, page_like_count: u.page_like_count ?? null, funnel_url: u.funnel_url ?? null, ad_text: u.ad_text ?? null, ads: u.ads, ad_days_active: u.ad_days_active ?? null });
 }
+// Most-invested advertisers first: more ads and longer runs mean more budget and more ops pain.
+queue.sort((a, b) => (b.ads - a.ads) || ((b.ad_days_active ?? 0) - (a.ad_days_active ?? 0)));
 const limited = queue.slice(0, args.limit);
 writeNdjson(QUEUE, limited);
 fs.writeFileSync(INSTRUCTIONS, instructions(limited.length));
