@@ -93,8 +93,9 @@ test('ndjson append/read/map survives a torn trailing line', () => {
   assert.equal(readNdjsonMap(f).get('a').v, 2, 'later row wins');
   appendNdjson(f, { ig_handle: 'c' });
   assert.equal(readNdjson(f).length, 3, 'append after a torn line starts a fresh line');
-  writeNdjson(f, [{ ig_handle: 'z' }]);
-  assert.deepEqual(readNdjson(f), [{ ig_handle: 'z' }]);
+  writeNdjson(f, [{ ig_handle: 'z', t: 'a\u2028b\u2029c' }]);
+  assert.equal(fs.readFileSync(f, 'utf8').split('\n').filter(Boolean).length, 1, 'U+2028/2029 are escaped, one record per line');
+  assert.deepEqual(readNdjson(f), [{ ig_handle: 'z', t: 'a\u2028b\u2029c' }]);
 });
 
 test('cli flags', () => {

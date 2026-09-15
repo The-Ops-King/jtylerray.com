@@ -1,6 +1,9 @@
 import fs from 'node:fs';
 import path from 'node:path';
 
+/** JSON.stringify leaves U+2028/U+2029 raw; some line-splitters treat them as newlines. Escape so one record is always one line. */
+const serialize = (row) => JSON.stringify(row).replace(/\u2028/g, '\\u2028').replace(/\u2029/g, '\\u2029');
+
 /**
  * Read an NDJSON file into an array. Missing file -> [].
  * A line that does not parse is a write that was interrupted (process killed mid-append): it is skipped with a
@@ -35,14 +38,14 @@ export function appendNdjson(file, row) {
     const st = fs.statSync(file);
     if (st.size > 0) { const fd = fs.openSync(file, 'r'); const b = Buffer.alloc(1); fs.readSync(fd, b, 0, 1, st.size - 1); fs.closeSync(fd); if (b[0] !== 0x0a) prefix = '\n'; }
   } catch { /* file does not exist yet */ }
-  fs.appendFileSync(file, prefix + JSON.stringify(row) + '\n', 'utf8');
+  fs.appendFileSync(file, prefix + serialize(row) + '\n', 'utf8');
 }
 
 /** Atomically rewrite a whole file (tmp + rename). */
 export function writeNdjson(file, rows) {
   fs.mkdirSync(path.dirname(file), { recursive: true });
   const tmp = `${file}.tmp-${process.pid}`;
-  fs.writeFileSync(tmp, rows.map((r) => JSON.stringify(r)).join('\n') + (rows.length ? '\n' : ''), 'utf8');
+  fs.writeFileSync(tmp, rows.map(serialize).join('\n') + (rows.length ? '\n' : ''), 'utf8');
   fs.renameSync(tmp, file);
 }
 
