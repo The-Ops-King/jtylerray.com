@@ -5,7 +5,7 @@ const UA = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (
 
 /** Hosts whose pages are link-in-bio hubs: we also fetch their first outbound destination. */
 export const LINK_IN_BIO_HOSTS = ['linktr.ee', 'beacons.ai', 'stan.store', 'linkin.bio', 'bio.site', 'tap.bio', 'lnk.bio', 'msha.ke', 'hoo.be', 'snipfeed.co', 'campsite.bio', 'solo.to', 'linkpop.com', 'allmylinks.com', 'bio.link', 'linkme.bio', 'withkoji.com', 'komi.io', 'pillar.io', 'later.com'];
-const SOCIAL_HOSTS = ['instagram.com', 'facebook.com', 'fb.com', 'tiktok.com', 'youtube.com', 'youtu.be', 'twitter.com', 'x.com', 'linkedin.com', 'spotify.com', 'apple.com', 'threads.net', 'snapchat.com', 'pinterest.com', 'whatsapp.com', 'wa.me', 't.me', 'discord.gg', 'discord.com'];
+const SOCIAL_HOSTS = ['instagram.com', 'facebook.com', 'fb.com', 'fb.me', 'm.me', 'messenger.com', 'ig.me', 'tiktok.com', 'youtube.com', 'youtu.be', 'twitter.com', 'x.com', 'linkedin.com', 'spotify.com', 'apple.com', 'threads.net', 'snapchat.com', 'pinterest.com', 'whatsapp.com', 'wa.me', 't.me', 'discord.gg', 'discord.com'];
 
 function hostOf(url) { try { return new URL(url).hostname.replace(/^www\./, ''); } catch { return ''; } }
 const hostMatches = (host, list) => list.some((h) => host === h || host.endsWith('.' + h));

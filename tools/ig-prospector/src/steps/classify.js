@@ -33,16 +33,6 @@ const QUEUE = path.join(DATA_DIR, 'classify-queue.ndjson');
 const ANSWERS = path.join(DATA_DIR, 'classify-answers.ndjson');
 const INSTRUCTIONS = path.join(DATA_DIR, 'classify-instructions.md');
 
-const funnels = readNdjson(FILES.funnels);
-pruneOrphans(FILES.classified, new Set(funnels.map((r) => r.ig_handle)));
-const done = readNdjsonMap(FILES.classified);
-// Only classify rows that can still qualify: rows failing a pre-classification rule (followers, ad age, post recency,
-// profile found) are skipped here and reported by the filter step with the rule that killed them.
-const preRules = buildPreRules(loadCriteria());
-const candidates = funnels.filter((r) => !evaluate(preRules, r));
-console.log(`[classify] ${funnels.length} enriched rows, ${candidates.length} pass pre-classification rules`);
-const pending = candidates.filter((r) => args.force || !done.has(r.ig_handle)).slice(0, args.limit);
-if (args.force) removeFromNdjson(FILES.classified, new Set(pending.map((r) => r.ig_handle)));
 const promptHash = sha(SYSTEM_PROMPT);
 const modelTag = mode === 'agent' ? 'agent' : cfg.model;
 
@@ -51,10 +41,24 @@ export function buildInput(r) {
 }
 const keyFor = (input) => sha({ v: cfg.prompt_version, promptHash, model: modelTag, input });
 
+const funnels = readNdjson(FILES.funnels);
+pruneOrphans(FILES.classified, new Set(funnels.map((r) => r.ig_handle)));
+const done = readNdjsonMap(FILES.classified);
+// Only classify rows that can still qualify: rows failing a pre-classification rule (followers, ad age, post recency,
+// profile found) are skipped here and reported by the filter step with the rule that killed them.
+const preRules = buildPreRules(loadCriteria());
+const candidates = funnels.filter((r) => !evaluate(preRules, r));
+console.log(`[classify] ${funnels.length} enriched rows, ${candidates.length} pass pre-classification rules`);
+// A classified row whose input (bio, funnel text) has changed since is stale and gets re-queued.
+const isCurrent = (r) => done.has(r.ig_handle) && done.get(r.ig_handle).classification_input_hash === keyFor(buildInput(r));
+const pending = candidates.filter((r) => args.force || !isCurrent(r)).slice(0, args.limit);
+if (args.force) removeFromNdjson(FILES.classified, new Set(pending.map((r) => r.ig_handle)));
+
 function writeClassified(r, result) {
   const c = result.classification;
   const row = {
     ...r,
+    classification_input_hash: keyFor(buildInput(r)),
     first_name: c.owner_first_name,
     last_name: c.owner_last_name,
     niche: c.niche,

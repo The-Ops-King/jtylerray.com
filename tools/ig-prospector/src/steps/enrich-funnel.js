@@ -18,14 +18,16 @@ const maxChars = readConfig('classify.json').max_funnel_chars;
 const profiles = readNdjson(FILES.profiles);
 pruneOrphans(FILES.funnels, new Set(profiles.map((r) => r.ig_handle)));
 const done = readNdjsonMap(FILES.funnels);
-const pending = profiles.filter((r) => args.force || !done.has(r.ig_handle)).slice(0, args.limit);
+const inputUrl = (r) => r.funnel_url || r.bio_link || null;
+// Redo a row when the upstream url changed (e.g. resolve stopped treating a Meta short link as a funnel).
+const pending = profiles.filter((r) => args.force || !done.has(r.ig_handle) || done.get(r.ig_handle).funnel_input_url !== inputUrl(r)).slice(0, args.limit);
 if (args.force) removeFromNdjson(FILES.funnels, new Set(pending.map((r) => r.ig_handle)));
 const progress = createProgress('enrich-funnel', pending.length);
 const limit = createLimiter(3);
 
 await Promise.all(pending.map((r) => limit(async () => {
-  const url = r.funnel_url || r.bio_link || null;
-  let out = { funnel_url: url, funnel_source: r.funnel_url ? 'ad' : r.bio_link ? 'bio' : null, funnel_final_url: null, funnel_status: null, funnel_text: '', funnel_link_in_bio: false, funnel_destination_url: null };
+  const url = inputUrl(r);
+  let out = { funnel_input_url: url, funnel_url: url, funnel_source: r.funnel_url ? 'ad' : r.bio_link ? 'bio' : null, funnel_final_url: null, funnel_status: null, funnel_text: '', funnel_link_in_bio: false, funnel_destination_url: null };
   if (url) {
     const page = await fetchHtml(url, { force: args.force });
     out.funnel_final_url = page.final_url; out.funnel_status = page.status; out.funnel_error = page.error;
