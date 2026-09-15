@@ -85,9 +85,11 @@ Drop a JSON array into `data/raw/manual/<name>.json`. Each object may have `page
 
 One record per Instagram handle (lowercase, no `@`). CSV columns, in order:
 
-`first_name, last_name, email, phone, ig_handle, ig_url, follower_count, offer_price, funnel_url, funnel_type, ads_running, ad_days_active, niche, team_signal, source, source_detail, date_sourced, notes` followed by the grading columns `fit_tier, fit_score, fit_notes, business_type, confidence, days_since_last_post, last_post_at, post_count, bio_link, fb_page_name`.
+`first_name, last_name, email, phone, ig_handle, ig_url, follower_count, offer_price, funnel_url, funnel_type, ads_running, ad_days_active, niche, team_signal, source, source_detail, date_sourced, notes` followed by `contact_email, contact_email_source` and the grading columns `fit_tier, fit_score, fit_notes, business_type, confidence, days_since_last_post, last_post_at, post_count, bio_link, fb_page_name`.
 
 `email` is `{ig_handle}@ig.placeholder`. It exists only so GHL can create and dedupe the contact. The domain is invalid by design. Never attach an email send, workflow, or campaign to these contacts.
+
+`contact_email` is a real public address when one was found: mined from the Instagram bio and the cached funnel HTML (`mailto:` links and page text), filtered by `config/emails.json` (vendor/platform domains such as skool.com or thrivecart.com, template placeholders, asset file names) and dropped when the same address shows up for three or more unrelated advertisers (a page builder's template). `contact_email_source` is `bio`, `funnel_mailto`, `funnel_text`, `destination_mailto` or `destination_text`. Bio beats funnel; an address on the advertiser's own domain beats one elsewhere. Edit `config/emails.json` and rerun `npm run filter && npm run export` to re-pick without refetching.
 
 ## GHL behavior
 

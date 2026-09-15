@@ -1,11 +1,12 @@
 /** The first 18 columns are the original contract. The rest are grading and slicing columns appended after it. */
 export const CONTRACT_COLUMNS = ['first_name', 'last_name', 'email', 'phone', 'ig_handle', 'ig_url', 'follower_count', 'offer_price', 'funnel_url', 'funnel_type', 'ads_running', 'ad_days_active', 'niche', 'team_signal', 'source', 'source_detail', 'date_sourced', 'notes'];
-export const EXTRA_COLUMNS = ['fit_tier', 'fit_score', 'fit_notes', 'business_type', 'confidence', 'days_since_last_post', 'last_post_at', 'post_count', 'bio_link', 'fb_page_name'];
+export const EXTRA_COLUMNS = ['contact_email', 'contact_email_source', 'fit_tier', 'fit_score', 'fit_notes', 'business_type', 'confidence', 'days_since_last_post', 'last_post_at', 'post_count', 'bio_link', 'fb_page_name'];
 export const CSV_COLUMNS = [...CONTRACT_COLUMNS, ...EXTRA_COLUMNS];
 
 /**
- * The email is a PLACEHOLDER: `{ig_handle}@ig.placeholder`. It exists only so GHL can create and dedupe the contact.
- * The domain is invalid by design. Never wire an email send, workflow, or campaign to these records.
+ * The `email` column is a PLACEHOLDER: `{ig_handle}@ig.placeholder`. It exists only so GHL can create and dedupe the contact.
+ * The domain is invalid by design. Never wire an email send, workflow, or campaign to it. A real public address, when one
+ * was found in the bio or funnel HTML, is in `contact_email` (with `contact_email_source` saying where it came from).
  */
 export const placeholderEmail = (handle, domain) => `${handle}@${domain}`;
 
@@ -42,6 +43,8 @@ export function toRecord(r, placeholderDomain) {
     source_detail: r.source_detail ?? '',
     date_sourced: r.date_sourced ?? '',
     notes: buildNotes(r),
+    contact_email: r.contact_email ?? '',
+    contact_email_source: r.contact_email_source ?? '',
     fit_tier: r.fit_tier ?? '',
     fit_score: r.fit_score ?? '',
     fit_notes: r.fit_notes ?? '',

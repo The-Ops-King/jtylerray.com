@@ -12,6 +12,7 @@ import { toRecord, toCsv, CSV_COLUMNS } from '../src/lib/export-format.js';
 import { appendNdjson, readNdjson, readNdjsonMap, writeNdjson } from '../src/lib/ndjson.js';
 import { parseArgs } from '../src/lib/cli.js';
 import { ClassificationSchema } from '../src/lib/anthropic.js';
+import { extractEmails, candidatesFromHtml, candidatesFromBio, countSharedEmails, pickContactEmail } from '../src/lib/emails.js';
 
 test('handles normalize to lowercase without @ and reject junk', () => {
   assert.equal(normalizeHandle('@Coach.Alice'), 'coach.alice');
@@ -84,7 +85,7 @@ test('csv export matches the column contract and escapes', () => {
   const csv = toCsv([rec]);
   const [header, row] = csv.trim().split('\n');
   assert.equal(header, CSV_COLUMNS.join(','));
-  assert.match(header, /^first_name,last_name,email,phone,ig_handle,ig_url,follower_count,offer_price,funnel_url,funnel_type,ads_running,ad_days_active,niche,team_signal,source,source_detail,date_sourced,notes,fit_tier,fit_score,fit_notes,business_type,/);
+  assert.match(header, /^first_name,last_name,email,phone,ig_handle,ig_url,follower_count,offer_price,funnel_url,funnel_type,ads_running,ad_days_active,niche,team_signal,source,source_detail,date_sourced,notes,contact_email,contact_email_source,fit_tier,fit_score,fit_notes,business_type,/);
   assert.match(row, /^A,"B, Jr",a\.b@ig\.placeholder,,a\.b,/);
 });
 
@@ -113,4 +114,32 @@ test('classification schema is strict', () => {
   assert.equal(ClassificationSchema.safeParse(ok).success, true);
   assert.equal(ClassificationSchema.safeParse({ ...ok, niche: 'crypto' }).success, false);
   assert.equal(ClassificationSchema.safeParse({ ...ok, extra: 1 }).success, false);
+});
+
+test('email extraction drops vendor, template and asset addresses and decodes obfuscation', () => {
+  const html = '<a href="mailto:Hello@CoachJane.com?subject=hi">mail</a> jane&#64;coachjane.com support@skool.com test@gmail.com '
+    + 'img@2x.png no-reply@coachjane.com sentry@o123.ingest.sentry.io team [at] otherbrand [dot] com hi@example.com';
+  assert.deepEqual(extractEmails(html), ['hello@coachjane.com', 'jane@coachjane.com', 'team@otherbrand.com']);
+  const c = candidatesFromHtml(html, 'https://www.coachjane.com/apply', 'funnel');
+  assert.deepEqual(c.map((x) => [x.email, x.mailto, x.host_match]), [['hello@coachjane.com', true, true], ['jane@coachjane.com', false, true], ['team@otherbrand.com', false, false]]);
+  assert.deepEqual(candidatesFromBio('DM me or email coach@gmail.com'), [{ email: 'coach@gmail.com', source: 'bio', mailto: false, host_match: false }]);
+  assert.deepEqual(candidatesFromHtml('', 'https://x.com', 'funnel'), []);
+});
+
+test('contact email pick prefers bio, then own-domain mailto, and drops addresses shared across advertisers', () => {
+  const tmpl = { email: 'chenowith52@gmail.com', source: 'funnel', mailto: false, host_match: false };
+  const rows = [
+    { ig_handle: 'a', email_candidates: [tmpl, { email: 'info@a.com', source: 'funnel', mailto: true, host_match: true }, { email: 'me@gmail.com', source: 'bio', mailto: false, host_match: false }] },
+    { ig_handle: 'b', email_candidates: [tmpl, { email: 'support@b.com', source: 'destination', mailto: false, host_match: true }, { email: 'sara@b.com', source: 'destination', mailto: false, host_match: true }] },
+    { ig_handle: 'c', email_candidates: [tmpl] },
+    { ig_handle: 'd', email_candidates: [{ email: 'stray@gmail.com', source: 'funnel', mailto: false, host_match: false }] },
+    { ig_handle: 'e', email_candidates: [] },
+  ];
+  const shared = countSharedEmails(rows);
+  assert.equal(shared.get('chenowith52@gmail.com').size, 3);
+  assert.deepEqual(pickContactEmail(rows[0], shared), { contact_email: 'me@gmail.com', contact_email_source: 'bio' });
+  assert.deepEqual(pickContactEmail(rows[1], shared), { contact_email: 'sara@b.com', contact_email_source: 'destination_text' }, 'named mailbox beats support@ on the same domain');
+  assert.deepEqual(pickContactEmail(rows[2], shared), { contact_email: null, contact_email_source: null }, 'template address seen on 3 advertisers is dropped');
+  assert.deepEqual(pickContactEmail(rows[3], shared), { contact_email: 'stray@gmail.com', contact_email_source: 'funnel_text' });
+  assert.deepEqual(pickContactEmail(rows[4], shared), { contact_email: null, contact_email_source: null });
 });

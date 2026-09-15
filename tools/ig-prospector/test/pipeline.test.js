@@ -37,7 +37,7 @@ before(async () => {
   for (const f of fs.readdirSync(path.join(PKG, 'config'))) if (f.endsWith('.json')) fs.copyFileSync(path.join(PKG, 'config', f), path.join(HOME, 'config', f));
   server = http.createServer((req, res) => {
     const pages = {
-      '/funnel-a': '<html><head><title>Apply to work with Alice</title></head><body><h1>1:1 Business Coaching</h1><p>Investment: $5,000. Apply below and my setter will reach out.</p><a href="/apply">Apply now</a></body></html>',
+      '/funnel-a': '<html><head><title>Apply to work with Alice</title></head><body><h1>1:1 Business Coaching</h1><p>Investment: $5,000. Apply below and my setter will reach out.</p><a href="/apply">Apply now</a><a href="mailto:alice@coachalice.com">email</a> <span>help@skool.com</span></body></html>',
       '/page-b': '<html><body><p>Bob fitness</p><a href="https://www.instagram.com/coach_bob/">IG</a></body></html>',
       '/redirect': null,
     };
@@ -107,6 +107,7 @@ test('enrich-funnel follows one redirect, caches html, handles missing url', asy
   assert.equal(alice.funnel_final_url, `${base}/funnel-a`);
   assert.equal(alice.funnel_status, 200);
   assert.match(alice.funnel_text, /Investment: \$5,000/);
+  assert.deepEqual(alice.email_candidates, [{ email: 'alice@coachalice.com', source: 'funnel', mailto: true, host_match: false }], 'vendor address filtered, mailto kept');
   assert.equal(rows.find((r) => r.ig_handle === 'carol.coach').funnel_url, null);
   assert.ok(fs.readdirSync(path.join(HOME, 'cache', 'http')).length >= 2, 'raw html cached');
 });
@@ -163,9 +164,10 @@ test('export writes the CSV contract and is CSV-only by default', async () => {
   const csv = fs.readFileSync(D('export.csv'), 'utf8').trim().split('\n');
   assert.match(csv[0], /^first_name,last_name,email,phone,ig_handle,ig_url,follower_count,offer_price,funnel_url,funnel_type,ads_running,ad_days_active,niche,team_signal,source,source_detail,date_sourced,notes,/);
   assert.equal(csv.length, 3);
-  assert.match(csv[0], /,notes,fit_tier,fit_score,fit_notes,business_type,confidence,days_since_last_post,last_post_at,post_count,bio_link,fb_page_name$/);
+  assert.match(csv[0], /,notes,contact_email,contact_email_source,fit_tier,fit_score,fit_notes,business_type,confidence,days_since_last_post,last_post_at,post_count,bio_link,fb_page_name$/);
   const aliceRow = csv.find((l) => l.startsWith('Alice,'));
   assert.match(aliceRow, /^Alice,A,coach\.alice@ig\.placeholder,,coach\.alice,https:\/\/www\.instagram\.com\/coach\.alice\/,12000,5000,http:\/\/127\.0\.0\.1:\d+\/funnel-a,application,2,400,business,has_setter,adlibrary,test term,\d{4}-\d{2}-\d{2},/);
+  assert.match(aliceRow, /,alice@coachalice\.com,funnel_mailto,/, 'contact_email column filled from the funnel mailto');
 });
 
 test('rerun is idempotent: no duplicates, nothing spent', async () => {

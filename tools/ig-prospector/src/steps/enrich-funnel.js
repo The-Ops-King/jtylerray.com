@@ -1,7 +1,7 @@
 /**
  * Step 4: enrich-funnel. Fetch the funnel page HTML (ad destination, else bio link). Raw HTML is cached in cache/http keyed by URL.
  * Follows one redirect hop. Link-in-bio pages (Linktree etc.) also get their first outbound destination fetched.
- * Output: data/funnels.ndjson (profile row + funnel_final_url, funnel_text, funnel_status).
+ * Output: data/funnels.ndjson (own fields: funnel_final_url, funnel_text, funnel_status, email_candidates mined from the HTML).
  * Usage: node src/steps/enrich-funnel.js [--force] [--limit N]
  */
 import { parseArgs } from '../lib/cli.js';
@@ -11,6 +11,7 @@ import { fetchHtml, htmlToText, isLinkInBio, firstOutboundLink } from '../lib/ht
 import { createLimiter } from '../lib/limiter.js';
 import { createProgress } from '../lib/log.js';
 import { loadJoined } from '../lib/records.js';
+import { candidatesFromHtml } from '../lib/emails.js';
 
 const args = parseArgs();
 ensureDirs();
@@ -20,19 +21,22 @@ const profiles = [...loadJoined(['resolved', 'profiles']).values()];
 pruneOrphans(FILES.funnels, new Set(profiles.map((r) => r.ig_handle)));
 const done = readNdjsonMap(FILES.funnels);
 const inputUrl = (r) => r.funnel_url || r.bio_link || null;
-// Redo a row when the upstream url changed (e.g. resolve stopped treating a Meta short link as a funnel).
-const pending = profiles.filter((r) => args.force || !done.has(r.ig_handle) || done.get(r.ig_handle).funnel_input_url !== inputUrl(r)).slice(0, args.limit);
+// Redo a row when the upstream url changed (e.g. resolve stopped treating a Meta short link as a funnel) or when it predates
+// a field added later (email_candidates); the HTML is served from cache/http so a redo costs nothing.
+const stale = (r) => { const d = done.get(r.ig_handle); return !d || d.funnel_input_url !== inputUrl(r) || !Array.isArray(d.email_candidates); };
+const pending = profiles.filter((r) => args.force || stale(r)).slice(0, args.limit);
 if (args.force) removeFromNdjson(FILES.funnels, new Set(pending.map((r) => r.ig_handle)));
 const progress = createProgress('enrich-funnel', pending.length);
 const limit = createLimiter(3);
 
 await Promise.all(pending.map((r) => limit(async () => {
   const url = inputUrl(r);
-  let out = { funnel_input_url: url, funnel_url: url, funnel_source: r.funnel_url ? 'ad' : r.bio_link ? 'bio' : null, funnel_final_url: null, funnel_status: null, funnel_text: '', funnel_link_in_bio: false, funnel_destination_url: null };
+  let out = { funnel_input_url: url, funnel_url: url, funnel_source: r.funnel_url ? 'ad' : r.bio_link ? 'bio' : null, funnel_final_url: null, funnel_status: null, funnel_text: '', funnel_link_in_bio: false, funnel_destination_url: null, email_candidates: [] };
   if (url) {
     const page = await fetchHtml(url, { force: args.force });
     out.funnel_final_url = page.final_url; out.funnel_status = page.status; out.funnel_error = page.error;
     let text = htmlToText(page.html, maxChars);
+    out.email_candidates.push(...candidatesFromHtml(page.html, page.final_url, 'funnel'));
     if (isLinkInBio(page.final_url) || isLinkInBio(url)) {
       out.funnel_link_in_bio = true;
       const dest = firstOutboundLink(page.html, page.final_url);
@@ -40,6 +44,7 @@ await Promise.all(pending.map((r) => limit(async () => {
         out.funnel_destination_url = dest;
         const d = await fetchHtml(dest, { force: args.force });
         out.funnel_destination_status = d.status;
+        out.email_candidates.push(...candidatesFromHtml(d.html, d.final_url, 'destination'));
         text = `[LINK-IN-BIO PAGE ${page.final_url}]\n${text.slice(0, Math.floor(maxChars / 3))}\n\n[DESTINATION ${d.final_url}]\n${htmlToText(d.html, maxChars)}`;
       }
     }

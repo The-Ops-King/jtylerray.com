@@ -4,7 +4,8 @@
  * profile missing/private, below the reachability follower floor, ads too new. Every reject carries the rule and value.
  * Rows that pass are graded by config/scoring.json into fit_score / fit_tier / fit_notes and written to
  * data/qualified.ndjson sorted by score, so the CSV can be sliced on any signal. Rows not yet classified are reported
- * as `not_classified_yet`. Rewrites both output files in full on every run.
+ * as `not_classified_yet`. Also picks contact_email per row from the bio + funnel email candidates, dropping template
+ * addresses shared across unrelated advertisers. Rewrites both output files in full on every run.
  * Usage: node src/steps/filter.js
  */
 import { ensureDirs, FILES } from '../lib/paths.js';
@@ -12,12 +13,16 @@ import { readNdjsonMap, writeNdjson } from '../lib/ndjson.js';
 import { loadCriteria, buildPreRules, buildPostRules, evaluate } from '../lib/criteria.js';
 import { loadScoring, score } from '../lib/scoring.js';
 import { loadJoined } from '../lib/records.js';
+import { candidatesFromBio, countSharedEmails, pickContactEmail } from '../lib/emails.js';
 
 ensureDirs();
 const C = loadCriteria(); const S = loadScoring();
 const pre = buildPreRules(C); const post = buildPostRules(C);
 const classified = readNdjsonMap(FILES.classified);
 const rows = [...loadJoined(['resolved', 'profiles', 'funnels', 'classified']).values()].filter((r) => r.funnel_fetched_at);
+for (const r of rows) r.email_candidates = [...candidatesFromBio(r.bio), ...(r.email_candidates || [])];
+const shared = countSharedEmails(rows);
+for (const r of rows) Object.assign(r, pickContactEmail(r, shared));
 const qualified = []; const rejects = []; const tally = {};
 const reject = (r, v) => { rejects.push({ ...r, ...v }); tally[v.rejected_by] = (tally[v.rejected_by] || 0) + 1; };
 for (const r of rows) {
