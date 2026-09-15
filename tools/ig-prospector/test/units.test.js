@@ -96,7 +96,7 @@ test('ndjson append/read/map survives a torn trailing line', () => {
 });
 
 test('cli flags', () => {
-  assert.deepEqual(parseArgs(['--force', '--limit', '20', '--no-fetch']), { force: true, limit: 20, dryRun: false, noGhl: false, positional: [], noFetch: true });
+  assert.deepEqual(parseArgs(['--force', '--limit', '20', '--no-fetch', '--ghl']), { force: true, limit: 20, positional: [], noFetch: true, ghl: true });
   assert.throws(() => parseArgs(['--limit', 'x']));
 });
 

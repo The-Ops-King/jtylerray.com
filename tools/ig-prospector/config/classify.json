@@ -1,10 +1,16 @@
 {
-  "_comment": "Model and cost settings for the classify step. Sonnet 5 rejects the temperature parameter (400), so temperature is only sent when non-null; set model to claude-sonnet-4-6 and temperature to 0 if you need it. prompt_version is part of the cache key: bump it when you change the prompt so cached results are recomputed.",
+  "_comment": "mode: agent (no API key; answers are written to data/classify-answers.ndjson by a Claude Code session or sub-agents, see data/classify-instructions.md) or api (calls the Anthropic API with ANTHROPIC_API_KEY). Sonnet 5 rejects the temperature parameter (400), so temperature is only sent when non-null; set model to claude-sonnet-4-6 and temperature to 0 if you need it. prompt_version is part of the cache key: bump it when you change the prompt so cached results are recomputed.",
+  "mode": "agent",
   "model": "claude-sonnet-5",
   "temperature": null,
   "effort": "low",
   "max_tokens": 1024,
   "max_funnel_chars": 12000,
   "prompt_version": 1,
-  "price_per_mtok": { "input": 2.0, "output": 10.0, "cache_read": 0.2, "cache_write": 2.5 }
+  "price_per_mtok": {
+    "input": 2.0,
+    "output": 10.0,
+    "cache_read": 0.2,
+    "cache_write": 2.5
+  }
 }

@@ -111,24 +111,34 @@ test('enrich-funnel follows one redirect, caches html, handles missing url', asy
   assert.ok(fs.readdirSync(path.join(HOME, 'cache', 'http')).length >= 2, 'raw html cached');
 });
 
-test('classify is served from cache when the input hash matches', async () => {
-  const { sha } = await import('../src/lib/cache.js');
-  const { SYSTEM_PROMPT } = await import('../src/lib/anthropic.js');
-  const cfg = JSON.parse(fs.readFileSync(path.join(HOME, 'config', 'classify.json'), 'utf8'));
-  const promptHash = sha(SYSTEM_PROMPT);
+test('classify (agent mode) queues inputs, ingests validated answers, rejects stale and invalid ones', async () => {
+  const out1 = await run('classify');
+  assert.match(out1, /4 still pending/);
+  const queue = lines('classify-queue.ndjson');
+  assert.equal(queue.length, 4);
+  assert.ok(fs.existsSync(D('classify-instructions.md')));
   const cls = (over) => ({ owner_first_name: null, owner_last_name: null, niche: 'business', funnel_type: 'application', offer_price_usd: 5000, sells_to_coaches_about_getting_first_client: false, is_agency_or_systems_provider: false, team_signal: 'has_setter', confidence: 'high', ...over });
   const answers = { 'coach.alice': cls({ owner_first_name: 'Alice', owner_last_name: 'A' }), coach_bob: cls({ niche: 'fitness', funnel_type: 'none', offer_price_usd: null, confidence: 'low' }), 'carol.coach': cls({ funnel_type: 'none', offer_price_usd: null, confidence: 'low' }), dan_manual: cls({ owner_first_name: 'Dan', is_agency_or_systems_provider: true }) };
-  const cacheDir = path.join(HOME, 'cache', 'anthropic'); fs.mkdirSync(cacheDir, { recursive: true });
-  for (const r of lines('funnels.ndjson')) {
-    const input = { handle: r.ig_handle, bio: r.bio || '', bioLink: r.bio_link, funnelUrl: r.funnel_final_url || r.funnel_url, funnelText: r.funnel_text || '', followerCount: r.follower_count };
-    const key = sha({ v: cfg.prompt_version, promptHash, model: cfg.model, input });
-    fs.writeFileSync(path.join(cacheDir, `${key}.json`), JSON.stringify({ key, value: { classification: answers[r.ig_handle], usd: 0, usage: {}, model: cfg.model, attempts: 1 } }));
-  }
-  await run('classify');
+  const q = Object.fromEntries(queue.map((x) => [x.ig_handle, x]));
+  const A = D('classify-answers.ndjson');
+  fs.writeFileSync(A, [
+    JSON.stringify({ ig_handle: 'coach.alice', input_hash: q['coach.alice'].input_hash, model: 'test', classification: answers['coach.alice'] }),
+    JSON.stringify({ ig_handle: 'coach_bob', input_hash: 'stale', model: 'test', classification: answers.coach_bob }),
+    JSON.stringify({ ig_handle: 'carol.coach', input_hash: q['carol.coach'].input_hash, model: 'test', classification: { ...answers['carol.coach'], niche: 'crypto' } }),
+  ].join('\n') + '\n');
+  await run('classify').then(() => assert.fail('should exit non-zero when answers are rejected'), (e) => assert.match(e.message, /ingested 1 answer\(s\), 2 rejected/));
+  assert.equal(lines('classified.ndjson').length, 1);
+  const fails = lines('classify-failures.ndjson');
+  assert.deepEqual(fails.map((f) => [f.ig_handle, f.error.split(':')[0]]), [['coach_bob', 'stale answer'], ['carol.coach', 'schema']]);
+  assert.equal(lines('classify-queue.ndjson').length, 3, 'rejected ones stay queued');
+  fs.writeFileSync(A, ['coach.alice', 'coach_bob', 'carol.coach', 'dan_manual'].map((h) => JSON.stringify({ ig_handle: h, input_hash: q[h].input_hash, model: 'test', classification: answers[h] })).join('\n') + '\n');
+  const out3 = await run('classify');
+  assert.match(out3, /ingested 3 answer\(s\), 0 rejected .* 0 from cache, 0 still pending/);
   const rows = lines('classified.ndjson');
   assert.equal(rows.length, 4);
   assert.equal(rows.find((r) => r.ig_handle === 'coach.alice').first_name, 'Alice');
   assert.equal(fs.existsSync(D('costs.ndjson')), false, 'no credits spent');
+  assert.ok(fs.readdirSync(path.join(HOME, 'cache', 'classify')).length === 4, 'answers cached by input hash');
 });
 
 test('filter applies criteria.json and explains every reject', async () => {
@@ -145,8 +155,9 @@ test('filter applies criteria.json and explains every reject', async () => {
   assert.deepEqual(lines('qualified.ndjson').map((r) => r.ig_handle).sort(), ['coach.alice', 'dan_manual']);
 });
 
-test('export writes the CSV contract and skips GHL with --no-ghl', async () => {
-  await run('export', '--no-ghl');
+test('export writes the CSV contract and is CSV-only by default', async () => {
+  const out = await run('export');
+  assert.match(out, /CSV only/);
   const csv = fs.readFileSync(D('export.csv'), 'utf8').trim().split('\n');
   assert.equal(csv[0], 'first_name,last_name,email,phone,ig_handle,ig_url,follower_count,offer_price,funnel_url,funnel_type,ads_running,ad_days_active,niche,team_signal,source,source_detail,date_sourced,notes');
   assert.equal(csv.length, 3);
@@ -156,7 +167,9 @@ test('export writes the CSV contract and skips GHL with --no-ghl', async () => {
 
 test('rerun is idempotent: no duplicates, nothing spent', async () => {
   const before = ['resolved', 'profiles', 'funnels', 'classified'].map((f) => lines(`${f}.ndjson`).length);
-  await run('resolve'); await run('enrich-profile'); await run('enrich-funnel'); await run('classify');
+  await run('resolve'); await run('enrich-profile'); await run('enrich-funnel');
+  fs.unlinkSync(D('classify-answers.ndjson'));
+  assert.match(await run('classify'), /0 still pending/);
   const after = ['resolved', 'profiles', 'funnels', 'classified'].map((f) => lines(`${f}.ndjson`).length);
   assert.deepEqual(after, before);
   assert.equal(fs.existsSync(D('costs.ndjson')), false);

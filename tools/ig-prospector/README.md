@@ -37,9 +37,9 @@ Each step reads the previous step's file from `data/` and writes its own. Every 
 | 2 resolve | `npm run resolve` | `data/raw/**` | `data/resolved.ndjson`, `data/unresolved.ndjson` | nothing (free HTTP fetch of funnel pages only when the ads carry no IG handle) |
 | 3 enrich-profile | `npm run enrich-profile` | `resolved.ndjson` | `data/profiles.ndjson` | Apify (IG profile actor), per handle, batched |
 | 4 enrich-funnel | `npm run enrich-funnel` | `profiles.ndjson` | `data/funnels.ndjson`, raw HTML in `cache/http/` | nothing |
-| 5 classify | `npm run classify` | `funnels.ndjson` | `data/classified.ndjson`, `data/classify-failures.ndjson` | Anthropic API, one call per handle |
+| 5 classify | `npm run classify` | `funnels.ndjson` (+ `data/classify-answers.ndjson` in agent mode) | `data/classified.ndjson`, `data/classify-failures.ndjson`, `data/classify-queue.ndjson` | nothing in agent mode; Anthropic API in api mode |
 | 6 filter | `npm run filter` | `classified.ndjson` + `config/criteria.json` | `data/qualified.ndjson`, `data/rejects.ndjson` | nothing |
-| 7 export | `npm run export` | `qualified.ndjson` | `data/export.csv`, `data/ghl-sync.ndjson` | GHL API calls |
+| 7 export | `npm run export` (`--ghl` to push) | `qualified.ndjson` | `data/export.csv`, `data/ghl-sync.ndjson` | nothing unless `--ghl` |
 
 `npm run status` prints row counts per stage and total spend. `data/costs.ndjson` is the spend ledger.
 
@@ -50,17 +50,19 @@ npm run source -- --limit 1          # one search term
 npm run resolve
 npm run enrich-profile -- --limit 20
 npm run enrich-funnel
-npm run classify
+npm run classify                     # agent mode: writes data/classify-queue.ndjson + instructions
+#   ... a Claude Code session or sub-agents write data/classify-answers.ndjson ...
+npm run classify                     # ingests + validates the answers, queues whatever is left
 npm run filter
-npm run export -- --no-ghl           # check the CSV first
-npm run export                       # then push to GHL
+npm run export                       # CSV only
+npm run export -- --ghl              # push to GHL when you want that
 ```
 
 Run the same commands again: they should report everything skipped and `npm run status` should show the same spend.
 
 ## Idempotency and cost control
 
-- Every external response is cached on disk (`cache/apify-adlib`, `cache/apify-ig/<handle>.json`, `cache/http/<url-hash>.json`, `cache/anthropic/<input-hash>.json`). Cached items are never re-fetched unless `--force`.
+- Every external response is cached on disk (`cache/apify-adlib`, `cache/apify-ig/<handle>.json`, `cache/http/<url-hash>.json`, `cache/classify/<input-hash>.json`). Cached items are never re-fetched unless `--force`.
 - Output files are appended one line per record as each record completes, so a kill at record 340 of 500 resumes at 340. A line torn by a kill is skipped and re-processed.
 - Concurrency is 3 for every external call, with exponential backoff on 429 / 5xx / network errors.
 - Apify runs carry `maxTotalChargeUsd` and `maxItems` caps from `config/actors.json` and `config/search-terms.json`, enforced by Apify itself.
@@ -95,10 +97,17 @@ One record per Instagram handle (lowercase, no `@`). CSV columns, in order:
 
 ## Classification
 
-Sonnet, structured outputs (`output_config.format` JSON schema), response validated again with zod. One retry on a parse failure, then the row goes to `data/classify-failures.ndjson`. Prices are never guessed: `offer_price_usd` is `null` unless a number is stated on the page. `confidence` is `low` when the page is thin.
+Two modes, set by `mode` in `config/classify.json`:
 
-Note: `claude-sonnet-5` rejects the `temperature` parameter. `config/classify.json` sends it only when non-null. Set `model` to `claude-sonnet-4-6` and `temperature` to `0` if you want a sampled-at-zero run.
+- `agent` (default, no API key). `npm run classify` writes the pending inputs to `data/classify-queue.ndjson` and the exact prompt, schema and answer format to `data/classify-instructions.md`. A Claude Code session (or sub-agents, one slice of the queue each) writes one line per handle to `data/classify-answers.ndjson`. Running the step again validates every answer with zod, checks its `input_hash` against the current input (stale answers are rejected), caches it, and writes the row. Bad answers land in `data/classify-failures.ndjson` with the reason and the step exits non-zero.
+- `api`. Calls the Anthropic API (`ANTHROPIC_API_KEY`) with Sonnet and structured outputs, validated again with zod, one retry then the failures file. `claude-sonnet-5` rejects `temperature`; it is sent only when non-null.
+
+In both modes prices are never guessed: `offer_price_usd` is `null` unless a number is stated. `confidence` is `low` when the page is thin. Results are cached by input hash in `cache/classify/`, so unchanged inputs are never classified twice.
 
 ## Tests
 
-`npm test` runs unit tests and an offline end-to-end run of steps 2 through 7 in a temp directory (fixture ads, seeded caches, a local HTTP server). It proves resumability, idempotency, the reject reasons, and the CSV contract without spending credits. Step 1 and live Apify / Anthropic / GHL calls are exercised by the 20-record acceptance run.
+`npm test` runs unit tests and an offline end-to-end run of steps 2 through 7 in a temp directory (fixture ads, seeded caches, a local HTTP server, agent-mode classification round trip). It proves resumability, idempotency, the reject reasons, and the CSV contract without spending credits. Step 1 and live Apify / GHL calls are exercised by the 20-record acceptance run.
+
+## Running from Claude Code on the web
+
+The session's environment must allow outbound HTTPS to `api.apify.com` and to arbitrary funnel domains (step 4 fetches whatever the ads link to). With a restrictive network policy, steps 1, 3 and 4 cannot run; steps 2, 5, 6 and 7 can.

@@ -4,7 +4,7 @@
  * create an opportunity in the IG Outreach pipeline / Sourced stage ONLY if the contact has no opportunity in that
  * pipeline yet. An existing opportunity in any stage is left untouched (never move backward).
  * data/ghl-sync.ndjson records every synced handle; rerun skips them unless --force.
- * Usage: node src/steps/export.js [--dry-run | --no-ghl] [--force] [--limit N]
+ * Usage: node src/steps/export.js [--ghl] [--force] [--limit N]   (CSV only unless --ghl is passed)
  */
 import fs from 'node:fs';
 import path from 'node:path';
@@ -25,7 +25,7 @@ const records = qualified.map((r) => toRecord(r, ghlCfg.placeholder_email_domain
 fs.writeFileSync(FILES.exportCsv, toCsv(records), 'utf8');
 console.log(`[export] wrote ${records.length} rows -> ${FILES.exportCsv}`);
 
-if (args.dryRun || args.noGhl) { console.log('[export] GHL sync skipped (--dry-run / --no-ghl)'); process.exit(0); }
+if (!args.ghl) { console.log('[export] CSV only. Pass --ghl to upsert into GoHighLevel.'); process.exit(0); }
 
 const fieldMapFile = path.join(CONFIG_DIR, 'ghl-fields.json');
 if (!fs.existsSync(fieldMapFile)) throw new Error(`Missing ${fieldMapFile}. Run \`npm run ghl:setup\` first.`);
