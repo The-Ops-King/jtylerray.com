@@ -43,9 +43,12 @@ function loadRaw() {
 const truthy = (v) => v === true || v === 'true' || v === 1 || v === 'ACTIVE' || v === 'active';
 const mostCommon = (arr) => { const c = new Map(); for (const a of arr) c.set(a, (c.get(a) || 0) + 1); return [...c.entries()].sort((a, b) => b[1] - a[1])[0]?.[0] ?? null; };
 
-// Group ads by advertiser page.
+// Group ads by advertiser page. The same ad can appear in several runs (overlapping samples), so count each ad id once.
 const pages = new Map();
+const seenAds = new Set();
 for (const { item, source, source_detail } of loadRaw()) {
+  const adId = pick(item, F.ad_id);
+  if (adId != null) { const k = `${source}:${adId}`; if (seenAds.has(k)) continue; seenAds.add(k); }
   const pageId = String(pick(item, F.page_id) ?? pick(item, F.page_name) ?? '');
   if (!pageId) continue;
   const key = `${source}:${pageId}`;
