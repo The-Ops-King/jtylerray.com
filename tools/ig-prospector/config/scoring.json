@@ -26,7 +26,7 @@
     "funnel_type": {
       "booking": 2,
       "application": 2,
-      "webinar": 1
+      "webinar": 2
     },
     "team_signal": {
       "has_setter": 2,
