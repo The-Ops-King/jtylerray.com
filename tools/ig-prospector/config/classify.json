@@ -6,7 +6,7 @@
   "effort": "low",
   "max_tokens": 1024,
   "max_funnel_chars": 12000,
-  "prompt_version": 1,
+  "prompt_version": 2,
   "price_per_mtok": {
     "input": 2.0,
     "output": 10.0,

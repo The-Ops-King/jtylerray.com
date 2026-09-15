@@ -62,6 +62,7 @@ function writeClassified(r, result) {
     classification_input_hash: keyFor(buildInput(r)),
     first_name: c.owner_first_name,
     last_name: c.owner_last_name,
+    business_type: c.business_type,
     niche: c.niche,
     funnel_type: c.funnel_type,
     offer_price: c.offer_price_usd,

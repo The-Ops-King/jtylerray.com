@@ -70,7 +70,8 @@ Run the same commands again: they should report everything skipped and `npm run 
 
 ## Configuration
 
-- `config/criteria.json`: qualification rules. Values are placeholders; `null` disables a rule. Change it and rerun `npm run filter` only. Every reject carries `rejected_by` and `reject_detail`.
+- `config/criteria.json`: HARD rules only (business type, agency, profile reachable, follower floor, ad age). A row failing one is never exported; every reject carries `rejected_by` and `reject_detail`. `null` disables a rule.
+- `config/scoring.json`: grading for everything that passes. Each signal adds points; `fit_score`, `fit_tier` (A/B/C/D) and `fit_notes` (which signals fired) land in the CSV so you slice there instead of re-running. Change either file and rerun `npm run filter` only.
 - `config/search-terms.json`: Ad Library search terms, country, active status, max ads per term.
 - `config/actors.json`: Apify actor ids, input templates, and the output field paths to read. Swap actors here without touching code. If an actor's input schema differs, Apify rejects the run with a validation error before charging.
 - `config/classify.json`: model, effort, max funnel chars, `prompt_version` (bump it when you change the prompt so cached results are recomputed).
@@ -84,7 +85,7 @@ Drop a JSON array into `data/raw/manual/<name>.json`. Each object may have `page
 
 One record per Instagram handle (lowercase, no `@`). CSV columns, in order:
 
-`first_name, last_name, email, phone, ig_handle, ig_url, follower_count, offer_price, funnel_url, funnel_type, ads_running, ad_days_active, niche, team_signal, source, source_detail, date_sourced, notes`
+`first_name, last_name, email, phone, ig_handle, ig_url, follower_count, offer_price, funnel_url, funnel_type, ads_running, ad_days_active, niche, team_signal, source, source_detail, date_sourced, notes` followed by the grading columns `fit_tier, fit_score, fit_notes, business_type, confidence, days_since_last_post, last_post_at, post_count, bio_link, fb_page_name`.
 
 `email` is `{ig_handle}@ig.placeholder`. It exists only so GHL can create and dedupe the contact. The domain is invalid by design. Never attach an email send, workflow, or campaign to these contacts.
 

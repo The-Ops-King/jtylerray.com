@@ -1,0 +1,54 @@
+{
+  "_comment": "Fit grading for rows that pass config/criteria.json. Points add up to fit_score; tiers are minimum scores (below the lowest tier is D). fit_notes lists the signals that fired so you can filter the CSV on any of them.",
+  "tiers": {
+    "A": 10,
+    "B": 7,
+    "C": 4
+  },
+  "signals": {
+    "followers_in_band": {
+      "min": 3000,
+      "max": 100000,
+      "points": 2
+    },
+    "followers_over": {
+      "min": 1000,
+      "points": 1
+    },
+    "ad_days_active": {
+      "min": 30,
+      "points": 2
+    },
+    "ads_running": {
+      "min": 3,
+      "points": 1
+    },
+    "funnel_type": {
+      "booking": 2,
+      "application": 2,
+      "webinar": 1
+    },
+    "team_signal": {
+      "has_setter": 2,
+      "has_closer": 2,
+      "hiring": 1
+    },
+    "recent_post_days": {
+      "max": 30,
+      "points": 1
+    },
+    "confidence": {
+      "high": 1
+    },
+    "niche": {
+      "business": 1,
+      "fitness": 1,
+      "relationship": 1,
+      "health": 1,
+      "finance": 1
+    },
+    "business_type": {
+      "coach": 1
+    }
+  }
+}

@@ -1,14 +1,13 @@
 {
-  "min_followers": 1000,
-  "max_followers": 100000,
-  "min_offer_price_usd": 3000,
-  "require_known_price": false,
-  "allowed_funnel_types": ["booking", "application", "webinar"],
-  "min_ad_days_active": 14,
-  "max_days_since_last_post": 60,
-  "reject_if_last_post_unknown": false,
+  "_comment": "HARD rules only: a row failing one of these is never exported. Everything else is graded by config/scoring.json and exported with a fit tier. null disables a rule.",
+  "allowed_business_types": [
+    "coach",
+    "consultant",
+    "course_creator"
+  ],
   "exclude_if_agency": true,
-  "exclude_if_sells_to_beginner_coaches": false,
-  "allowed_confidence": null,
-  "allowed_niches": null
+  "min_followers": 500,
+  "max_followers": null,
+  "min_ad_days_active": 7,
+  "exclude_private_profiles": true
 }

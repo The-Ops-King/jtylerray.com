@@ -87,7 +87,7 @@ test('enrich-profile serves everything from cache and spends nothing', async () 
   const post = (d) => ({ timestamp: new Date(Date.now() - d * 86400000).toISOString() });
   const put = (h, item, error) => fs.writeFileSync(path.join(cacheDir, `${h}.json`), JSON.stringify({ key: h, value: { item, error } }));
   put('coach.alice', { username: 'Coach.Alice', fullName: 'Alice A', biography: 'I help coaches scale to 50k/mo', externalUrl: `${base}/redirect`, followersCount: 12000, postsCount: 300, private: false, latestPosts: [post(9), post(2)] });
-  put('coach_bob', { username: 'coach_bob', biography: 'fit', followersCount: 500, postsCount: 10, latestPosts: [post(1)] });
+  put('coach_bob', { username: 'coach_bob', biography: 'fit', followersCount: 400, postsCount: 10, latestPosts: [post(1)] });
   put('carol.coach', null, 'not_returned');
   put('dan_manual', { username: 'dan_manual', biography: 'dan', followersCount: 8000, postsCount: 50, latestPosts: [post(5)] });
   await run('enrich-profile');
@@ -113,12 +113,12 @@ test('enrich-funnel follows one redirect, caches html, handles missing url', asy
 
 test('classify (agent mode) queues inputs, ingests validated answers, rejects stale and invalid ones', async () => {
   const out1 = await run('classify');
-  assert.match(out1, /4 enriched rows, 2 pass pre-classification rules/);
+  assert.match(out1, /4 enriched rows, 2 pass pre-classification rules/); // bob (400 followers) and carol (not found) never classified
   assert.match(out1, /2 still pending/);
   const queue = lines('classify-queue.ndjson');
-  assert.deepEqual(queue.map((q) => q.ig_handle).sort(), ['coach.alice', 'dan_manual'], 'bob (500 followers) and carol (not found) are never classified');
+  assert.deepEqual(queue.map((q) => q.ig_handle).sort(), ['coach.alice', 'dan_manual'], 'bob (400 followers) and carol (not found) are never classified');
   assert.ok(fs.existsSync(D('classify-instructions.md')));
-  const cls = (over) => ({ owner_first_name: null, owner_last_name: null, niche: 'business', funnel_type: 'application', offer_price_usd: 5000, sells_to_coaches_about_getting_first_client: false, is_agency_or_systems_provider: false, team_signal: 'has_setter', confidence: 'high', ...over });
+  const cls = (over) => ({ owner_first_name: null, owner_last_name: null, business_type: 'coach', niche: 'business', funnel_type: 'application', offer_price_usd: 5000, sells_to_coaches_about_getting_first_client: false, is_agency_or_systems_provider: false, team_signal: 'has_setter', confidence: 'high', ...over });
   const answers = { 'coach.alice': cls({ owner_first_name: 'Alice', owner_last_name: 'A' }), coach_bob: cls({ niche: 'fitness', funnel_type: 'none', offer_price_usd: null, confidence: 'low' }), 'carol.coach': cls({ funnel_type: 'none', offer_price_usd: null, confidence: 'low' }), dan_manual: cls({ owner_first_name: 'Dan', is_agency_or_systems_provider: true }) };
   const q = Object.fromEntries(queue.map((x) => [x.ig_handle, x]));
   const A = D('classify-answers.ndjson');
@@ -144,11 +144,13 @@ test('classify (agent mode) queues inputs, ingests validated answers, rejects st
 test('filter applies criteria.json and explains every reject', async () => {
   const out = await run('filter');
   assert.match(out, /4 enriched \(2 classified\) -> 1 qualified, 3 rejected/);
+  assert.match(out, /tiers: /);
   const q = lines('qualified.ndjson'); const rej = lines('rejects.ndjson');
   assert.deepEqual(q.map((r) => r.ig_handle), ['coach.alice']);
   const why = Object.fromEntries(rej.map((r) => [r.ig_handle, r.rejected_by]));
   assert.deepEqual(why, { coach_bob: 'min_followers', 'carol.coach': 'profile_not_found', dan_manual: 'exclude_if_agency' });
   // Change criteria, rerun step 6 only: dan now passes the agency rule but fails funnel type? (application allowed) -> qualifies.
+  assert.equal(q[0].fit_tier !== undefined && q[0].fit_notes.includes('funnel:application'), true, 'graded');
   const cfgFile = path.join(HOME, 'config', 'criteria.json');
   const c = JSON.parse(fs.readFileSync(cfgFile, 'utf8')); c.exclude_if_agency = false; fs.writeFileSync(cfgFile, JSON.stringify(c));
   await run('filter');
@@ -159,8 +161,9 @@ test('export writes the CSV contract and is CSV-only by default', async () => {
   const out = await run('export');
   assert.match(out, /CSV only/);
   const csv = fs.readFileSync(D('export.csv'), 'utf8').trim().split('\n');
-  assert.equal(csv[0], 'first_name,last_name,email,phone,ig_handle,ig_url,follower_count,offer_price,funnel_url,funnel_type,ads_running,ad_days_active,niche,team_signal,source,source_detail,date_sourced,notes');
+  assert.match(csv[0], /^first_name,last_name,email,phone,ig_handle,ig_url,follower_count,offer_price,funnel_url,funnel_type,ads_running,ad_days_active,niche,team_signal,source,source_detail,date_sourced,notes,/);
   assert.equal(csv.length, 3);
+  assert.match(csv[0], /,notes,fit_tier,fit_score,fit_notes,business_type,confidence,days_since_last_post,last_post_at,post_count,bio_link,fb_page_name$/);
   const aliceRow = csv.find((l) => l.startsWith('Alice,'));
   assert.match(aliceRow, /^Alice,A,coach\.alice@ig\.placeholder,,coach\.alice,https:\/\/www\.instagram\.com\/coach\.alice\/,12000,5000,http:\/\/127\.0\.0\.1:\d+\/funnel-a,application,2,400,business,has_setter,adlibrary,test term,\d{4}-\d{2}-\d{2},/);
 });
