@@ -63,6 +63,8 @@ test('criteria rules report the first failing rule with detail', () => {
   assert.equal(evaluate(rules, good), null);
   assert.deepEqual(evaluate(rules, { ...good, follower_count: 100 }), { rejected_by: 'min_followers', reject_detail: 'follower_count=100' });
   assert.deepEqual(evaluate(rules, { ...good, profile_found: false }), { rejected_by: 'profile_not_found', reject_detail: 'profile_error=not_returned' });
+  assert.equal(evaluate(rules, { ...good, days_since_last_post: null }), null, 'unknown last post passes by default');
+  assert.deepEqual(evaluate(buildRules({ ...C, reject_if_last_post_unknown: true }), { ...good, days_since_last_post: null }), { rejected_by: 'max_days_since_last_post', reject_detail: 'days_since_last_post=unknown' });
   assert.deepEqual(evaluate(rules, { ...good, funnel_type: 'webinar' }), { rejected_by: 'allowed_funnel_types', reject_detail: 'funnel_type=webinar' });
   assert.equal(evaluate(rules, { ...good, offer_price: null }), null, 'unknown price passes unless require_known_price');
   assert.deepEqual(evaluate(buildRules({ ...C, require_known_price: true }), { ...good, offer_price: null }), { rejected_by: 'require_known_price', reject_detail: 'offer_price=null' });

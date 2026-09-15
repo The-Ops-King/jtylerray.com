@@ -21,6 +21,7 @@ import { cacheGet, cacheSet, sha } from '../lib/cache.js';
 import { SYSTEM_PROMPT, ClassificationSchema, CLASSIFICATION_JSON_SCHEMA } from '../lib/anthropic.js';
 import { createLimiter } from '../lib/limiter.js';
 import { createProgress } from '../lib/log.js';
+import { loadCriteria, buildPreRules, evaluate } from '../lib/criteria.js';
 
 const args = parseArgs();
 ensureDirs();
@@ -35,7 +36,12 @@ const INSTRUCTIONS = path.join(DATA_DIR, 'classify-instructions.md');
 const funnels = readNdjson(FILES.funnels);
 pruneOrphans(FILES.classified, new Set(funnels.map((r) => r.ig_handle)));
 const done = readNdjsonMap(FILES.classified);
-const pending = funnels.filter((r) => args.force || !done.has(r.ig_handle)).slice(0, args.limit);
+// Only classify rows that can still qualify: rows failing a pre-classification rule (followers, ad age, post recency,
+// profile found) are skipped here and reported by the filter step with the rule that killed them.
+const preRules = buildPreRules(loadCriteria());
+const candidates = funnels.filter((r) => !evaluate(preRules, r));
+console.log(`[classify] ${funnels.length} enriched rows, ${candidates.length} pass pre-classification rules`);
+const pending = candidates.filter((r) => args.force || !done.has(r.ig_handle)).slice(0, args.limit);
 if (args.force) removeFromNdjson(FILES.classified, new Set(pending.map((r) => r.ig_handle)));
 const promptHash = sha(SYSTEM_PROMPT);
 const modelTag = mode === 'agent' ? 'agent' : cfg.model;

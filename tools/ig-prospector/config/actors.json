@@ -75,6 +75,19 @@
         "adArchiveID",
         "adArchiveId",
         "id"
+      ],
+      "page_like_count": [
+        "snapshot.page_like_count",
+        "page_like_count",
+        "pageLikeCount"
+      ],
+      "ad_text": [
+        "snapshot.body.text",
+        "snapshot.body",
+        "body.text",
+        "body",
+        "snapshot.title",
+        "ad_content.body"
       ]
     }
   },

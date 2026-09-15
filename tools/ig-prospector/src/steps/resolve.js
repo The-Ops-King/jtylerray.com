@@ -9,7 +9,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { parseArgs } from '../lib/cli.js';
-import { ensureDirs, readConfig, RAW_DIR, FILES } from '../lib/paths.js';
+import { ensureDirs, readConfig, RAW_DIR, FILES, DATA_DIR } from '../lib/paths.js';
 import { readNdjsonMap, writeNdjson } from '../lib/ndjson.js';
 import { pick } from '../lib/fields.js';
 import { normalizeHandle, handleFromUrl, findHandleInHtml, igUrl } from '../lib/handles.js';
@@ -23,6 +23,7 @@ ensureDirs();
 const F = readConfig('actors.json').ad_library.fields;
 const IGNORED = new Set(readConfig('resolve.json').ignored_handles.map((h) => h.toLowerCase()));
 const keep = (h) => (h && !IGNORED.has(h) ? h : null);
+const discovered = readNdjsonMap(path.join(DATA_DIR, 'discovered.ndjson'), 'page_id');
 
 function loadRaw() {
   const out = [];
@@ -48,7 +49,7 @@ for (const { item, source, source_detail } of loadRaw()) {
   const pageId = String(pick(item, F.page_id) ?? pick(item, F.page_name) ?? '');
   if (!pageId) continue;
   const key = `${source}:${pageId}`;
-  if (!pages.has(key)) pages.set(key, { page_id: pageId, page_name: pick(item, F.page_name), source, terms: new Set(), handles: [], links: [], starts: [], active: 0, ads: 0, profile_uris: [] });
+  if (!pages.has(key)) pages.set(key, { page_id: pageId, page_name: pick(item, F.page_name), source, terms: new Set(), handles: [], links: [], starts: [], active: 0, ads: 0, profile_uris: [], likes: null, texts: [] });
   const p = pages.get(key);
   p.ads++;
   p.terms.add(source_detail);
@@ -57,6 +58,8 @@ for (const { item, source, source_detail } of loadRaw()) {
   const link = cleanUrl(pick(item, F.link_url));
   if (link && !isSocial(link)) p.links.push(link);
   const uri = pick(item, F.page_profile_uri); if (uri) p.profile_uris.push(uri);
+  const likes = pick(item, F.page_like_count); if (likes != null) p.likes = Number(likes);
+  const text = pick(item, F.ad_text); if (text && p.texts.length < 2) p.texts.push(String(text).slice(0, 240));
   const start = toEpochMs(pick(item, F.start_date)); if (start) p.starts.push(start);
   const active = pick(item, F.is_active); if (active == null || truthy(active)) p.active++;
 }
@@ -76,8 +79,9 @@ await Promise.all([...pages.values()].map((p) => limit(async () => {
     handle = findHandleInHtml(page.html, IGNORED);
     if (handle) handle_source = 'funnel_page';
   }
+  if (!handle && discovered.get(p.page_id)?.ig_handle) { handle = keep(discovered.get(p.page_id).ig_handle); if (handle) handle_source = 'discovered'; }
   if (!handle) {
-    unresolvedRows.push({ page_id: p.page_id, page_name: p.page_name, source: p.source, source_detail: [...p.terms].join('; '), funnel_url, ads: p.ads, reason: funnel_url ? 'no_instagram_link_in_ads_or_funnel' : 'no_instagram_link_and_no_funnel_url' });
+    unresolvedRows.push({ page_id: p.page_id, page_name: p.page_name, source: p.source, source_detail: [...p.terms].join('; '), funnel_url, page_profile_uri: p.profile_uris[0] ?? null, page_like_count: p.likes, ad_text: p.texts.join(' | ') || null, ads: p.ads, ad_days_active: daysBetween(p.starts.length ? Math.min(...p.starts) : null), searched: discovered.has(p.page_id), reason: discovered.has(p.page_id) ? 'searched_no_instagram_found' : funnel_url ? 'no_instagram_link_in_ads_or_funnel' : 'no_instagram_link_and_no_funnel_url' });
     progress.fail(`${p.page_name} unresolved`);
     return;
   }

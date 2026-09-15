@@ -4,10 +4,13 @@
   "version": "0.1.0",
   "type": "module",
   "description": "Instagram prospect sourcing pipeline: Ad Library -> IG profile -> funnel -> classify -> filter -> CSV + GHL",
-  "engines": { "node": ">=20" },
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
     "source": "node src/steps/source.js",
     "resolve": "node src/steps/resolve.js",
+    "discover": "node src/steps/discover.js",
     "enrich-profile": "node src/steps/enrich-profile.js",
     "enrich-funnel": "node src/steps/enrich-funnel.js",
     "classify": "node src/steps/classify.js",

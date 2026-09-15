@@ -113,37 +113,37 @@ test('enrich-funnel follows one redirect, caches html, handles missing url', asy
 
 test('classify (agent mode) queues inputs, ingests validated answers, rejects stale and invalid ones', async () => {
   const out1 = await run('classify');
-  assert.match(out1, /4 still pending/);
+  assert.match(out1, /4 enriched rows, 2 pass pre-classification rules/);
+  assert.match(out1, /2 still pending/);
   const queue = lines('classify-queue.ndjson');
-  assert.equal(queue.length, 4);
+  assert.deepEqual(queue.map((q) => q.ig_handle).sort(), ['coach.alice', 'dan_manual'], 'bob (500 followers) and carol (not found) are never classified');
   assert.ok(fs.existsSync(D('classify-instructions.md')));
   const cls = (over) => ({ owner_first_name: null, owner_last_name: null, niche: 'business', funnel_type: 'application', offer_price_usd: 5000, sells_to_coaches_about_getting_first_client: false, is_agency_or_systems_provider: false, team_signal: 'has_setter', confidence: 'high', ...over });
   const answers = { 'coach.alice': cls({ owner_first_name: 'Alice', owner_last_name: 'A' }), coach_bob: cls({ niche: 'fitness', funnel_type: 'none', offer_price_usd: null, confidence: 'low' }), 'carol.coach': cls({ funnel_type: 'none', offer_price_usd: null, confidence: 'low' }), dan_manual: cls({ owner_first_name: 'Dan', is_agency_or_systems_provider: true }) };
   const q = Object.fromEntries(queue.map((x) => [x.ig_handle, x]));
   const A = D('classify-answers.ndjson');
   fs.writeFileSync(A, [
-    JSON.stringify({ ig_handle: 'coach.alice', input_hash: q['coach.alice'].input_hash, model: 'test', classification: answers['coach.alice'] }),
-    JSON.stringify({ ig_handle: 'coach_bob', input_hash: 'stale', model: 'test', classification: answers.coach_bob }),
-    JSON.stringify({ ig_handle: 'carol.coach', input_hash: q['carol.coach'].input_hash, model: 'test', classification: { ...answers['carol.coach'], niche: 'crypto' } }),
+    JSON.stringify({ ig_handle: 'coach.alice', input_hash: 'stale', model: 'test', classification: answers['coach.alice'] }),
+    JSON.stringify({ ig_handle: 'dan_manual', input_hash: q.dan_manual.input_hash, model: 'test', classification: { ...answers.dan_manual, niche: 'crypto' } }),
   ].join('\n') + '\n');
-  await run('classify').then(() => assert.fail('should exit non-zero when answers are rejected'), (e) => assert.match(e.message, /ingested 1 answer\(s\), 2 rejected/));
-  assert.equal(lines('classified.ndjson').length, 1);
+  await run('classify').then(() => assert.fail('should exit non-zero when answers are rejected'), (e) => assert.match(e.message, /ingested 0 answer\(s\), 2 rejected/));
+  assert.equal(lines('classified.ndjson').length, 0);
   const fails = lines('classify-failures.ndjson');
-  assert.deepEqual(fails.map((f) => [f.ig_handle, f.error.split(':')[0]]), [['coach_bob', 'stale answer'], ['carol.coach', 'schema']]);
-  assert.equal(lines('classify-queue.ndjson').length, 3, 'rejected ones stay queued');
-  fs.writeFileSync(A, ['coach.alice', 'coach_bob', 'carol.coach', 'dan_manual'].map((h) => JSON.stringify({ ig_handle: h, input_hash: q[h].input_hash, model: 'test', classification: answers[h] })).join('\n') + '\n');
+  assert.deepEqual(fails.map((f) => [f.ig_handle, f.error.split(':')[0]]), [['coach.alice', 'stale answer'], ['dan_manual', 'schema']]);
+  assert.equal(lines('classify-queue.ndjson').length, 2, 'rejected ones stay queued');
+  fs.writeFileSync(A, ['coach.alice', 'dan_manual'].map((h) => JSON.stringify({ ig_handle: h, input_hash: q[h].input_hash, model: 'test', classification: answers[h] })).join('\n') + '\n');
   const out3 = await run('classify');
-  assert.match(out3, /ingested 3 answer\(s\), 0 rejected .* 0 from cache, 0 still pending/);
+  assert.match(out3, /ingested 2 answer\(s\), 0 rejected .* 0 from cache, 0 still pending/);
   const rows = lines('classified.ndjson');
-  assert.equal(rows.length, 4);
+  assert.equal(rows.length, 2);
   assert.equal(rows.find((r) => r.ig_handle === 'coach.alice').first_name, 'Alice');
   assert.equal(fs.existsSync(D('costs.ndjson')), false, 'no credits spent');
-  assert.ok(fs.readdirSync(path.join(HOME, 'cache', 'classify')).length === 4, 'answers cached by input hash');
+  assert.ok(fs.readdirSync(path.join(HOME, 'cache', 'classify')).length === 2, 'answers cached by input hash');
 });
 
 test('filter applies criteria.json and explains every reject', async () => {
   const out = await run('filter');
-  assert.match(out, /4 classified -> 1 qualified, 3 rejected/);
+  assert.match(out, /4 enriched \(2 classified\) -> 1 qualified, 3 rejected/);
   const q = lines('qualified.ndjson'); const rej = lines('rejects.ndjson');
   assert.deepEqual(q.map((r) => r.ig_handle), ['coach.alice']);
   const why = Object.fromEntries(rej.map((r) => [r.ig_handle, r.rejected_by]));
@@ -167,6 +167,12 @@ test('export writes the CSV contract and is CSV-only by default', async () => {
 
 test('rerun is idempotent: no duplicates, nothing spent', async () => {
   const before = ['resolved', 'profiles', 'funnels', 'classified'].map((f) => lines(`${f}.ndjson`).length);
+  await run('discover');
+  assert.deepEqual(lines('discover-queue.ndjson').map((q) => q.page_name), ['Nobody Inc'], 'unresolved page that could still qualify is queued for discovery');
+  fs.writeFileSync(D('discover-answers.ndjson'), JSON.stringify({ page_id: '3', page_name: 'Nobody Inc', ig_handle: null, evidence: 'no account found', confidence: 'high', model: 'test' }) + '\n');
+  assert.match(await run('discover'), /ingested 1 answer\(s\).*0 queued/);
+  await run('resolve');
+  assert.equal(lines('unresolved.ndjson')[0].reason, 'searched_no_instagram_found');
   await run('resolve'); await run('enrich-profile'); await run('enrich-funnel');
   fs.unlinkSync(D('classify-answers.ndjson'));
   assert.match(await run('classify'), /0 still pending/);

@@ -1,13 +1,19 @@
 {
-  "_comment": "Each term becomes one Ad Library search (one Apify actor run, cached). country is an ISO-3166 code. active_status: active | inactive | all. max_ads_per_term caps actor output (and cost) per term.",
+  "_comment": "Each term becomes one Ad Library search (one Apify actor run, cached). country is an ISO-3166 code. active_status: active | inactive | all. max_ads_per_term caps actor output (and cost) per term. Keyword search ranks by impressions, so depth per term is what reaches small advertisers.",
   "country": "US",
   "active_status": "active",
-  "max_ads_per_term": 200,
+  "max_ads_per_term": 500,
   "terms": [
     "book a call coaching",
-    "apply to work with me coach",
-    "high ticket coaching program",
-    "1:1 coaching application",
-    "scale your coaching business"
+    "apply to work with me",
+    "book a free strategy call",
+    "scale to 50k a month",
+    "1:1 mentorship coaches",
+    "high ticket coaching offer",
+    "coaches who want to scale",
+    "coaching business apply now",
+    "online coach case study",
+    "fill your calendar coaching",
+    "6 figure coaching business"
   ]
 }
