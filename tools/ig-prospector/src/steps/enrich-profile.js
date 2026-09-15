@@ -7,7 +7,7 @@
  */
 import { parseArgs } from '../lib/cli.js';
 import { ensureDirs, readConfig, FILES } from '../lib/paths.js';
-import { readNdjson, readNdjsonMap, appendNdjson, removeFromNdjson } from '../lib/ndjson.js';
+import { readNdjson, readNdjsonMap, appendNdjson, removeFromNdjson, pruneOrphans } from '../lib/ndjson.js';
 import { cacheGet, cacheSet } from '../lib/cache.js';
 import { runActor } from '../lib/apify.js';
 import { pick, fillTemplate } from '../lib/fields.js';
@@ -23,6 +23,7 @@ const cfg = readConfig('actors.json').instagram_profile;
 const F = cfg.fields;
 
 const resolved = readNdjson(FILES.resolved);
+pruneOrphans(FILES.profiles, new Set(resolved.map((r) => r.ig_handle)));
 const done = readNdjsonMap(FILES.profiles);
 let pending = resolved.filter((r) => args.force || !done.has(r.ig_handle)).slice(0, args.limit);
 if (args.force) removeFromNdjson(FILES.profiles, new Set(pending.map((r) => r.ig_handle)));

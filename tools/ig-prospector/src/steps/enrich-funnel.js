@@ -6,7 +6,7 @@
  */
 import { parseArgs } from '../lib/cli.js';
 import { ensureDirs, readConfig, FILES } from '../lib/paths.js';
-import { readNdjson, readNdjsonMap, appendNdjson, removeFromNdjson } from '../lib/ndjson.js';
+import { readNdjson, readNdjsonMap, appendNdjson, removeFromNdjson, pruneOrphans } from '../lib/ndjson.js';
 import { fetchHtml, htmlToText, isLinkInBio, firstOutboundLink } from '../lib/http.js';
 import { createLimiter } from '../lib/limiter.js';
 import { createProgress } from '../lib/log.js';
@@ -16,6 +16,7 @@ ensureDirs();
 const maxChars = readConfig('classify.json').max_funnel_chars;
 
 const profiles = readNdjson(FILES.profiles);
+pruneOrphans(FILES.funnels, new Set(profiles.map((r) => r.ig_handle)));
 const done = readNdjsonMap(FILES.funnels);
 const pending = profiles.filter((r) => args.force || !done.has(r.ig_handle)).slice(0, args.limit);
 if (args.force) removeFromNdjson(FILES.funnels, new Set(pending.map((r) => r.ig_handle)));

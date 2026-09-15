@@ -39,7 +39,7 @@ const limit = createLimiter(3);
 
 await Promise.all(todo.map((term) => limit(async () => {
   const search_url = adLibrarySearchUrl(term, terms);
-  const input = fillTemplate(actorCfg.input_template, { search_url, max_ads: terms.max_ads_per_term, active_status: terms.active_status, term });
+  const input = fillTemplate(actorCfg.input_template, { search_url, max_ads: terms.max_ads_per_term, active_status: terms.active_status, country: terms.country, term });
   const cacheKey = sha({ actor: actorCfg.actor_id, input });
   const outFile = path.join(outDir, `${slug(term)}.json`);
   if (!args.force && cacheGet('apify-adlib', cacheKey) && fs.existsSync(outFile)) { progress.skip(); return; }

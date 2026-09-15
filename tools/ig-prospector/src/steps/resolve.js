@@ -20,6 +20,8 @@ import { createProgress } from '../lib/log.js';
 const args = parseArgs();
 ensureDirs();
 const F = readConfig('actors.json').ad_library.fields;
+const IGNORED = new Set(readConfig('resolve.json').ignored_handles.map((h) => h.toLowerCase()));
+const keep = (h) => (h && !IGNORED.has(h) ? h : null);
 
 function loadRaw() {
   const out = [];
@@ -49,7 +51,7 @@ for (const { item, source, source_detail } of loadRaw()) {
   const p = pages.get(key);
   p.ads++;
   p.terms.add(source_detail);
-  const h = normalizeHandle(pick(item, F.ig_handle)) || handleFromUrl(cleanUrl(pick(item, F.link_url)) || pick(item, F.link_url)) || handleFromUrl(pick(item, F.page_profile_uri));
+  const h = keep(normalizeHandle(pick(item, F.ig_handle))) || keep(handleFromUrl(cleanUrl(pick(item, F.link_url)) || pick(item, F.link_url))) || keep(handleFromUrl(pick(item, F.page_profile_uri)));
   if (h) p.handles.push(h);
   const link = cleanUrl(pick(item, F.link_url));
   if (link && !isSocial(link)) p.links.push(link);
@@ -70,7 +72,7 @@ await Promise.all([...pages.values()].map((p) => limit(async () => {
   let handle_source = handle ? 'ad' : null;
   if (!handle && funnel_url && !args.noFetch) {
     const page = await fetchHtml(funnel_url);
-    handle = findHandleInHtml(page.html);
+    handle = findHandleInHtml(page.html, IGNORED);
     if (handle) handle_source = 'funnel_page';
   }
   if (!handle) {

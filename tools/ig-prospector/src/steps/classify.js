@@ -16,7 +16,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { parseArgs } from '../lib/cli.js';
 import { ensureDirs, readConfig, FILES, DATA_DIR } from '../lib/paths.js';
-import { readNdjson, readNdjsonMap, appendNdjson, removeFromNdjson, writeNdjson } from '../lib/ndjson.js';
+import { readNdjson, readNdjsonMap, appendNdjson, removeFromNdjson, writeNdjson, pruneOrphans } from '../lib/ndjson.js';
 import { cacheGet, cacheSet, sha } from '../lib/cache.js';
 import { SYSTEM_PROMPT, ClassificationSchema, CLASSIFICATION_JSON_SCHEMA } from '../lib/anthropic.js';
 import { createLimiter } from '../lib/limiter.js';
@@ -33,6 +33,7 @@ const ANSWERS = path.join(DATA_DIR, 'classify-answers.ndjson');
 const INSTRUCTIONS = path.join(DATA_DIR, 'classify-instructions.md');
 
 const funnels = readNdjson(FILES.funnels);
+pruneOrphans(FILES.classified, new Set(funnels.map((r) => r.ig_handle)));
 const done = readNdjsonMap(FILES.classified);
 const pending = funnels.filter((r) => args.force || !done.has(r.ig_handle)).slice(0, args.limit);
 if (args.force) removeFromNdjson(FILES.classified, new Set(pending.map((r) => r.ig_handle)));

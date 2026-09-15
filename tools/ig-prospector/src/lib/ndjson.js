@@ -51,3 +51,11 @@ export function removeFromNdjson(file, handles, key = 'ig_handle') {
   const keep = readNdjson(file).filter((r) => !handles.has(r[key]));
   writeNdjson(file, keep);
 }
+
+/** Drop rows whose key is no longer present upstream (e.g. a handle removed by a resolve rerun). Returns how many were dropped. */
+export function pruneOrphans(file, upstreamKeys, key = 'ig_handle') {
+  const rows = readNdjson(file);
+  const keep = rows.filter((r) => upstreamKeys.has(r[key]));
+  if (keep.length !== rows.length) { writeNdjson(file, keep); console.log(`[ndjson] ${path.basename(file)}: pruned ${rows.length - keep.length} row(s) no longer present upstream`); }
+  return rows.length - keep.length;
+}

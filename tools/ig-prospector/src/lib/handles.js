@@ -23,14 +23,14 @@ export function handleFromUrl(url) {
   return m ? normalizeHandle(m[1]) : null;
 }
 
-/** Find the first instagram profile link in an HTML/text blob. */
-export function findHandleInHtml(html) {
+/** Find the first instagram profile link in an HTML/text blob, skipping handles in `ignored` (platform accounts). */
+export function findHandleInHtml(html, ignored = new Set()) {
   if (!html) return null;
   const re = /https?:\/\/(?:www\.)?instagram\.com\/([A-Za-z0-9._]{1,30})(?:[/?#"'\s]|$)/gi;
   let m;
   while ((m = re.exec(html))) {
     const h = normalizeHandle(m[1]);
-    if (h) return h;
+    if (h && !ignored.has(h)) return h;
   }
   return null;
 }
