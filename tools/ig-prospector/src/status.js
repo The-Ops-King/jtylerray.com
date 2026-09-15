@@ -2,14 +2,14 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { FILES, RAW_DIR } from './lib/paths.js';
-import { readNdjson } from './lib/ndjson.js';
+import { readNdjson, readNdjsonMap } from './lib/ndjson.js';
 
 const adlib = path.join(RAW_DIR, 'adlib');
 let ads = 0, terms = 0;
 if (fs.existsSync(adlib)) for (const f of fs.readdirSync(adlib)) { terms++; ads += (JSON.parse(fs.readFileSync(path.join(adlib, f), 'utf8')).items || []).length; }
 console.log(`source:          ${terms} terms, ${ads} raw ads`);
 for (const [k, label] of [['resolved', 'resolve'], ['unresolved', '  unresolved'], ['profiles', 'enrich-profile'], ['funnels', 'enrich-funnel'], ['classified', 'classify'], ['classifyFailures', '  failures'], ['qualified', 'qualified'], ['rejects', 'rejects'], ['ghlSync', 'ghl synced']]) {
-  console.log(`${label.padEnd(16)} ${readNdjson(FILES[k]).length}`);
+  console.log(`${label.padEnd(16)} ${readNdjsonMap(FILES[k], k === 'unresolved' ? 'page_id' : 'ig_handle').size}`);
 }
 const costs = readNdjson(FILES.costs);
 const byProvider = {};

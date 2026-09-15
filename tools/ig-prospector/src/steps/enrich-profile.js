@@ -7,7 +7,7 @@
  */
 import { parseArgs } from '../lib/cli.js';
 import { ensureDirs, readConfig, FILES } from '../lib/paths.js';
-import { readNdjson, readNdjsonMap, appendNdjson, removeFromNdjson, pruneOrphans } from '../lib/ndjson.js';
+import { readNdjsonMap, appendNdjson, removeFromNdjson, pruneOrphans, compactNdjson } from '../lib/ndjson.js';
 import { cacheGet, cacheSet } from '../lib/cache.js';
 import { runActor } from '../lib/apify.js';
 import { pick, fillTemplate } from '../lib/fields.js';
@@ -16,13 +16,14 @@ import { cleanUrl } from '../lib/http.js';
 import { toEpochMs, daysBetween, isoDate } from '../lib/time.js';
 import { createLimiter } from '../lib/limiter.js';
 import { createProgress } from '../lib/log.js';
+import { loadJoined } from '../lib/records.js';
 
 const args = parseArgs();
 ensureDirs();
 const cfg = readConfig('actors.json').instagram_profile;
 const F = cfg.fields;
 
-const resolved = readNdjson(FILES.resolved);
+const resolved = [...loadJoined(['resolved']).values()];
 pruneOrphans(FILES.profiles, new Set(resolved.map((r) => r.ig_handle)));
 const done = readNdjsonMap(FILES.profiles);
 let pending = resolved.filter((r) => args.force || !done.has(r.ig_handle)).slice(0, args.limit);
@@ -49,7 +50,7 @@ function profileFromItem(item) {
 }
 
 function writeRow(base, profile) {
-  const row = { ...base, ...profile, profile_fetched_at: new Date().toISOString() };
+  const row = { ig_handle: base.ig_handle, ...profile, profile_fetched_at: new Date().toISOString() }; // own fields only
   done.set(base.ig_handle, row);
   appendNdjson(FILES.profiles, row);
 }
@@ -86,3 +87,4 @@ await Promise.all(batches.map((batch, bi) => limit(async () => {
 })));
 progress.done();
 if (progress.state.failed) process.exitCode = 1;
+compactNdjson(FILES.profiles);

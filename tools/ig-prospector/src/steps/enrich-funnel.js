@@ -6,16 +6,17 @@
  */
 import { parseArgs } from '../lib/cli.js';
 import { ensureDirs, readConfig, FILES } from '../lib/paths.js';
-import { readNdjson, readNdjsonMap, appendNdjson, removeFromNdjson, pruneOrphans } from '../lib/ndjson.js';
+import { readNdjsonMap, appendNdjson, removeFromNdjson, pruneOrphans, compactNdjson } from '../lib/ndjson.js';
 import { fetchHtml, htmlToText, isLinkInBio, firstOutboundLink } from '../lib/http.js';
 import { createLimiter } from '../lib/limiter.js';
 import { createProgress } from '../lib/log.js';
+import { loadJoined } from '../lib/records.js';
 
 const args = parseArgs();
 ensureDirs();
 const maxChars = readConfig('classify.json').max_funnel_chars;
 
-const profiles = readNdjson(FILES.profiles);
+const profiles = [...loadJoined(['resolved', 'profiles']).values()];
 pruneOrphans(FILES.funnels, new Set(profiles.map((r) => r.ig_handle)));
 const done = readNdjsonMap(FILES.funnels);
 const inputUrl = (r) => r.funnel_url || r.bio_link || null;
@@ -44,9 +45,10 @@ await Promise.all(pending.map((r) => limit(async () => {
     }
     out.funnel_text = text.slice(0, maxChars);
   }
-  const row = { ...r, ...out, funnel_fetched_at: new Date().toISOString() };
+  const row = { ig_handle: r.ig_handle, ...out, funnel_fetched_at: new Date().toISOString() }; // own fields only
   done.set(r.ig_handle, row);
   appendNdjson(FILES.funnels, row);
   progress.tick(`@${r.ig_handle} ${url ? `${out.funnel_status} ${out.funnel_text.length} chars${out.funnel_link_in_bio ? ' (link-in-bio)' : ''}` : 'no url'}`);
 })));
 progress.done();
+compactNdjson(FILES.funnels);

@@ -8,18 +8,19 @@
  * Usage: node src/steps/filter.js
  */
 import { ensureDirs, FILES } from '../lib/paths.js';
-import { readNdjson, readNdjsonMap, writeNdjson } from '../lib/ndjson.js';
+import { readNdjsonMap, writeNdjson } from '../lib/ndjson.js';
+import { loadJoined } from '../lib/records.js';
 import { loadCriteria, buildPreRules, buildPostRules, evaluate } from '../lib/criteria.js';
 
 ensureDirs();
 const C = loadCriteria();
 const pre = buildPreRules(C); const post = buildPostRules(C);
 const classified = readNdjsonMap(FILES.classified);
-const rows = readNdjson(FILES.funnels);
+const rows = [...loadJoined(['resolved', 'profiles', 'funnels', 'classified']).values()].filter((r) => r.funnel_fetched_at); // enriched through step 4
 const qualified = []; const rejects = []; const tally = {};
 const reject = (r, v) => { rejects.push({ ...r, ...v }); tally[v.rejected_by] = (tally[v.rejected_by] || 0) + 1; };
 for (const base of rows) {
-  const r = classified.get(base.ig_handle) ?? base;
+  const r = base;
   const v1 = evaluate(pre, r);
   if (v1) { reject(r, v1); continue; }
   if (!classified.has(base.ig_handle)) { reject(r, { rejected_by: 'not_classified_yet', reject_detail: 'run classify' }); continue; }

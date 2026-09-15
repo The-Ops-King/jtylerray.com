@@ -16,12 +16,13 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { parseArgs } from '../lib/cli.js';
 import { ensureDirs, readConfig, FILES, DATA_DIR } from '../lib/paths.js';
-import { readNdjson, readNdjsonMap, appendNdjson, removeFromNdjson, writeNdjson, pruneOrphans } from '../lib/ndjson.js';
+import { readNdjsonMap, appendNdjson, removeFromNdjson, writeNdjson, pruneOrphans, compactNdjson } from '../lib/ndjson.js';
 import { cacheGet, cacheSet, sha } from '../lib/cache.js';
 import { SYSTEM_PROMPT, ClassificationSchema, CLASSIFICATION_JSON_SCHEMA } from '../lib/anthropic.js';
 import { createLimiter } from '../lib/limiter.js';
 import { createProgress } from '../lib/log.js';
 import { loadCriteria, buildPreRules, evaluate } from '../lib/criteria.js';
+import { loadJoined } from '../lib/records.js';
 
 const args = parseArgs();
 ensureDirs();
@@ -41,7 +42,7 @@ export function buildInput(r) {
 }
 const keyFor = (input) => sha({ v: cfg.prompt_version, promptHash, model: modelTag, input });
 
-const funnels = readNdjson(FILES.funnels);
+const funnels = [...loadJoined(['resolved', 'profiles', 'funnels']).values()];
 pruneOrphans(FILES.classified, new Set(funnels.map((r) => r.ig_handle)));
 const done = readNdjsonMap(FILES.classified);
 // Only classify rows that can still qualify: rows failing a pre-classification rule (followers, ad age, post recency,
@@ -56,8 +57,8 @@ if (args.force) removeFromNdjson(FILES.classified, new Set(pending.map((r) => r.
 
 function writeClassified(r, result) {
   const c = result.classification;
-  const row = {
-    ...r,
+  const row = { // own fields only
+    ig_handle: r.ig_handle,
     classification_input_hash: keyFor(buildInput(r)),
     first_name: c.owner_first_name,
     last_name: c.owner_last_name,
@@ -161,3 +162,4 @@ ${JSON.stringify(CLASSIFICATION_JSON_SCHEMA, null, 2)}
 \`\`\`
 `;
 }
+compactNdjson(FILES.classified);

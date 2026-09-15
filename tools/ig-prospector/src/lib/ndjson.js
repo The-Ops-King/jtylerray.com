@@ -62,3 +62,12 @@ export function pruneOrphans(file, upstreamKeys, key = 'ig_handle') {
   if (keep.length !== rows.length) { writeNdjson(file, keep); console.log(`[ndjson] ${path.basename(file)}: pruned ${rows.length - keep.length} row(s) no longer present upstream`); }
   return rows.length - keep.length;
 }
+
+/** Rewrite an append-only file keeping only the latest row per key (later rows win). Run at the end of a step. */
+export function compactNdjson(file, key = 'ig_handle') {
+  const rows = readNdjson(file);
+  const m = new Map();
+  for (const r of rows) if (r[key] != null) m.set(r[key], r);
+  if (m.size !== rows.length) writeNdjson(file, [...m.values()]);
+  return rows.length - m.size;
+}
