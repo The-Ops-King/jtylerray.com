@@ -1,0 +1,26 @@
+{
+  "name": "ig-prospector",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Instagram prospect sourcing pipeline: Ad Library -> IG profile -> funnel -> classify -> filter -> CSV + GHL",
+  "engines": { "node": ">=20" },
+  "scripts": {
+    "source": "node src/steps/source.js",
+    "resolve": "node src/steps/resolve.js",
+    "enrich-profile": "node src/steps/enrich-profile.js",
+    "enrich-funnel": "node src/steps/enrich-funnel.js",
+    "classify": "node src/steps/classify.js",
+    "filter": "node src/steps/filter.js",
+    "export": "node src/steps/export.js",
+    "ghl:setup": "node src/setup-ghl.js",
+    "status": "node src/status.js",
+    "test": "node --test test/*.test.js"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.125.0",
+    "apify-client": "^2.25.0",
+    "dotenv": "^16.4.5",
+    "zod": "^3.23.8"
+  }
+}

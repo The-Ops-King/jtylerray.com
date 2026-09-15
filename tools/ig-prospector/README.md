@@ -1,0 +1,104 @@
+# ig-prospector
+
+Instagram prospect sourcing pipeline. Node.js, run from a terminal. Output is `data/export.csv` plus contacts upserted into a GoHighLevel (GHL) location.
+
+It builds and tracks a list. It never sends a message.
+
+## What it does not do
+
+- It does not use the official Meta Ad Library API (that API only returns political/social-issue ads). Advertisers come from an Apify Ad Library scraper actor, or from hand-imported JSON.
+- It does not use an Instagram API. Profile data comes from an Apify Instagram profile scraper actor, priced per result.
+- It does not message anyone. Outreach is manual in the Instagram app; GHL tracks it.
+- No UI, no scheduler, no database.
+
+## Setup
+
+```bash
+cd tools/ig-prospector
+npm install
+cp .env.example .env   # fill in APIFY_TOKEN, ANTHROPIC_API_KEY, GHL_PRIVATE_TOKEN, GHL_LOCATION_ID
+```
+
+In GHL, create a pipeline named `IG Outreach` with a first stage named `Sourced` (names are configurable in `config/ghl.json`). Then:
+
+```bash
+npm run ghl:setup   # creates the contact custom fields once, caches ids + pipeline/stage ids to config/ghl-fields.json
+```
+
+The Private Integration token needs scopes: `contacts.readonly`, `contacts.write`, `locations/customFields.readonly`, `locations/customFields.write`, `opportunities.readonly`, `opportunities.write`.
+
+## Run order
+
+Each step reads the previous step's file from `data/` and writes its own. Every step is resumable and skips work that is already on disk unless you pass `--force`. `--limit N` processes at most N new records in this run.
+
+| Step | Command | Reads | Writes | Spends |
+|---|---|---|---|---|
+| 1 source | `npm run source` | `config/search-terms.json` | `data/raw/adlib/*.json` (raw, untouched) | Apify (Ad Library actor), one run per term |
+| 2 resolve | `npm run resolve` | `data/raw/**` | `data/resolved.ndjson`, `data/unresolved.ndjson` | nothing (free HTTP fetch of funnel pages only when the ads carry no IG handle) |
+| 3 enrich-profile | `npm run enrich-profile` | `resolved.ndjson` | `data/profiles.ndjson` | Apify (IG profile actor), per handle, batched |
+| 4 enrich-funnel | `npm run enrich-funnel` | `profiles.ndjson` | `data/funnels.ndjson`, raw HTML in `cache/http/` | nothing |
+| 5 classify | `npm run classify` | `funnels.ndjson` | `data/classified.ndjson`, `data/classify-failures.ndjson` | Anthropic API, one call per handle |
+| 6 filter | `npm run filter` | `classified.ndjson` + `config/criteria.json` | `data/qualified.ndjson`, `data/rejects.ndjson` | nothing |
+| 7 export | `npm run export` | `qualified.ndjson` | `data/export.csv`, `data/ghl-sync.ndjson` | GHL API calls |
+
+`npm run status` prints row counts per stage and total spend. `data/costs.ndjson` is the spend ledger.
+
+First run: 20 records.
+
+```bash
+npm run source -- --limit 1          # one search term
+npm run resolve
+npm run enrich-profile -- --limit 20
+npm run enrich-funnel
+npm run classify
+npm run filter
+npm run export -- --no-ghl           # check the CSV first
+npm run export                       # then push to GHL
+```
+
+Run the same commands again: they should report everything skipped and `npm run status` should show the same spend.
+
+## Idempotency and cost control
+
+- Every external response is cached on disk (`cache/apify-adlib`, `cache/apify-ig/<handle>.json`, `cache/http/<url-hash>.json`, `cache/anthropic/<input-hash>.json`). Cached items are never re-fetched unless `--force`.
+- Output files are appended one line per record as each record completes, so a kill at record 340 of 500 resumes at 340. A line torn by a kill is skipped and re-processed.
+- Concurrency is 3 for every external call, with exponential backoff on 429 / 5xx / network errors.
+- Apify runs carry `maxTotalChargeUsd` and `maxItems` caps from `config/actors.json` and `config/search-terms.json`, enforced by Apify itself.
+- The terminal shows a running count of records and dollars per step.
+
+## Configuration
+
+- `config/criteria.json`: qualification rules. Values are placeholders; `null` disables a rule. Change it and rerun `npm run filter` only. Every reject carries `rejected_by` and `reject_detail`.
+- `config/search-terms.json`: Ad Library search terms, country, active status, max ads per term.
+- `config/actors.json`: Apify actor ids, input templates, and the output field paths to read. Swap actors here without touching code. If an actor's input schema differs, Apify rejects the run with a validation error before charging.
+- `config/classify.json`: model, effort, max funnel chars, `prompt_version` (bump it when you change the prompt so cached results are recomputed).
+- `config/ghl.json`: API base/version, pipeline and stage names, custom field definitions.
+
+## Hand-imported advertisers
+
+Drop a JSON array into `data/raw/manual/<name>.json`. Each object may have `page_id`, `page_name`, `instagram_actor_name` (or an instagram URL in `link_url`), `link_url` (funnel), `start_date`, `is_active`, `source_detail`. Rows from manual files get `source: manual` and skip the `min_ad_days_active` rule.
+
+## Data model
+
+One record per Instagram handle (lowercase, no `@`). CSV columns, in order:
+
+`first_name, last_name, email, phone, ig_handle, ig_url, follower_count, offer_price, funnel_url, funnel_type, ads_running, ad_days_active, niche, team_signal, source, source_detail, date_sourced, notes`
+
+`email` is `{ig_handle}@ig.placeholder`. It exists only so GHL can create and dedupe the contact. The domain is invalid by design. Never attach an email send, workflow, or campaign to these contacts.
+
+## GHL behavior
+
+- Contact upsert is keyed on the placeholder email (`POST /contacts/upsert`).
+- Tags `source-{source}` and `niche-{niche}` are added with the append endpoint, not the upsert body (the upsert body's `tags` field overwrites all tags).
+- An opportunity is created in `IG Outreach` / `Sourced` only if the contact has no opportunity in that pipeline. An existing opportunity in any stage is left alone. The tool never moves a contact backward.
+- `data/ghl-sync.ndjson` records synced handles; rerun skips them unless `--force`.
+
+## Classification
+
+Sonnet, structured outputs (`output_config.format` JSON schema), response validated again with zod. One retry on a parse failure, then the row goes to `data/classify-failures.ndjson`. Prices are never guessed: `offer_price_usd` is `null` unless a number is stated on the page. `confidence` is `low` when the page is thin.
+
+Note: `claude-sonnet-5` rejects the `temperature` parameter. `config/classify.json` sends it only when non-null. Set `model` to `claude-sonnet-4-6` and `temperature` to `0` if you want a sampled-at-zero run.
+
+## Tests
+
+`npm test` runs unit tests and an offline end-to-end run of steps 2 through 7 in a temp directory (fixture ads, seeded caches, a local HTTP server). It proves resumability, idempotency, the reject reasons, and the CSV contract without spending credits. Step 1 and live Apify / Anthropic / GHL calls are exercised by the 20-record acceptance run.

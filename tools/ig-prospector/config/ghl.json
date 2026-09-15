@@ -1,0 +1,23 @@
+{
+  "_comment": "Names are matched case-insensitively. The pipeline and stage must already exist in the GHL location; the setup script does not create pipelines. Custom fields are created by `npm run ghl:setup` and their ids cached in config/ghl-fields.json.",
+  "api_base": "https://services.leadconnectorhq.com",
+  "api_version": "2021-07-28",
+  "pipeline_name": "IG Outreach",
+  "sourced_stage_name": "Sourced",
+  "placeholder_email_domain": "ig.placeholder",
+  "custom_fields": [
+    { "key": "ig_handle",      "name": "IG Handle",       "dataType": "TEXT" },
+    { "key": "ig_url",         "name": "IG URL",          "dataType": "TEXT" },
+    { "key": "follower_count", "name": "IG Followers",    "dataType": "NUMERICAL" },
+    { "key": "offer_price",    "name": "Offer Price USD", "dataType": "NUMERICAL" },
+    { "key": "funnel_url",     "name": "Funnel URL",      "dataType": "TEXT" },
+    { "key": "funnel_type",    "name": "Funnel Type",     "dataType": "TEXT" },
+    { "key": "ads_running",    "name": "Ads Running",     "dataType": "NUMERICAL" },
+    { "key": "ad_days_active", "name": "Ad Days Active",  "dataType": "NUMERICAL" },
+    { "key": "niche",          "name": "Niche",           "dataType": "TEXT" },
+    { "key": "team_signal",    "name": "Team Signal",     "dataType": "TEXT" },
+    { "key": "source_detail",  "name": "Source Detail",   "dataType": "TEXT" },
+    { "key": "date_sourced",   "name": "Date Sourced",    "dataType": "TEXT" },
+    { "key": "notes",          "name": "Prospect Notes",  "dataType": "LARGE_TEXT" }
+  ]
+}

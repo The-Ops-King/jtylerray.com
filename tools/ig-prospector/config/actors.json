@@ -1,0 +1,43 @@
+{
+  "_comment": "Apify actor ids and how to read their output. Field paths are tried in order; first non-empty wins. Change these here, not in code, if you swap actors.",
+  "ad_library": {
+    "actor_id": "curious_coder/facebook-ads-library-scraper",
+    "max_total_charge_usd_per_run": 2,
+    "timeout_secs": 900,
+    "input_template": {
+      "urls": [{ "url": "{{search_url}}" }],
+      "count": "{{max_ads}}",
+      "scrapePageAds.activeStatus": "{{active_status}}",
+      "period": ""
+    },
+    "fields": {
+      "page_id": ["page_id", "pageId", "pageID", "snapshot.page_id", "metadata.page_id", "advertiser.page_id"],
+      "page_name": ["page_name", "pageName", "snapshot.page_name", "metadata.page_name", "advertiser.page_name"],
+      "ig_handle": ["snapshot.instagram_actor_name", "snapshot.instagramActorName", "instagram_actor_name", "instagramActorName", "instagram_handle", "instagramHandle", "advertiser.instagram_actor_name"],
+      "page_profile_uri": ["snapshot.page_profile_uri", "snapshot.pageProfileUri", "page_profile_uri", "pageProfileUri", "metadata.page_profile_uri"],
+      "link_url": ["snapshot.link_url", "snapshot.linkUrl", "link_url", "linkUrl", "snapshot.cards.0.link_url", "snapshot.cards.0.linkUrl", "ad_content.link_url"],
+      "start_date": ["start_date", "startDate", "start_date_formatted", "startDateFormatted", "timing.start_date", "startDateString"],
+      "is_active": ["is_active", "isActive", "status.is_active"],
+      "ad_id": ["ad_archive_id", "adArchiveID", "adArchiveId", "id"]
+    }
+  },
+  "instagram_profile": {
+    "actor_id": "apify/instagram-profile-scraper",
+    "batch_size": 20,
+    "max_total_charge_usd_per_run": 1,
+    "timeout_secs": 600,
+    "input_template": { "usernames": "{{usernames}}" },
+    "fields": {
+      "username": ["username", "userName", "handle"],
+      "full_name": ["fullName", "full_name", "name"],
+      "biography": ["biography", "bio"],
+      "external_url": ["externalUrl", "external_url", "externalUrls.0", "bioLinks.0.url", "bio_links.0.url"],
+      "followers": ["followersCount", "followers_count", "followers"],
+      "posts": ["postsCount", "posts_count", "mediaCount", "posts"],
+      "is_private": ["private", "isPrivate", "is_private"],
+      "latest_posts": ["latestPosts", "latest_posts", "posts"],
+      "post_timestamp": ["timestamp", "takenAt", "taken_at", "takenAtTimestamp", "taken_at_timestamp"],
+      "error": ["error", "errorDescription"]
+    }
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "min_followers": 3000,
+  "max_followers": null,
+  "min_offer_price_usd": 3000,
+  "require_known_price": false,
+  "allowed_funnel_types": ["booking", "application"],
+  "min_ad_days_active": 60,
+  "max_days_since_last_post": 30,
+  "exclude_if_agency": true,
+  "exclude_if_sells_to_beginner_coaches": true,
+  "allowed_confidence": null,
+  "allowed_niches": null
+}

@@ -1,0 +1,13 @@
+{
+  "_comment": "Each term becomes one Ad Library search (one Apify actor run, cached). country is an ISO-3166 code. active_status: active | inactive | all. max_ads_per_term caps actor output (and cost) per term.",
+  "country": "US",
+  "active_status": "active",
+  "max_ads_per_term": 200,
+  "terms": [
+    "book a call coaching",
+    "apply to work with me coach",
+    "high ticket coaching program",
+    "1:1 coaching application",
+    "scale your coaching business"
+  ]
+}
