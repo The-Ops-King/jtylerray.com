@@ -1,14 +1,14 @@
 {
-  "min_followers": 3000,
+  "min_followers": 1000,
   "max_followers": 100000,
   "min_offer_price_usd": 3000,
   "require_known_price": false,
-  "allowed_funnel_types": ["booking", "application"],
-  "min_ad_days_active": 30,
-  "max_days_since_last_post": 30,
+  "allowed_funnel_types": ["booking", "application", "webinar"],
+  "min_ad_days_active": 14,
+  "max_days_since_last_post": 60,
   "reject_if_last_post_unknown": false,
   "exclude_if_agency": true,
-  "exclude_if_sells_to_beginner_coaches": true,
+  "exclude_if_sells_to_beginner_coaches": false,
   "allowed_confidence": null,
   "allowed_niches": null
 }
