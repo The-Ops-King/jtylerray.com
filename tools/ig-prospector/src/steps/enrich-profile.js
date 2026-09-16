@@ -3,10 +3,14 @@
  * Batches handles per actor run (cheaper than one run per handle); caches per handle in cache/apify-ig/<handle>.json.
  * A handle the actor did not return (deleted, private, blocked) is still written with profile_found=false so it is never re-spent.
  * Output: data/profiles.ndjson (resolved row + profile fields).
- * Usage: node src/steps/enrich-profile.js [--force] [--limit N]
+ * Handles that came from Instagram user search already carry profile fields in the raw search dataset
+ * (data/raw/ig-search/); those are used as-is (no post history, so last_post_at stays null) instead of being re-bought.
+ * Usage: node src/steps/enrich-profile.js [--force] [--limit N] [--no-spend: cache and search data only, leave the rest pending]
  */
 import { parseArgs } from '../lib/cli.js';
-import { ensureDirs, readConfig, FILES } from '../lib/paths.js';
+import fs from 'node:fs';
+import path from 'node:path';
+import { ensureDirs, readConfig, FILES, RAW_DIR } from '../lib/paths.js';
 import { readNdjsonMap, appendNdjson, removeFromNdjson, pruneOrphans, compactNdjson } from '../lib/ndjson.js';
 import { cacheGet, cacheSet } from '../lib/cache.js';
 import { runActor } from '../lib/apify.js';
@@ -55,13 +59,31 @@ function writeRow(base, profile) {
   appendNdjson(FILES.profiles, row);
 }
 
-// 1) Serve from cache first (zero credits).
-const needFetch = [];
+// 0) Profiles already present in the Instagram search datasets (same fields minus post history).
+function loadSearchProfiles() {
+  const dir = path.join(RAW_DIR, 'ig-search'); const out = new Map();
+  if (!fs.existsSync(dir)) return out;
+  for (const f of fs.readdirSync(dir).filter((x) => x.endsWith('.json'))) {
+    const p = JSON.parse(fs.readFileSync(path.join(dir, f), 'utf8'));
+    for (const it of p.items || []) {
+      const h = normalizeHandle(pick(it, F.username));
+      if (h && pick(it, F.followers) != null && !pick(it, F.error) && !out.has(h)) out.set(h, { item: it, run_id: `ig-search:${p.niche ?? f}` });
+    }
+  }
+  return out;
+}
+const fromSearch = loadSearchProfiles();
+
+// 1) Serve from cache first (zero credits), then from search data.
+const needFetch = []; let servedFromSearch = 0;
 for (const r of pending) {
   const hit = args.force ? null : cacheGet(CACHE_NS, r.ig_handle);
   if (hit) { writeRow(r, hit.value.item ? profileFromItem(hit.value.item) : { profile_found: false, profile_error: hit.value.error || 'not_returned' }); progress.skip(); progress.tick(`@${r.ig_handle} (cache)`); }
+  else if (fromSearch.has(r.ig_handle)) { const v = fromSearch.get(r.ig_handle); cacheSet(CACHE_NS, r.ig_handle, v); writeRow(r, { ...profileFromItem(v.item), profile_source: 'ig_search' }); servedFromSearch++; progress.skip(); progress.tick(`@${r.ig_handle} (search data)`); }
   else needFetch.push(r);
 }
+if (servedFromSearch) console.log(`[enrich-profile] ${servedFromSearch} profile(s) taken from Instagram search data (no post history)`);
+if (args.noSpend && needFetch.length) { console.log(`[enrich-profile] --no-spend: ${needFetch.length} handle(s) left pending`); needFetch.length = 0; }
 
 // 2) Fetch the rest in batches, concurrency 3.
 const batches = [];
