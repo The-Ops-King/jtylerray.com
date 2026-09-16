@@ -15,6 +15,8 @@ export const ScoringSchema = z.object({
     confidence: z.record(z.string(), z.number()),
     niche: z.record(z.string(), z.number()),
     business_type: z.record(z.string(), z.number()),
+    community_members: pts.extend({ min: z.number() }).optional(),
+    community_paid: pts.optional(),
   }),
 }).strict();
 
@@ -39,6 +41,9 @@ export function score(S, r) {
   add(`confidence:${r.classification_confidence}`, g.confidence[r.classification_confidence] || 0);
   add(`niche:${r.niche}`, g.niche[r.niche] || 0);
   add(`type:${r.business_type}`, g.business_type[r.business_type] || 0);
+  // Seed-only evidence of a paid offer (Skool): counts alongside the ad signals, never instead of them.
+  if (g.community_members && (r.community_members ?? 0) >= g.community_members.min) add(`community_${g.community_members.min}+`, g.community_members.points);
+  if (g.community_paid && (r.community_price_monthly_usd ?? 0) > 0) add('community_paid', g.community_paid.points);
   const tier = Object.entries(S.tiers).sort((a, b) => b[1] - a[1]).find(([, min]) => total >= min)?.[0] ?? 'D';
   return { fit_score: total, fit_tier: tier, fit_notes: hits.join(', ') };
 }

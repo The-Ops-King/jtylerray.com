@@ -79,6 +79,18 @@ Run the same commands again: they should report everything skipped and `npm run 
 
 ## Hand-imported advertisers
 
+### Seed sources (handles found without the Ad Library)
+
+Three extra steps find Instagram handles some other way and write them to `data/raw/seeds/<source>/`. `resolve` folds them in with `source` set to the directory name (`skool`, `ig_search`, `ig_related`), so the CSV can be sliced by source. Seed rows have no ad data (`ads_running` 0, `ad_days_active` blank) and skip the `min_ad_days_active` rule; they earn the ad points in scoring only if the same handle also advertises. All three read the niche list in `config/niches.json`.
+
+- `npm run source:skool` (free). Searches Skool discovery for each niche's `skool_queries`, opens every community with at least `min_members` (`config/skool.json`), and takes the owner's Instagram link when they list one (about 40% do). The owner's website, else the community about page, becomes the funnel. Every community seen lands in `data/skool-groups.ndjson`; the community name, members and monthly price ride along into the CSV (`community_url`, `community_members`, `community_price_monthly`) and score as `community_50+` / `community_paid` in `config/scoring.json`. Pages are cached; `--force` refetches, `--niche <key>` runs one niche.
+- `npm run source:ig-search` (Apify, about $0.0023 per result). One Instagram user-search run per niche with its `ig_queries`; `config/ig-search.json` sets results per query and the per-run spend cap. Cached by input, so a rerun spends nothing unless the queries change.
+- `npm run source:related` (free). Reads the `relatedProfiles` the profile scraper happened to return for qualified handles and seeds the ones the pipeline has not seen. The scraper does not return them on demand, so this is a small one-time bump after each `enrich-profile`.
+
+After any seed step: `npm run resolve && npm run enrich-profile && npm run enrich-funnel && npm run classify` as usual.
+
+### Manual imports
+
 Drop a JSON array into `data/raw/manual/<name>.json`. Each object may have `page_id`, `page_name`, `instagram_actor_name` (or an instagram URL in `link_url`), `link_url` (funnel), `start_date`, `is_active`, `source_detail`. Rows from manual files get `source: manual` and skip the `min_ad_days_active` rule.
 
 ## Data model

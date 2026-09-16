@@ -2,6 +2,8 @@
  * Step 2: resolve. Raw ads -> one row per advertiser page -> Instagram handle (primary key) + funnel URL + ad activity.
  * Handle sources, in order: the ad's instagram_actor_name, an instagram.com link in the ad, an instagram link on the
  * funnel page (free HTTP fetch, cached). Pages with no handle go to data/unresolved.ndjson with the reason.
+ * Seed files (data/raw/seeds/<source>/, written by the source:* steps) already carry a handle; they are folded in after
+ * the ad pages so an advertiser that also shows up as a seed keeps its ad signals.
  * Output: data/resolved.ndjson keyed by ig_handle. Rebuilt in full on every run (free: HTML fetches are cached), so a
  * change to the raw data or the ignore list is reflected immediately; date_sourced is preserved from the previous file.
  * Usage: node src/steps/resolve.js [--force: refetch funnel pages] [--no-fetch]
@@ -17,6 +19,7 @@ import { cleanUrl, fetchHtml, isSocial } from '../lib/http.js';
 import { toEpochMs, daysBetween, isoDate, TODAY } from '../lib/time.js';
 import { createLimiter } from '../lib/limiter.js';
 import { createProgress } from '../lib/log.js';
+import { loadSeeds } from '../lib/seeds.js';
 
 const args = parseArgs();
 ensureDirs();
@@ -108,7 +111,31 @@ await Promise.all([...pages.values()].map((p) => limit(async () => {
   existing.set(handle, row);
   progress.tick(`@${handle} (${handle_source}) ads=${p.active}/${p.ads} days=${row.ad_days_active}`);
 })));
+// Seeds: handle already known, no ads. First occurrence wins; an advertiser row for the same handle always wins.
+let seeded = 0;
+for (const { item, source, source_detail } of loadSeeds()) {
+  const handle = keep(normalizeHandle(item.ig_handle));
+  if (!handle || existing.has(handle)) continue;
+  const funnel_url = cleanUrl(item.funnel_url);
+  existing.set(handle, {
+    ig_handle: handle,
+    ig_url: igUrl(handle),
+    handle_source: 'seed',
+    page_id: item.page_id || `${source}:${handle}`,
+    page_name: item.name ?? null,
+    funnel_url: funnel_url && !isSocial(funnel_url) ? funnel_url : null,
+    ads_running: 0,
+    ads_seen: 0,
+    ad_first_seen: null,
+    ad_days_active: null,
+    source,
+    source_detail,
+    date_sourced: previous.get(handle)?.date_sourced ?? TODAY,
+    ...(item.extra || {}),
+  });
+  seeded++;
+}
 writeNdjson(FILES.resolved, [...existing.values()]);
 writeNdjson(FILES.unresolved, unresolvedRows);
 progress.done();
-console.log(`resolved: ${existing.size} handles | unresolved pages: ${unresolvedRows.length} -> ${FILES.unresolved}`);
+console.log(`resolved: ${existing.size} handles (${seeded} from seeds) | unresolved pages: ${unresolvedRows.length} -> ${FILES.unresolved}`);

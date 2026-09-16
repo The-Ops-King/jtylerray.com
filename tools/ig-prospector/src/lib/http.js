@@ -1,5 +1,9 @@
+import { execFile } from 'node:child_process';
+import { promisify } from 'node:util';
 import { cacheGet, cacheSet } from './cache.js';
-import { withBackoff } from './limiter.js';
+import { withBackoff, sleep } from './limiter.js';
+
+const execFileP = promisify(execFile);
 
 const UA = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36';
 
@@ -55,6 +59,34 @@ export async function fetchHtml(url, { maxRedirects = 1, timeoutMs = 20000, forc
     result = { url, final_url: current, status: 0, html: '', redirected: hops, pending_redirect: null, content_type: '', fetched_at: new Date().toISOString(), error: String(err?.message || err) };
   }
   return cacheSet('http', key, result);
+}
+
+const WAF_MARK = 'awsWafCookieDomainList';
+const isChallenge = (code, html) => Number(code) === 202 && html.includes(WAF_MARK);
+/**
+ * Same contract as fetchHtml, but the request goes through the system curl. Some hosts (Skool, behind AWS WAF) serve a
+ * JavaScript challenge to Node's fetch fingerprint and a normal page to curl (only with a plain browser UA; extra accept
+ * headers trigger the challenge too). A challenge page is retried with a pause and never cached. Follows at most one redirect, like fetchHtml.
+ */
+export async function fetchHtmlCurl(url, { timeoutMs = 20000, force = false, retries = 3 } = {}) {
+  if (!force) { const hit = cacheGet('http', url); if (hit) return hit.value; }
+  const MARK = '\n<<<CURL-META>>>';
+  let result;
+  for (let attempt = 0; ; attempt++) {
+    try {
+      const { stdout } = await execFileP('curl', ['-sS', '-L', '--max-redirs', '1', '--max-time', String(Math.ceil(timeoutMs / 1000)), '--noproxy', '127.0.0.1,localhost', '-A', UA, '-w', `${MARK}%{http_code} %{url_effective} %{num_redirects}`, url], { maxBuffer: 8 * 1024 * 1024 });
+      const at = stdout.lastIndexOf(MARK);
+      const [code, finalUrl, hops] = stdout.slice(at + MARK.length).trim().split(' ');
+      const html = stdout.slice(0, at);
+      if (isChallenge(code, html) && attempt < retries) { await sleep(3000 * 2 ** attempt); continue; }
+      result = { url, final_url: finalUrl || url, status: Number(code) || 0, html: html.slice(0, 2_000_000), redirected: Number(hops) || 0, pending_redirect: null, content_type: '', fetched_at: new Date().toISOString(), error: isChallenge(code, html) ? 'waf_challenge' : null };
+    } catch (err) {
+      if (attempt < retries) { await sleep(1000 * 2 ** attempt); continue; }
+      result = { url, final_url: url, status: 0, html: '', redirected: 0, pending_redirect: null, content_type: '', fetched_at: new Date().toISOString(), error: String(err?.message || err) };
+    }
+    break;
+  }
+  return result.error === 'waf_challenge' ? result : cacheSet('http', url, result);
 }
 
 /** Visible text + title + meta description from HTML. Good enough for classification; not a DOM parser. */

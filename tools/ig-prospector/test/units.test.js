@@ -13,6 +13,8 @@ import { appendNdjson, readNdjson, readNdjsonMap, writeNdjson } from '../src/lib
 import { parseArgs } from '../src/lib/cli.js';
 import { ClassificationSchema } from '../src/lib/anthropic.js';
 import { extractEmails, candidatesFromHtml, candidatesFromBio, countSharedEmails, pickContactEmail } from '../src/lib/emails.js';
+import { parseDiscovery, parseAbout } from '../src/lib/skool.js';
+import { score } from '../src/lib/scoring.js';
 
 test('handles normalize to lowercase without @ and reject junk', () => {
   assert.equal(normalizeHandle('@Coach.Alice'), 'coach.alice');
@@ -142,4 +144,30 @@ test('contact email pick prefers bio, then own-domain mailto, and drops addresse
   assert.deepEqual(pickContactEmail(rows[2], shared), { contact_email: null, contact_email_source: null }, 'template address seen on 3 advertisers is dropped');
   assert.deepEqual(pickContactEmail(rows[3], shared), { contact_email: 'stray@gmail.com', contact_email_source: 'funnel_text' });
   assert.deepEqual(pickContactEmail(rows[4], shared), { contact_email: null, contact_email_source: null });
+});
+
+const nextData = (pageProps) => `<html><body><script id="__NEXT_DATA__" type="application/json">${JSON.stringify({ props: { pageProps } })}</script></body></html>`;
+
+test('skool parsers read discovery and about pages, prices in cents, owner links', () => {
+  const disc = parseDiscovery(nextData({ page: 1, numGroups: 2, hasMore: false, groups: [
+    { group: { name: 'air-bnb-pros', metadata: JSON.stringify({ displayName: 'Airbnb Pros', totalMembers: 120, currentMBp: '{"currency":"usd","amount":4900}', currentABp: '{"currency":"usd","amount":29000}', description: 'STR' }) } },
+    { name: 'free-one', metadata: { displayName: 'Free One', totalMembers: 7 } },
+  ] }));
+  assert.deepEqual(disc.groups.map((g) => [g.name, g.members, g.price_monthly_usd, g.price_annual_usd]), [['air-bnb-pros', 120, 49, 290], ['free-one', 7, null, null]]);
+  assert.equal(disc.has_more, false);
+  const about = parseAbout(nextData({ currentGroup: { name: 'air-bnb-pros', metadata: { displayName: 'Airbnb Pros', totalMembers: 120, currentMBp: { currency: 'usd', amount: 4900 }, lpDescription: 'Join', owner: JSON.stringify({ first_name: 'Sam', last_name: 'Host', name: 'sam-host-1', metadata: { link_instagram: 'https://www.instagram.com/Sam.Host?igsh=abc', link_website: 'https://samhost.com' } }) } } }));
+  assert.equal(about.owner.instagram, 'https://www.instagram.com/Sam.Host?igsh=abc');
+  assert.equal(about.owner.website, 'https://samhost.com');
+  assert.equal(about.price_monthly_usd, 49);
+  assert.equal(parseAbout('<html>no data</html>'), null);
+  assert.equal(parseDiscovery(''), null);
+});
+
+test('scoring adds community signals for seed rows and leaves ad rows unchanged', () => {
+  const S = { tiers: { A: 10, B: 7, C: 4 }, signals: { followers_in_band: { min: 3000, max: 100000, points: 2 }, followers_over: { min: 1000, points: 1 }, ad_days_active: { min: 30, points: 2 }, ads_running: { min: 3, points: 1 }, funnel_type: { booking: 2 }, team_signal: {}, recent_post_days: { max: 30, points: 1 }, confidence: { high: 1 }, niche: {}, business_type: { coach: 1 }, community_members: { min: 50, points: 1 }, community_paid: { points: 1 } } };
+  const seed = { follower_count: 5000, funnel_type: 'booking', classification_confidence: 'high', business_type: 'coach', community_members: 120, community_price_monthly_usd: 49 };
+  const r = score(S, seed);
+  assert.equal(r.fit_score, 8); assert.equal(r.fit_tier, 'B'); assert.match(r.fit_notes, /community_50\+, community_paid/);
+  const ad = score(S, { ...seed, community_members: undefined, community_price_monthly_usd: undefined, ad_days_active: 60, ads_running: 4 });
+  assert.equal(ad.fit_score, 9); assert.doesNotMatch(ad.fit_notes, /community/);
 });

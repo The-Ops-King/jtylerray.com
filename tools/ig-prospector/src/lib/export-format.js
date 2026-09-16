@@ -1,6 +1,6 @@
 /** The first 18 columns are the original contract. The rest are grading and slicing columns appended after it. */
 export const CONTRACT_COLUMNS = ['first_name', 'last_name', 'email', 'phone', 'ig_handle', 'ig_url', 'follower_count', 'offer_price', 'funnel_url', 'funnel_type', 'ads_running', 'ad_days_active', 'niche', 'team_signal', 'source', 'source_detail', 'date_sourced', 'notes'];
-export const EXTRA_COLUMNS = ['contact_email', 'contact_email_source', 'fit_tier', 'fit_score', 'fit_notes', 'business_type', 'confidence', 'days_since_last_post', 'last_post_at', 'post_count', 'bio_link', 'fb_page_name'];
+export const EXTRA_COLUMNS = ['contact_email', 'contact_email_source', 'fit_tier', 'fit_score', 'fit_notes', 'business_type', 'confidence', 'days_since_last_post', 'last_post_at', 'post_count', 'bio_link', 'fb_page_name', 'community_url', 'community_members', 'community_price_monthly'];
 export const CSV_COLUMNS = [...CONTRACT_COLUMNS, ...EXTRA_COLUMNS];
 
 /**
@@ -19,7 +19,10 @@ export function buildNotes(r) {
     r.last_post_at ? `last_post=${r.last_post_at}` : null,
     r.post_count != null ? `posts=${r.post_count}` : null,
     r.bio_link ? `bio_link=${r.bio_link}` : null,
-    r.page_name ? `fb_page=${r.page_name}` : null,
+    r.page_name && r.source === 'adlibrary' ? `fb_page=${r.page_name}` : null,
+    r.community_name ? `community=${r.community_name} (${r.community_members ?? '?'} members${r.community_price_monthly_usd ? `, $${r.community_price_monthly_usd}/mo` : ''})` : null,
+    r.related_to ? `related_to=@${r.related_to}` : null,
+    r.search_query ? `search=${r.search_query}` : null,
   ].filter(Boolean).join(' | ');
 }
 
@@ -54,7 +57,10 @@ export function toRecord(r, placeholderDomain) {
     last_post_at: r.last_post_at ?? '',
     post_count: r.post_count ?? '',
     bio_link: r.bio_link ?? '',
-    fb_page_name: r.page_name ?? '',
+    fb_page_name: r.source === 'adlibrary' ? r.page_name ?? '' : '',
+    community_url: r.community_url ?? '',
+    community_members: r.community_members ?? '',
+    community_price_monthly: r.community_price_monthly_usd ?? '',
   };
 }
 

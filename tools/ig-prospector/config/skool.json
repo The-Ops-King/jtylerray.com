@@ -1,0 +1,9 @@
+{
+  "_comment": "Skool discovery is server-rendered; this step fetches it directly (no Apify). Communities with fewer than min_members are skipped; paid_only restricts to communities with a monthly or annual price. Every page is cached in cache/http; pass --force to refresh.",
+  "base_url": "https://www.skool.com",
+  "max_pages_per_query": 3,
+  "min_members": 30,
+  "paid_only": false,
+  "concurrency": 2,
+  "delay_ms": 400
+}

@@ -49,6 +49,13 @@
     },
     "business_type": {
       "coach": 1
+    },
+    "community_members": {
+      "min": 50,
+      "points": 1
+    },
+    "community_paid": {
+      "points": 1
     }
   }
 }

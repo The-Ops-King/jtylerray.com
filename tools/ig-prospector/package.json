@@ -9,6 +9,9 @@
   },
   "scripts": {
     "source": "node src/steps/source.js",
+    "source:skool": "node src/steps/source-skool.js",
+    "source:related": "node src/steps/source-related.js",
+    "source:ig-search": "node src/steps/source-ig-search.js",
     "resolve": "node src/steps/resolve.js",
     "discover": "node src/steps/discover.js",
     "enrich-profile": "node src/steps/enrich-profile.js",

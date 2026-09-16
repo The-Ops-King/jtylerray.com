@@ -1,0 +1,37 @@
+{
+  "_comment": "Instagram user search via Apify. One actor run per niche with all its ig_queries; results_per_query caps each query. max_total_charge_usd_per_run is a hard cap enforced by Apify.",
+  "actor_id": "apify/instagram-search-scraper",
+  "search_type": "user",
+  "results_per_query": 100,
+  "max_total_charge_usd_per_run": 1.5,
+  "timeout_secs": 900,
+  "fields": {
+    "username": [
+      "username",
+      "userName",
+      "handle"
+    ],
+    "full_name": [
+      "fullName",
+      "full_name",
+      "name"
+    ],
+    "search_term": [
+      "searchTerm",
+      "search_term",
+      "searchQuery",
+      "query",
+      "inputSearch"
+    ],
+    "followers": [
+      "followersCount",
+      "followers_count",
+      "followers"
+    ],
+    "verified": [
+      "verified",
+      "isVerified",
+      "is_verified"
+    ]
+  }
+}

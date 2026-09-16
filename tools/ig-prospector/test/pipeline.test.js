@@ -31,6 +31,7 @@ async function run(step, ...flags) {
   } catch (e) { throw new Error(`${step} failed (${e.code})\n${e.stdout}\n${e.stderr}`); }
 }
 
+const nextData = (pageProps) => `<html><body><script id="__NEXT_DATA__" type="application/json">${JSON.stringify({ props: { pageProps } })}</script></body></html>`;
 let server; let base;
 before(async () => {
   fs.mkdirSync(path.join(HOME, 'config'), { recursive: true });
@@ -40,6 +41,11 @@ before(async () => {
       '/funnel-a': '<html><head><title>Apply to work with Alice</title></head><body><h1>1:1 Business Coaching</h1><p>Investment: $5,000. Apply below and my setter will reach out.</p><a href="/apply">Apply now</a><a href="mailto:alice@coachalice.com">email</a> <span>help@skool.com</span></body></html>',
       '/page-b': '<html><body><p>Bob fitness</p><a href="https://www.instagram.com/coach_bob/">IG</a></body></html>',
       '/redirect': null,
+      '/discovery?q=airbnb': nextData({ page: 1, numGroups: 2, hasMore: false, groups: [
+        { group: { name: 'air-bnb-pros', metadata: JSON.stringify({ displayName: 'Airbnb Pros', totalMembers: 120, currentMBp: '{"currency":"usd","amount":4900}' }) } },
+        { group: { name: 'tiny-club', metadata: { displayName: 'Tiny', totalMembers: 3 } } },
+      ] }),
+      '/air-bnb-pros/about': nextData({ currentGroup: { name: 'air-bnb-pros', metadata: { displayName: 'Airbnb Pros', totalMembers: 120, currentMBp: { currency: 'usd', amount: 4900 }, owner: JSON.stringify({ first_name: 'Sam', last_name: 'Host', name: 'sam-host-1', metadata: { link_instagram: 'https://www.instagram.com/Sam.Host/', link_website: `${base}/funnel-a` } }) } } }),
     };
     if (req.url === '/redirect') { res.writeHead(302, { location: '/funnel-a' }); return res.end(); }
     if (pages[req.url]) { res.writeHead(200, { 'content-type': 'text/html' }); return res.end(pages[req.url]); }
@@ -164,7 +170,7 @@ test('export writes the CSV contract and is CSV-only by default', async () => {
   const csv = fs.readFileSync(D('export.csv'), 'utf8').trim().split('\n');
   assert.match(csv[0], /^first_name,last_name,email,phone,ig_handle,ig_url,follower_count,offer_price,funnel_url,funnel_type,ads_running,ad_days_active,niche,team_signal,source,source_detail,date_sourced,notes,/);
   assert.equal(csv.length, 3);
-  assert.match(csv[0], /,notes,contact_email,contact_email_source,fit_tier,fit_score,fit_notes,business_type,confidence,days_since_last_post,last_post_at,post_count,bio_link,fb_page_name$/);
+  assert.match(csv[0], /,notes,contact_email,contact_email_source,fit_tier,fit_score,fit_notes,business_type,confidence,days_since_last_post,last_post_at,post_count,bio_link,fb_page_name,community_url,community_members,community_price_monthly$/);
   const aliceRow = csv.find((l) => l.startsWith('Alice,'));
   assert.match(aliceRow, /^Alice,A,coach\.alice@ig\.placeholder,,coach\.alice,https:\/\/www\.instagram\.com\/coach\.alice\/,12000,5000,http:\/\/127\.0\.0\.1:\d+\/funnel-a,application,2,400,business,has_setter,adlibrary,test term,\d{4}-\d{2}-\d{2},/);
   assert.match(aliceRow, /,alice@coachalice\.com,funnel_mailto,/, 'contact_email column filled from the funnel mailto');
@@ -196,4 +202,42 @@ test('resume: a truncated output file is completed without duplicates', async ()
   assert.equal(new Set(rows.map((r) => r.ig_handle)).size, 4);
   const raw = fs.readFileSync(f, 'utf8').split('\n').filter(Boolean);
   assert.equal(raw.length, 5, 'torn line isolated on its own line, 4 good rows');
+});
+
+test('skool seed source -> resolve -> enrich -> filter carries community fields and scores them', async () => {
+  const cfgFile = path.join(HOME, 'config', 'skool.json');
+  const c = JSON.parse(fs.readFileSync(cfgFile, 'utf8')); c.base_url = base; c.min_members = 30; c.delay_ms = 0; fs.writeFileSync(cfgFile, JSON.stringify(c));
+  const nichesFile = path.join(HOME, 'config', 'niches.json');
+  fs.writeFileSync(nichesFile, JSON.stringify({ niches: [{ key: 'airbnb', label: 'Airbnb', skool_queries: ['airbnb'], ig_queries: ['airbnb coach'] }] }));
+  const out = await run('source-skool');
+  assert.match(out, /airbnb: 2 communities, 1 eligible, 1 with Instagram/);
+  const seedFiles = fs.readdirSync(D('raw/seeds/skool'));
+  assert.equal(seedFiles.length, 1);
+  const seed = JSON.parse(fs.readFileSync(D(`raw/seeds/skool/${seedFiles[0]}`), 'utf8'));
+  assert.deepEqual(seed.items.map((i) => [i.ig_handle, i.extra.community_members, i.extra.community_price_monthly_usd]), [['sam.host', 120, 49]]);
+  assert.equal(lines('skool-groups.ndjson').length, 1, 'every eligible community is recorded');
+  await run('source-skool'); // rerun: cached pages, same file, no duplicate
+  assert.equal(fs.readdirSync(D('raw/seeds/skool')).length, 1);
+
+  await run('resolve');
+  const sam = lines('resolved.ndjson').find((r) => r.ig_handle === 'sam.host');
+  assert.equal(sam.source, 'skool'); assert.equal(sam.handle_source, 'seed'); assert.equal(sam.community_members, 120); assert.equal(sam.ad_days_active, null);
+  assert.equal(sam.funnel_url, `${base}/funnel-a`, 'owner website is the funnel');
+  assert.equal(lines('resolved.ndjson').find((r) => r.ig_handle === 'coach.alice').source, 'adlibrary', 'ad rows untouched');
+
+  const cacheDir = path.join(HOME, 'cache', 'apify-ig');
+  fs.writeFileSync(path.join(cacheDir, 'sam.host.json'), JSON.stringify({ key: 'sam.host', value: { item: { username: 'Sam.Host', fullName: 'Sam Host', biography: 'STR coach', followersCount: 9000, postsCount: 80, latestPosts: [{ timestamp: new Date().toISOString() }] } } }));
+  await run('enrich-profile'); await run('enrich-funnel');
+  const out2 = await run('classify');
+  const q = lines('classify-queue.ndjson').find((x) => x.ig_handle === 'sam.host');
+  assert.ok(q, 'seed row reaches the classify queue (no ad-age rule for seeds)');
+  fs.writeFileSync(D('classify-answers.ndjson'), JSON.stringify({ ig_handle: 'sam.host', input_hash: q.input_hash, model: 'test', classification: { owner_first_name: 'Sam', owner_last_name: 'Host', business_type: 'coach', niche: 'finance', funnel_type: 'application', offer_price_usd: null, sells_to_coaches_about_getting_first_client: false, is_agency_or_systems_provider: false, team_signal: 'solo', confidence: 'high' } }) + '\n');
+  await run('classify');
+  await run('filter'); await run('export');
+  const qs = lines('qualified.ndjson').find((r) => r.ig_handle === 'sam.host');
+  assert.ok(qs, 'seed row qualifies'); assert.match(qs.fit_notes, /community_50\+, community_paid/);
+  const csv = fs.readFileSync(D('export.csv'), 'utf8');
+  assert.match(csv.split('\n')[0], /,community_url,community_members,community_price_monthly$/);
+  assert.match(csv, new RegExp(`sam\\.host,.*,skool,skool:airbnb,.*${base.replace(/[.]/g, '\\.')}/air-bnb-pros/about,120,49`));
+  assert.equal(fs.existsSync(D('costs.ndjson')), false, 'skool source spends nothing');
 });
