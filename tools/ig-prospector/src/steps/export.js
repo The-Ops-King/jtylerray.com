@@ -1,10 +1,11 @@
 /**
  * Step 7: export. Write data/export.csv (exact column contract) and upsert qualified records into GHL.
- * GHL: upsert contact keyed on the placeholder email, append tags source-{source} and niche-{niche},
- * create an opportunity in the IG Outreach pipeline / Sourced stage ONLY if the contact has no opportunity in that
- * pipeline yet. An existing opportunity in any stage is left untouched (never move backward).
+ * GHL: upsert the contact keyed on the placeholder email (the key is derived from ig_handle, so it never changes and a
+ * rerun can never duplicate), append the ig-* tags, and write every field including the real contact_email as a custom
+ * field. Opportunities are OFF by default: pass --opportunities to also create one in the configured pipeline's Sourced
+ * stage, and only when the contact has none there yet (an existing opportunity in any stage is never moved backward).
  * data/ghl-sync.ndjson records every synced handle; rerun skips them unless --force.
- * Usage: node src/steps/export.js [--ghl] [--force] [--limit N]   (CSV only unless --ghl is passed)
+ * Usage: node src/steps/export.js [--ghl] [--opportunities] [--force] [--limit N]   (CSV only unless --ghl is passed)
  */
 import fs from 'node:fs';
 import path from 'node:path';
@@ -30,6 +31,7 @@ if (!args.ghl) { console.log('[export] CSV only. Pass --ghl to upsert into GoHig
 const fieldMapFile = path.join(CONFIG_DIR, 'ghl-fields.json');
 if (!fs.existsSync(fieldMapFile)) throw new Error(`Missing ${fieldMapFile}. Run \`npm run ghl:setup\` first.`);
 const fieldMap = JSON.parse(fs.readFileSync(fieldMapFile, 'utf8'));
+if (args.opportunities && !fieldMap.pipelineId) throw new Error(`--opportunities needs a pipeline: no "${ghlCfg.pipeline_name}" pipeline was found when \`npm run ghl:setup\` last ran. Create it in GHL with a "${ghlCfg.sourced_stage_name}" stage, rerun ghl:setup, then retry.`);
 const ghl = new GhlClient();
 if (fieldMap.locationId !== ghl.locationId) throw new Error(`config/ghl-fields.json was generated for location ${fieldMap.locationId}, but GHL_LOCATION_ID is ${ghl.locationId}. Rerun \`npm run ghl:setup\`.`);
 
@@ -55,11 +57,13 @@ await Promise.all(pending.map((rec) => limit(async () => {
     });
     const contactId = up?.contact?.id;
     if (!contactId) throw new Error(`upsert returned no contact id: ${JSON.stringify(up).slice(0, 200)}`);
-    const tags = [`source-${tagSafe(rec.source)}`, `niche-${tagSafe(rec.niche)}`];
+    const p = ghlCfg.tag_prefix || 'ig';
+    const tags = [`${p}-prospect`, `${p}-src-${tagSafe(rec.source)}`, `${p}-tier-${tagSafe(rec.fit_tier)}`, `${p}-niche-${tagSafe(rec.niche)}`];
     await ghl.addTags(contactId, tags);
 
+    let opportunity = null; let oppAction = 'skipped (contacts only; pass --opportunities)';
+    if (args.opportunities) {
     const existingOpps = await ghl.findOpportunities(contactId, fieldMap.pipelineId);
-    let opportunity = null; let oppAction;
     if (existingOpps.length) {
       const o = existingOpps[0];
       const stage = fieldMap.stages.find((s) => s.id === o.pipelineStageId);
@@ -69,6 +73,7 @@ await Promise.all(pending.map((rec) => limit(async () => {
       const o = await ghl.createOpportunity({ pipelineId: fieldMap.pipelineId, pipelineStageId: fieldMap.sourcedStageId, contactId, name: `@${rec.ig_handle}` });
       oppAction = 'created opportunity in Sourced';
       opportunity = { id: o?.id ?? null, stageId: fieldMap.sourcedStageId, stageName: fieldMap.sourcedStageName };
+    }
     }
     const result = { ig_handle: rec.ig_handle, contact_id: contactId, contact_new: Boolean(up?.new), tags, opportunity, opp_action: oppAction, synced_at: new Date().toISOString() };
     synced.set(rec.ig_handle, result);
