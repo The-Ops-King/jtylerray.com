@@ -69,4 +69,23 @@ export function toCsv(records) {
   return [CSV_COLUMNS.join(','), ...records.map((rec) => CSV_COLUMNS.map((c) => csvCell(rec[c])).join(','))].join('\n') + '\n';
 }
 
+/**
+ * Extra tags for the config/ghl.json segments a record matches. GHL has no API for saved smart lists, so a segment is
+ * a tag: one filter in the UI turns it into a smart list, and workflows can use it directly. Every clause a segment
+ * declares must hold; an absent clause is not a constraint. Missing numbers read as 0, so a blank follower count can
+ * never satisfy a minimum.
+ */
+export function segmentTags(rec, segments = [], prefix = 'ig') {
+  const out = [];
+  for (const seg of segments) {
+    const followers = Number(rec.follower_count) || 0;
+    if (seg.funnel_type_in && !seg.funnel_type_in.includes(rec.funnel_type)) continue;
+    if (seg.min_followers != null && followers < seg.min_followers) continue;
+    if (seg.max_followers != null && followers > seg.max_followers) continue;
+    if (seg.has_contact_email && !rec.contact_email) continue;
+    out.push(`${prefix}-${tagSafe(seg.tag)}`);
+  }
+  return out;
+}
+
 export const tagSafe = (s) => String(s || 'unknown').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');

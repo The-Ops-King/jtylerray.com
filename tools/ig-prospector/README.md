@@ -105,6 +105,12 @@ One record per Instagram handle (lowercase, no `@`). CSV columns, in order:
 
 ## GHL behavior
 
+### Segments (GHL has no smart-list API)
+
+Every synced contact is tagged `ig-prospect`, `ig-src-<source>`, `ig-tier-<tier>` and `ig-niche-<niche>`, plus one tag per matching segment in `config/ghl.json`. GHL exposes no endpoint for saved smart lists, so a segment *is* a tag: filter on it once in Contacts and save that as a smart list, or use it directly in a workflow. Underscores in a value become hyphens, so `ig_search` tags as `ig-src-ig-search`.
+
+Segments ship with two entries: `ig-shortlist` (the funnel asks for a call, an application or a webinar seat, and the account has 3,000 to 100,000 followers) and `ig-has-email` (a real public address was found). A segment matches only when every clause it declares holds; supported clauses are `funnel_type_in`, `min_followers`, `max_followers` and `has_contact_email`. After editing them, run `npm run export -- --ghl --retag` to re-apply tags to contacts already in GHL without re-pushing every field.
+
 - Contact upsert is keyed on the placeholder email (`POST /contacts/upsert`).
 - Tags `source-{source}` and `niche-{niche}` are added with the append endpoint, not the upsert body (the upsert body's `tags` field overwrites all tags).
 - An opportunity is created in `IG Outreach` / `Sourced` only if the contact has no opportunity in that pipeline. An existing opportunity in any stage is left alone. The tool never moves a contact backward.

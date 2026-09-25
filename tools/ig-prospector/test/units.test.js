@@ -8,7 +8,7 @@ import { cleanUrl, htmlToText, firstOutboundLink, isLinkInBio } from '../src/lib
 import { pick, fillTemplate } from '../src/lib/fields.js';
 import { toEpochMs, daysBetween } from '../src/lib/time.js';
 import { buildRules, evaluate, CriteriaSchema } from '../src/lib/criteria.js';
-import { toRecord, toCsv, CSV_COLUMNS } from '../src/lib/export-format.js';
+import { toRecord, toCsv, CSV_COLUMNS, segmentTags } from '../src/lib/export-format.js';
 import { appendNdjson, readNdjson, readNdjsonMap, writeNdjson } from '../src/lib/ndjson.js';
 import { parseArgs } from '../src/lib/cli.js';
 import { ClassificationSchema } from '../src/lib/anthropic.js';
@@ -170,4 +170,20 @@ test('scoring adds community signals for seed rows and leaves ad rows unchanged'
   assert.equal(r.fit_score, 8); assert.equal(r.fit_tier, 'B'); assert.match(r.fit_notes, /community_50\+, community_paid/);
   const ad = score(S, { ...seed, community_members: undefined, community_price_monthly_usd: undefined, ad_days_active: 60, ads_running: 4 });
   assert.equal(ad.fit_score, 9); assert.doesNotMatch(ad.fit_notes, /community/);
+});
+
+test('segment tags require every declared clause and treat a blank number as zero', () => {
+  const segs = [
+    { tag: 'shortlist', funnel_type_in: ['booking', 'application', 'webinar'], min_followers: 3000, max_followers: 100000 },
+    { tag: 'has-email', has_contact_email: true },
+  ];
+  const t = (r) => segmentTags(r, segs, 'ig');
+  assert.deepEqual(t({ funnel_type: 'booking', follower_count: 5000, contact_email: 'a@b.com' }), ['ig-shortlist', 'ig-has-email']);
+  assert.deepEqual(t({ funnel_type: 'application', follower_count: 3000, contact_email: '' }), ['ig-shortlist'], 'boundaries are inclusive');
+  assert.deepEqual(t({ funnel_type: 'webinar', follower_count: 100000, contact_email: '' }), ['ig-shortlist']);
+  assert.deepEqual(t({ funnel_type: 'booking', follower_count: 2999, contact_email: '' }), [], 'under the floor');
+  assert.deepEqual(t({ funnel_type: 'booking', follower_count: 100001, contact_email: '' }), [], 'over the cap');
+  assert.deepEqual(t({ funnel_type: 'none', follower_count: 5000, contact_email: 'a@b.com' }), ['ig-has-email'], 'no CTA, still emailable');
+  assert.deepEqual(t({ funnel_type: 'booking', follower_count: '', contact_email: '' }), [], 'a blank follower count never meets a minimum');
+  assert.deepEqual(segmentTags({ funnel_type: 'booking', follower_count: 5000 }, [], 'ig'), [], 'no segments configured');
 });

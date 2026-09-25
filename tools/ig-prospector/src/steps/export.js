@@ -5,7 +5,9 @@
  * field. Opportunities are OFF by default: pass --opportunities to also create one in the configured pipeline's Sourced
  * stage, and only when the contact has none there yet (an existing opportunity in any stage is never moved backward).
  * data/ghl-sync.ndjson records every synced handle; rerun skips them unless --force.
- * Usage: node src/steps/export.js [--ghl] [--opportunities] [--force] [--limit N]   (CSV only unless --ghl is passed)
+ * --retag revisits contacts that are already synced and only re-applies their tags (append-only, so it is safe to
+ * repeat): use it after editing the segments in config/ghl.json, instead of re-pushing every field with --force.
+ * Usage: node src/steps/export.js [--ghl] [--opportunities] [--retag] [--force] [--limit N]   (CSV only unless --ghl)
  */
 import fs from 'node:fs';
 import path from 'node:path';
@@ -15,7 +17,7 @@ import { readNdjson, readNdjsonMap, appendNdjson, removeFromNdjson } from '../li
 import { GhlClient } from '../lib/ghl.js';
 import { createLimiter } from '../lib/limiter.js';
 import { createProgress } from '../lib/log.js';
-import { toRecord, toCsv, tagSafe } from '../lib/export-format.js';
+import { toRecord, toCsv, tagSafe, segmentTags } from '../lib/export-format.js';
 
 const args = parseArgs();
 ensureDirs();
@@ -36,13 +38,27 @@ const ghl = new GhlClient();
 if (fieldMap.locationId !== ghl.locationId) throw new Error(`config/ghl-fields.json was generated for location ${fieldMap.locationId}, but GHL_LOCATION_ID is ${ghl.locationId}. Rerun \`npm run ghl:setup\`.`);
 
 const synced = readNdjsonMap(FILES.ghlSync);
-const pending = records.filter((rec) => args.force || !synced.has(rec.ig_handle)).slice(0, args.limit);
+const pending = records.filter((rec) => args.force || args.retag || !synced.has(rec.ig_handle)).slice(0, args.limit);
 if (args.force) removeFromNdjson(FILES.ghlSync, new Set(pending.map((r) => r.ig_handle)));
 const progress = createProgress('export:ghl', pending.length);
 const limit = createLimiter(3);
 
+const p = ghlCfg.tag_prefix || 'ig';
+const tagsFor = (rec) => [`${p}-prospect`, `${p}-src-${tagSafe(rec.source)}`, `${p}-tier-${tagSafe(rec.fit_tier)}`, `${p}-niche-${tagSafe(rec.niche)}`, ...segmentTags(rec, ghlCfg.segments, p)];
+
 await Promise.all(pending.map((rec) => limit(async () => {
   try {
+    // --retag on an already-synced contact: tags only, no upsert and no opportunity work.
+    const prior = synced.get(rec.ig_handle);
+    if (args.retag && !args.force && prior?.contact_id) {
+      const tags = tagsFor(rec);
+      await ghl.addTags(prior.contact_id, tags);
+      const result = { ...prior, tags, retagged_at: new Date().toISOString() };
+      synced.set(rec.ig_handle, result);
+      appendNdjson(FILES.ghlSync, result);
+      progress.tick(`@${rec.ig_handle} retagged ${tags.join(' ')}`);
+      return;
+    }
     const customFields = Object.entries(fieldMap.fields)
       .filter(([key]) => rec[key] !== '' && rec[key] != null)
       .map(([key, id]) => ({ id, field_value: rec[key] }));
@@ -59,8 +75,7 @@ await Promise.all(pending.map((rec) => limit(async () => {
     });
     const contactId = up?.contact?.id;
     if (!contactId) throw new Error(`upsert returned no contact id: ${JSON.stringify(up).slice(0, 200)}`);
-    const p = ghlCfg.tag_prefix || 'ig';
-    const tags = [`${p}-prospect`, `${p}-src-${tagSafe(rec.source)}`, `${p}-tier-${tagSafe(rec.fit_tier)}`, `${p}-niche-${tagSafe(rec.niche)}`];
+    const tags = tagsFor(rec);
     await ghl.addTags(contactId, tags);
 
     let opportunity = null; let oppAction = 'skipped (contacts only; pass --opportunities)';

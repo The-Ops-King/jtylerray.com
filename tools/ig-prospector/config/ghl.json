@@ -1,5 +1,5 @@
 {
-  "_comment": "Names are matched case-insensitively. Custom fields are created by `npm run ghl:setup` and their ids cached in config/ghl-fields.json. The pipeline is OPTIONAL: setup records it when it exists, and `npm run export -- --ghl` pushes contacts only unless you pass --opportunities. The contact's email is always the placeholder {ig_handle}@ig.placeholder so the upsert key never changes and reruns cannot duplicate; a real public address, where one was found, goes in the IG Contact Email field instead, so no campaign can send to it by accident.",
+  "_comment": "Names are matched case-insensitively. Custom fields are created by `npm run ghl:setup` and their ids cached in config/ghl-fields.json. The pipeline is OPTIONAL: setup records it when it exists, and `npm run export -- --ghl` pushes contacts only unless you pass --opportunities. The contact's email is always the placeholder {ig_handle}@ig.placeholder so the upsert key never changes and reruns cannot duplicate; a real public address, where one was found, goes in the IG Contact Email field instead, so no campaign can send to it by accident. segments add one extra tag per matching contact so each becomes a one-filter smart list in GHL; GHL has no API for saved smart lists, so the tag is the segment.",
   "api_base": "https://services.leadconnectorhq.com",
   "api_version": "2021-07-28",
   "pipeline_name": "IG Outreach",
@@ -92,5 +92,23 @@
       "dataType": "TEXT"
     }
   ],
-  "tag_prefix": "ig"
+  "tag_prefix": "ig",
+  "segments": [
+    {
+      "tag": "shortlist",
+      "_comment": "Start here: the page asks for a call, an application or a webinar seat, and the audience is big enough to be worth a DM but small enough to read it.",
+      "funnel_type_in": [
+        "booking",
+        "application",
+        "webinar"
+      ],
+      "min_followers": 3000,
+      "max_followers": 100000
+    },
+    {
+      "tag": "has-email",
+      "_comment": "A real public address was found, so these can be emailed as well as DMed. The address is in the IG Contact Email field, never the contact's own email.",
+      "has_contact_email": true
+    }
+  ]
 }
