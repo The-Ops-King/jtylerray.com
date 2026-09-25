@@ -50,7 +50,9 @@ await Promise.all(pending.map((rec) => limit(async () => {
       email: rec.email,
       firstName: rec.first_name || undefined,
       lastName: rec.last_name || undefined,
-      name: [rec.first_name, rec.last_name].filter(Boolean).join(' ') || rec.ig_handle,
+      // No owner name was found for ~1 in 5 rows. Fall back to "@handle" rather than the bare handle, so the CRM
+      // shows something recognisable as an Instagram account instead of a word posing as someone's first name.
+      name: [rec.first_name, rec.last_name].filter(Boolean).join(' ') || `@${rec.ig_handle}`,
       website: rec.ig_url,
       source: `ig-prospector:${rec.source}`,
       customFields,
