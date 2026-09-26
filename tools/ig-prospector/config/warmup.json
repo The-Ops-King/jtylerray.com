@@ -1,0 +1,44 @@
+{
+  "_comment": "Daily Instagram warm-up ladder. State lives entirely in GoHighLevel (an opportunity in the pipeline below, plus one open task per prospect), so the daily job needs nothing from this machine and keeps working after this container is gone. A prospect enters at the first stage and advances only when you tick its task off.",
+  "pipeline_name": "IG Warm-Up",
+  "source_tag": "ig-shortlist",
+  "daily_touch_cap": 15,
+  "timezone": "America/Phoenix",
+  "_offset_comment": "Phoenix does not observe daylight saving, so a fixed offset is safe here. A zone that does would need real timezone arithmetic instead.",
+  "utc_offset_hours": -7,
+  "due_local_hour": 9,
+  "task_prefix": "IG Warm-Up",
+  "digest_email": "jt@jtylerray.com",
+  "replied_stage_name": "Replied",
+  "dead_stage_name": "Dead",
+  "stages": [
+    {
+      "ghl_stage": "Stage 1 Follow",
+      "day": 1,
+      "label": "Follow",
+      "action": "Follow them, then like 2 recent posts. No comment yet.",
+      "detail": "Just show up in their notifications as a new follower who reads their stuff."
+    },
+    {
+      "ghl_stage": "Stage 2 Comment",
+      "day": 2,
+      "label": "Comment",
+      "action": "Like 2 more recent posts and leave a real comment on both.",
+      "detail": "Say something only someone who read the post could say. No emoji-only, no \"great post\"."
+    },
+    {
+      "ghl_stage": "Stage 3 Engage",
+      "day": 4,
+      "label": "Engage",
+      "action": "Like 3 more posts, comment on 2 of them, and reply to a story if they have one.",
+      "detail": "By now your name should look familiar in their notifications."
+    },
+    {
+      "ghl_stage": "Stage 4 DM",
+      "day": 5,
+      "label": "DM",
+      "action": "Send the DM. Open with something specific from their content, not your offer.",
+      "detail": "After you send it, tick the task. The card stays in Stage 4 until they reply, then move it to Replied or Dead yourself."
+    }
+  ]
+}

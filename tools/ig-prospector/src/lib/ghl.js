@@ -50,6 +50,48 @@ export class GhlClient {
   upsertContact(contact) { return this.request('POST', '/contacts/upsert', { body: { locationId: this.locationId, ...contact } }); }
   addTags(contactId, tags) { return this.request('POST', `/contacts/${contactId}/tags`, { body: { tags } }); }
 
+  /** Every opportunity in a pipeline, paged. */
+  async listPipelineOpportunities(pipelineId) {
+    const out = []; let page = 1;
+    for (;;) {
+      const r = await this.request('GET', '/opportunities/search', { query: { location_id: this.locationId, pipeline_id: pipelineId, limit: 100, page } });
+      const batch = r?.opportunities || [];
+      out.push(...batch);
+      if (batch.length < 100) break;
+      page++;
+      if (page > 50) break; // a pipeline this size means something is wrong upstream
+    }
+    return out;
+  }
+
+  moveOpportunity(opportunityId, pipelineId, pipelineStageId) {
+    return this.request('PUT', `/opportunities/${opportunityId}`, { body: { pipelineId, pipelineStageId } });
+  }
+
+  listTasks(contactId) { return this.request('GET', `/contacts/${contactId}/tasks`).then((r) => r?.tasks || []); }
+  createTask(contactId, { title, body, dueDate }) { return this.request('POST', `/contacts/${contactId}/tasks`, { body: { title, body, dueDate, completed: false } }).then((r) => r?.task || r); }
+  /** Move an open task's due date (the touch cap pushes work to another day rather than piling it onto one). */
+  updateTask(contactId, taskId, { title, body, dueDate }) { return this.request('PUT', `/contacts/${contactId}/tasks/${taskId}`, { body: { title, body, dueDate, completed: false } }).then((r) => r?.task || r); }
+
+  /** How many contacts carry a tag, without paging through them. */
+  countByTag(tag) {
+    return this.request('POST', '/contacts/search', { body: { locationId: this.locationId, page: 1, pageLimit: 1, filters: [{ field: 'tags', operator: 'contains', value: tag }] } })
+      .then((r) => r?.total ?? 0);
+  }
+
+  /** Contacts carrying a tag, paged. Returns full contact records including customFields. */
+  async searchByTag(tag, { max = 2000 } = {}) {
+    const out = []; let page = 1;
+    for (;;) {
+      const r = await this.request('POST', '/contacts/search', { body: { locationId: this.locationId, page, pageLimit: 100, filters: [{ field: 'tags', operator: 'contains', value: tag }] } });
+      const batch = r?.contacts || [];
+      out.push(...batch);
+      if (batch.length < 100 || out.length >= max) break;
+      page++;
+    }
+    return out;
+  }
+
   async findOpportunities(contactId, pipelineId) {
     const r = await this.request('GET', '/opportunities/search', { query: { location_id: this.locationId, contact_id: contactId, pipeline_id: pipelineId, limit: 100 } });
     return r?.opportunities || [];

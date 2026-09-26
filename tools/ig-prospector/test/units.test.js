@@ -14,6 +14,7 @@ import { parseArgs } from '../src/lib/cli.js';
 import { ClassificationSchema } from '../src/lib/anthropic.js';
 import { extractEmails, candidatesFromHtml, candidatesFromBio, countSharedEmails, pickContactEmail } from '../src/lib/emails.js';
 import { parseDiscovery, parseAbout } from '../src/lib/skool.js';
+import { planDay, renderDigest, taskTitle, taskForStage, addDays, dueAt, gapAfter, WarmupSchema } from '../src/lib/warmup.js';
 import { score } from '../src/lib/scoring.js';
 
 test('handles normalize to lowercase without @ and reject junk', () => {
@@ -186,4 +187,143 @@ test('segment tags require every declared clause and treat a blank number as zer
   assert.deepEqual(t({ funnel_type: 'none', follower_count: 5000, contact_email: 'a@b.com' }), ['ig-has-email'], 'no CTA, still emailable');
   assert.deepEqual(t({ funnel_type: 'booking', follower_count: '', contact_email: '' }), [], 'a blank follower count never meets a minimum');
   assert.deepEqual(segmentTags({ funnel_type: 'booking', follower_count: 5000 }, [], 'ig'), [], 'no segments configured');
+});
+
+const WARM = WarmupSchema.parse({
+  pipeline_name: 'IG Warm-Up', source_tag: 'ig-shortlist', daily_touch_cap: 5, timezone: 'America/Phoenix',
+  utc_offset_hours: -7, due_local_hour: 9, task_prefix: 'IG Warm-Up', digest_email: 'x@y.com',
+  replied_stage_name: 'Replied', dead_stage_name: 'Dead',
+  stages: [
+    { ghl_stage: 'Stage 1 Follow', day: 1, label: 'Follow', action: 'Follow and like 2.', detail: '' },
+    { ghl_stage: 'Stage 2 Comment', day: 2, label: 'Comment', action: 'Comment on 2.', detail: '' },
+    { ghl_stage: 'Stage 3 Engage', day: 4, label: 'Engage', action: 'Engage more.', detail: '' },
+    { ghl_stage: 'Stage 4 DM', day: 5, label: 'DM', action: 'Send the DM.', detail: '' },
+  ],
+});
+const TODAY = '2026-09-26';
+const task = (cfgStage, handle, over = {}) => ({ id: `t-${handle}-${cfgStage}`, title: taskTitle(WARM, cfgStage, handle), dueDate: `${TODAY}T16:00:00.000Z`, completed: false, ...over });
+
+test('warm-up date helpers and stage gaps', () => {
+  assert.deepEqual([0, 1, 2, 3].map((i) => gapAfter(WARM, i)), [1, 2, 1, null]);
+  assert.equal(addDays('2026-09-26', 2), '2026-09-28');
+  assert.equal(addDays('2026-02-28', 1), '2026-03-01');
+  assert.equal(addDays('2026-12-31', 1), '2027-01-01');
+  assert.equal(dueAt(WARM, '2026-09-27'), '2026-09-27T16:00:00.000Z', '9am Phoenix is 16:00 UTC');
+  assert.equal(taskTitle(WARM, 0, 'coach_bob'), '[IG Warm-Up 1/4] Follow @coach_bob');
+});
+
+test('taskForStage matches only the current stage and prefers the newest', () => {
+  const older = task(1, 'bob', { id: 'old', dueDate: '2026-09-01T16:00:00.000Z' });
+  const newer = task(1, 'bob', { id: 'new', dueDate: '2026-09-20T16:00:00.000Z' });
+  const other = task(0, 'bob', { id: 'stage1' });
+  assert.equal(taskForStage(WARM, [older, other, newer], 1, 'bob').id, 'new');
+  assert.equal(taskForStage(WARM, [other], 1, 'bob'), null, 'a stage 1 task is not a stage 2 task');
+  assert.equal(taskForStage(WARM, [], 0, 'bob'), null);
+});
+
+test('planDay advances ticked tasks, surfaces due ones, and leaves future ones alone', () => {
+  const inflight = [
+    { ig_handle: 'ticked', contact_id: 'c1', opportunity_id: 'o1', stage_index: 1, tasks: [task(1, 'ticked', { completed: true })] },
+    { ig_handle: 'duetoday', contact_id: 'c2', opportunity_id: 'o2', stage_index: 0, tasks: [task(0, 'duetoday')] },
+    { ig_handle: 'overdue', contact_id: 'c3', opportunity_id: 'o3', stage_index: 2, tasks: [task(2, 'overdue', { dueDate: '2026-09-20T16:00:00.000Z' })] },
+    { ig_handle: 'later', contact_id: 'c4', opportunity_id: 'o4', stage_index: 0, tasks: [task(0, 'later', { dueDate: '2026-09-30T16:00:00.000Z' })] },
+    { ig_handle: 'stalled', contact_id: 'c5', opportunity_id: 'o5', stage_index: 2, tasks: [] },
+    { ig_handle: 'dmsent', contact_id: 'c6', opportunity_id: 'o6', stage_index: 3, tasks: [task(3, 'dmsent', { completed: true })] },
+  ];
+  const p = planDay(WARM, inflight, TODAY);
+  assert.deepEqual(p.advance.map((x) => [x.ig_handle, x.stage_index, x.next_due_date]), [['ticked', 2, '2026-09-28']], 'stage 2 to 3 waits the 2-day gap');
+  assert.deepEqual(p.due.map((x) => x.ig_handle).sort(), ['duetoday', 'overdue', 'stalled']);
+  assert.equal(p.due.find((x) => x.ig_handle === 'stalled').reason, 'task_missing');
+  assert.deepEqual(p.scheduled.map((x) => x.ig_handle), ['later']);
+  assert.deepEqual(p.awaiting.map((x) => x.ig_handle), ['dmsent'], 'a ticked final task waits for a reply, it does not advance');
+  assert.equal(p.capacity, 2, 'cap 5 minus 3 due');
+});
+
+test('the next touch is spaced from the day the last one was due, not from the day the tick is noticed', () => {
+  // Ticked on the 26th, but this run is the 27th. Spacing from the run day would push stage 3 to the 29th and add a day
+  // to every gap, stretching a 5-day ladder into a 9-day one.
+  const inflight = [{ ig_handle: 'bob', contact_id: 'c1', opportunity_id: 'o1', stage_index: 1, tasks: [task(1, 'bob', { completed: true })] }];
+  const p = planDay(WARM, inflight, '2026-09-27');
+  assert.deepEqual(p.advance.map((x) => x.next_due_date), ['2026-09-28'], 'due 26th + 2-day gap is the 28th whatever day the run is');
+  assert.deepEqual(p.taskWrites, [{ contact_id: 'c1', ig_handle: 'bob', stage_index: 2, due_date: '2026-09-28', mode: 'create', task_id: null }]);
+});
+
+test('a one-day gap makes an advance part of the same day\'s work', () => {
+  const inflight = [{ ig_handle: 'bob', contact_id: 'c1', opportunity_id: 'o1', stage_index: 0, tasks: [task(0, 'bob', { completed: true })] }];
+  const p = planDay(WARM, inflight, '2026-09-27');
+  assert.deepEqual(p.advance.map((x) => [x.stage_index, x.next_due_date]), [[1, '2026-09-27']]);
+  assert.deepEqual(p.due.map((x) => [x.ig_handle, x.stage_index, x.reason]), [['bob', 1, 'advanced']], 'the card moves and the next touch is due the same day');
+  assert.equal(p.capacity, 4, 'an advance that is due today spends a slot');
+});
+
+test('a long-stalled tick never schedules the next touch in the past', () => {
+  const inflight = [{ ig_handle: 'bob', contact_id: 'c1', opportunity_id: 'o1', stage_index: 1, tasks: [task(1, 'bob', { completed: true, dueDate: '2026-08-01T16:00:00.000Z' })] }];
+  const p = planDay(WARM, inflight, TODAY);
+  assert.deepEqual(p.advance.map((x) => x.next_due_date), [TODAY], 'clamped to today, not 2026-08-03');
+  assert.deepEqual(p.due.map((x) => x.reason), ['advanced']);
+});
+
+test('the touch cap limits the whole day, pushing the excess out and keeping the furthest along', () => {
+  const mk = (h, stage, score) => ({ ig_handle: h, contact_id: `c-${h}`, opportunity_id: `o-${h}`, stage_index: stage, fit_score: score, tasks: [task(stage, h)] });
+  const p = planDay(WARM, [mk('dm', 3, 1), mk('engage', 2, 1), mk('lowfit', 0, 10), mk('highfit', 0, 90), mk('comment', 1, 1), mk('spare', 0, 50)], TODAY);
+  assert.equal(p.due.length, 5, 'cap 5 is a cap on the day, not only on intake');
+  assert.deepEqual(p.due.map((x) => x.ig_handle), ['dm', 'engage', 'comment', 'highfit', 'spare'], 'later stages keep their slot, then the best fit');
+  assert.deepEqual(p.deferred.map((x) => [x.ig_handle, x.defer_to]), [['lowfit', '2026-09-27']]);
+  assert.equal(p.capacity, 0, 'a day that had to push work out has no room for new people');
+  assert.deepEqual(p.taskWrites, [{ contact_id: 'c-lowfit', ig_handle: 'lowfit', stage_index: 0, due_date: '2026-09-27', mode: 'reschedule', task_id: 't-lowfit-0' }]);
+});
+
+test('a deferred advance still moves stage today, with its task dated later', () => {
+  const mk = (h, stage) => ({ ig_handle: h, contact_id: `c-${h}`, opportunity_id: `o-${h}`, stage_index: stage, tasks: [task(stage, h)] });
+  const ticked = { ig_handle: 'bob', contact_id: 'c-bob', opportunity_id: 'o-bob', stage_index: 0, tasks: [task(0, 'bob', { completed: true })] };
+  const p = planDay(WARM, [ticked, ...['a', 'b', 'c', 'd', 'e'].map((h) => mk(h, 2))], '2026-09-27');
+  assert.deepEqual(p.advance.map((x) => [x.ig_handle, x.stage_index, x.next_due_date]), [['bob', 1, '2026-09-28']], 'the stage move stands, only the task date slips');
+  assert.deepEqual(p.deferred.map((x) => x.ig_handle), ['bob']);
+  assert.deepEqual(p.taskWrites.filter((w) => w.ig_handle === 'bob'), [{ contact_id: 'c-bob', ig_handle: 'bob', stage_index: 1, due_date: '2026-09-28', mode: 'create', task_id: null }], 'one write, at the deferred date');
+});
+
+test('planDay capacity never goes negative and ignores out-of-range stages', () => {
+  const many = Array.from({ length: 9 }, (_, i) => ({ ig_handle: `h${i}`, contact_id: `c${i}`, opportunity_id: `o${i}`, stage_index: 0, tasks: [task(0, `h${i}`)] }));
+  assert.equal(planDay(WARM, many, TODAY).capacity, 0);
+  const bad = [{ ig_handle: 'x', contact_id: 'c', opportunity_id: 'o', stage_index: 9, tasks: [] }, { ig_handle: 'y', contact_id: 'c', opportunity_id: 'o', stage_index: null, tasks: [] }];
+  const p = planDay(WARM, bad, TODAY);
+  assert.deepEqual([p.due.length, p.advance.length, p.awaiting.length, p.scheduled.length], [0, 0, 0, 0]);
+});
+
+test('the digest groups by stage, counts touches and states who is waiting', () => {
+  const md = renderDigest(WARM, {
+    today: TODAY,
+    due: [{ ig_handle: 'overdue', stage_index: 2, follower_count: '12000', niche: 'fitness', funnel_type: 'booking', fit_tier: 'B', funnel_url: 'https://x.com/apply' }],
+    entered: [{ ig_handle: 'fresh', stage_index: 0, follower_count: '4000', niche: 'business', funnel_type: 'none', fit_tier: 'A', is_new: true }],
+    advance: [{ ig_handle: 'ticked' }],
+    awaiting: [{ ig_handle: 'dmsent' }],
+    deferred: [{ ig_handle: 'pushed', defer_to: '2026-09-27' }],
+    scheduled: [{ ig_handle: 'later', due_date: '2026-09-30' }],
+    rosterTotal: 4, poolLeft: 480,
+  });
+  assert.match(md, /# Instagram warm-up, 2026-09-26/);
+  assert.match(md, /\*\*2 touches today\.\*\*/);
+  assert.match(md, /4 prospects in flight, 1 advanced since yesterday, 1 awaiting a reply after a DM, 480 left in the pool/);
+  assert.match(md, /## Follow — 1 person \(stage 1 of 4, day 1\)/);
+  assert.match(md, /## Engage — 1 person \(stage 3 of 4, day 4\)/);
+  assert.match(md, /12,000 followers · fitness · booking funnel · tier B/);
+  assert.match(md, /1 more were ready today but would have taken the day past 5 touches, so they move to 2026-09-27\./);
+  assert.match(md, /new today/);
+  assert.match(md, /## Awaiting a reply — 1/);
+  assert.match(md, /1 more scheduled, next on 2026-09-30/);
+  assert.match(md, /Tick each task in GoHighLevel/);
+  const empty = renderDigest(WARM, { today: TODAY, due: [], entered: [], advance: [], awaiting: [], scheduled: [], rosterTotal: 0, poolLeft: 0 });
+  assert.match(empty, /\*\*Nothing due today\.\*\*/);
+  const unknownPool = renderDigest(WARM, { today: TODAY, due: [], entered: [], advance: [], awaiting: [], scheduled: [], rosterTotal: 3, poolLeft: null });
+  assert.doesNotMatch(unknownPool, /left in the pool/, 'an uncounted pool is not reported as empty');
+});
+
+test('the digest puts the best prospect first within each stage', () => {
+  const p = (h, score) => ({ ig_handle: h, stage_index: 0, fit_score: score });
+  const md = renderDigest(WARM, {
+    today: TODAY, due: [p('low', 4), p('high', 13), p('mid', 9)], entered: [p('newbest', 15)],
+    advance: [], awaiting: [], scheduled: [], rosterTotal: 4, poolLeft: 1,
+  });
+  const order = [...md.matchAll(/\*\*@(\w+)\*\*/g)].map((m) => m[1]);
+  assert.deepEqual(order, ['newbest', 'high', 'mid', 'low']);
 });

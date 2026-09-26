@@ -116,6 +116,33 @@ Segments ship with two entries: `ig-shortlist` (the funnel asks for a call, an a
 - An opportunity is created in `IG Outreach` / `Sourced` only if the contact has no opportunity in that pipeline. An existing opportunity in any stage is left alone. The tool never moves a contact backward.
 - `data/ghl-sync.ndjson` records synced handles; rerun skips them unless `--force`.
 
+## Daily warm-up ladder
+
+`npm run warmup` (config in `config/warmup.json`) runs the daily Instagram warm-up: a prospect is followed, then
+commented on, then engaged with, then DMed, over four dated touches. GoHighLevel holds every bit of the state — the
+opportunity's stage in the `IG Warm-Up` pipeline is the prospect's stage, and one task per prospect is the thing you tick
+to advance it — so the job needs nothing from this machine and works from any fresh checkout.
+
+Each run: advance whoever ticked their task, re-raise anyone stalled without one, cap the day, top up from the
+`ig-shortlist` tag with the highest `fit_score` prospects not yet enrolled, and write `data/warmup-digest.md` plus a
+`.html` version for email.
+
+Two things about the arithmetic, because both are easy to get wrong:
+
+- **Gaps are measured from the day a touch was due, not from the day the run notices the tick.** A tick is always seen a
+  run late, so spacing from the run day would add a day to every gap and stretch a 5-day ladder into a 9-day one. With a
+  one-day gap this means an advance is usually part of the same day's work: the card moves and the next touch is due
+  immediately.
+- **`daily_touch_cap` caps the day's work, not just intake.** Once two cohorts' stages collide, the ladder alone can ask
+  for more touches than the cap, and 30 comments in an afternoon is how an Instagram account gets throttled. The excess
+  moves a day out instead, keeping the furthest-along prospects (delaying a DM wastes the warm-up that earned it) and
+  then the best fit. A day that had to push work out takes nobody new.
+
+Throughput follows from the cap, not from a separate setting: four touches per prospect against a cap of 15 settles at
+roughly 3 new prospects and 3 DMs a day, with about 30 in flight. Raise `daily_touch_cap` to raise both.
+
+`--dry-run` plans and writes the digest without touching GoHighLevel; `--cap N` overrides the cap for one run.
+
 ## Classification
 
 Two modes, set by `mode` in `config/classify.json`:

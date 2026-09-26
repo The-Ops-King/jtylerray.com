@@ -21,7 +21,8 @@
     "export": "node src/steps/export.js",
     "ghl:setup": "node src/setup-ghl.js",
     "status": "node src/status.js",
-    "test": "node --test test/*.test.js"
+    "test": "node --test test/*.test.js",
+    "warmup": "node src/steps/warmup.js"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.125.0",
