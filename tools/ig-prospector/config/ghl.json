@@ -72,11 +72,6 @@
       "dataType": "LARGE_TEXT"
     },
     {
-      "key": "contact_email",
-      "name": "IG Contact Email",
-      "dataType": "TEXT"
-    },
-    {
       "key": "fit_tier",
       "name": "IG Fit Tier",
       "dataType": "TEXT"
@@ -107,7 +102,7 @@
     },
     {
       "tag": "has-email",
-      "_comment": "A real public address was found, so these can be emailed as well as DMed. The address is in the IG Contact Email field, never the contact's own email.",
+      "_comment": "A real public address was found, so these can be emailed as well as DMed. This tag is the ONLY safe audience for an email send: every other contact carries a placeholder address that hard-bounces.",
       "has_contact_email": true
     }
   ]

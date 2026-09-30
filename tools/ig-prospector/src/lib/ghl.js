@@ -48,7 +48,11 @@ export class GhlClient {
   getPipelines() { return this.request('GET', '/opportunities/pipelines', { query: { locationId: this.locationId } }).then((r) => r?.pipelines || []); }
 
   upsertContact(contact) { return this.request('POST', '/contacts/upsert', { body: { locationId: this.locationId, ...contact } }); }
+  /** Update a contact in place. Used instead of upsert once the email field holds a real address and can no longer
+   *  serve as a dedupe key: upserting a changed email would create a second contact rather than find this one. */
+  updateContact(contactId, contact) { return this.request('PUT', `/contacts/${contactId}`, { body: contact }); }
   addTags(contactId, tags) { return this.request('POST', `/contacts/${contactId}/tags`, { body: { tags } }); }
+  removeTags(contactId, tags) { return this.request('DELETE', `/contacts/${contactId}/tags`, { body: { tags } }); }
 
   /** Every opportunity in a pipeline, paged. */
   async listPipelineOpportunities(pipelineId) {

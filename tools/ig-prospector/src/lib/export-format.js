@@ -4,9 +4,15 @@ export const EXTRA_COLUMNS = ['contact_email', 'contact_email_source', 'fit_tier
 export const CSV_COLUMNS = [...CONTRACT_COLUMNS, ...EXTRA_COLUMNS];
 
 /**
- * The `email` column is a PLACEHOLDER: `{ig_handle}@ig.placeholder`. It exists only so GHL can create and dedupe the contact.
- * The domain is invalid by design. Never wire an email send, workflow, or campaign to it. A real public address, when one
- * was found in the bio or funnel HTML, is in `contact_email` (with `contact_email_source` saying where it came from).
+ * The `email` column is the prospect's real public address when one was found in their bio or funnel HTML, and otherwise
+ * a PLACEHOLDER `{ig_handle}@ig.placeholder` whose domain is invalid by design (GHL needs an email to create a contact).
+ *
+ * So this column is a MIX: about a fifth of it is deliverable and the rest hard-bounces. Never point an email send,
+ * workflow or campaign at the whole list. The `ig-has-email` tag is the only safe audience; a send to `ig-prospect`
+ * would hard-bounce on every placeholder and take the sending domain down with it.
+ *
+ * `contact_email` keeps the real address on its own (and `contact_email_source` says where it came from), so the two can
+ * still be told apart after the fact.
  */
 export const placeholderEmail = (handle, domain) => `${handle}@${domain}`;
 
@@ -30,7 +36,7 @@ export function toRecord(r, placeholderDomain) {
   return {
     first_name: r.first_name ?? '',
     last_name: r.last_name ?? '',
-    email: placeholderEmail(r.ig_handle, placeholderDomain),
+    email: r.contact_email || placeholderEmail(r.ig_handle, placeholderDomain),
     phone: '',
     ig_handle: r.ig_handle,
     ig_url: r.ig_url,
@@ -62,6 +68,35 @@ export function toRecord(r, placeholderDomain) {
     community_members: r.community_members ?? '',
     community_price_monthly: r.community_price_monthly_usd ?? '',
   };
+}
+
+/**
+ * Decide who owns an address that more than one prospect mined. Sibling accounts of one business share an inbox, and GHL
+ * enforces unique emails per location, so exactly one contact can carry it: the rest fall back to their placeholder and
+ * lose the has-email segment, because a tag that promises deliverability has to keep that promise.
+ *
+ * The owner is the highest fit_score, then the first handle alphabetically, so the choice never depends on which API
+ * call happened to land first. Nothing is lost by this: the address reaches the same inbox either way, and the loser's
+ * `contact_email_source` records who took it.
+ *
+ * Mutates and returns `records`.
+ */
+export function resolveSharedEmails(records, placeholderDomain) {
+  const byAddress = new Map();
+  for (const rec of records) {
+    const addr = String(rec.contact_email || '').trim().toLowerCase();
+    if (addr) byAddress.set(addr, [...(byAddress.get(addr) || []), rec]);
+  }
+  for (const [, holders] of byAddress) {
+    if (holders.length < 2) continue;
+    const [owner, ...rest] = [...holders].sort((a, b) => (Number(b.fit_score) || 0) - (Number(a.fit_score) || 0) || String(a.ig_handle).localeCompare(String(b.ig_handle)));
+    for (const r of rest) {
+      r.contact_email = '';
+      r.contact_email_source = `shared_with_${owner.ig_handle}`;
+      r.email = placeholderEmail(r.ig_handle, placeholderDomain);
+    }
+  }
+  return records;
 }
 
 const csvCell = (v) => { const s = v == null ? '' : String(v); return /[",\n\r]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s; };

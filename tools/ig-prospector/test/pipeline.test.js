@@ -172,8 +172,15 @@ test('export writes the CSV contract and is CSV-only by default', async () => {
   assert.equal(csv.length, 3);
   assert.match(csv[0], /,notes,contact_email,contact_email_source,fit_tier,fit_score,fit_notes,business_type,confidence,days_since_last_post,last_post_at,post_count,bio_link,fb_page_name,community_url,community_members,community_price_monthly$/);
   const aliceRow = csv.find((l) => l.startsWith('Alice,'));
-  assert.match(aliceRow, /^Alice,A,coach\.alice@ig\.placeholder,,coach\.alice,https:\/\/www\.instagram\.com\/coach\.alice\/,12000,5000,http:\/\/127\.0\.0\.1:\d+\/funnel-a,application,2,400,business,has_setter,adlibrary,test term,\d{4}-\d{2}-\d{2},/);
-  assert.match(aliceRow, /,alice@coachalice\.com,funnel_mailto,/, 'contact_email column filled from the funnel mailto');
+  // The email column is the real address when one was found: Alice's came from a mailto on her funnel page.
+  assert.match(aliceRow, /^Alice,A,alice@coachalice\.com,,coach\.alice,https:\/\/www\.instagram\.com\/coach\.alice\/,12000,5000,http:\/\/127\.0\.0\.1:\d+\/funnel-a,application,2,400,business,has_setter,adlibrary,test term,\d{4}-\d{2}-\d{2},/);
+  assert.match(aliceRow, /,alice@coachalice\.com,funnel_mailto,/, 'contact_email keeps the real address on its own so the two can be told apart');
+  // Dan points at the same funnel page as Alice, so he mines the same address. GHL allows one contact per email, so the
+  // better-scoring prospect keeps it and Dan falls back to his placeholder with a note saying who took it.
+  const danRow = csv.find((l) => l.includes(',dan_manual,'));
+  const dan = danRow.split(',');
+  assert.equal(dan[2], 'dan_manual@ig.placeholder', 'the shared address went to Alice, so Dan keeps the placeholder');
+  assert.match(danRow, /,,shared_with_coach\.alice,/, 'contact_email cleared, source records the owner');
 });
 
 test('rerun is idempotent: no duplicates, nothing spent', async () => {

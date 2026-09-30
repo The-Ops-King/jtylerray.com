@@ -8,7 +8,7 @@ import { cleanUrl, htmlToText, firstOutboundLink, isLinkInBio } from '../src/lib
 import { pick, fillTemplate } from '../src/lib/fields.js';
 import { toEpochMs, daysBetween } from '../src/lib/time.js';
 import { buildRules, evaluate, CriteriaSchema } from '../src/lib/criteria.js';
-import { toRecord, toCsv, CSV_COLUMNS, segmentTags } from '../src/lib/export-format.js';
+import { toRecord, toCsv, CSV_COLUMNS, segmentTags, resolveSharedEmails } from '../src/lib/export-format.js';
 import { appendNdjson, readNdjson, readNdjsonMap, writeNdjson } from '../src/lib/ndjson.js';
 import { parseArgs } from '../src/lib/cli.js';
 import { ClassificationSchema } from '../src/lib/classification.js';
@@ -202,6 +202,39 @@ const WARM = WarmupSchema.parse({
 });
 const TODAY = '2026-09-26';
 const task = (cfgStage, handle, over = {}) => ({ id: `t-${handle}-${cfgStage}`, title: taskTitle(WARM, cfgStage, handle), dueDate: `${TODAY}T16:00:00.000Z`, completed: false, ...over });
+
+test('the email column is the real address when there is one, else a placeholder', () => {
+  // GHL will not create a contact without an email, so a prospect with no public address gets an invalid one derived
+  // from the handle. That makes the column a mix of deliverable and bouncing addresses, which is why an email send
+  // must be scoped to the ig-has-email tag rather than the whole list.
+  assert.equal(toRecord({ ig_handle: 'coach_bob', contact_email: 'bob@bobcoaching.com' }, 'ig.placeholder').email, 'bob@bobcoaching.com');
+  assert.equal(toRecord({ ig_handle: 'coach_bob' }, 'ig.placeholder').email, 'coach_bob@ig.placeholder');
+  assert.equal(toRecord({ ig_handle: 'coach_bob', contact_email: '' }, 'ig.placeholder').email, 'coach_bob@ig.placeholder', 'an empty string is not an address');
+  assert.equal(toRecord({ ig_handle: 'coach_bob', contact_email: 'bob@bobcoaching.com' }, 'ig.placeholder').contact_email, 'bob@bobcoaching.com', 'the real address stays in its own column too');
+});
+
+test('a shared address goes to one owner, chosen deterministically', () => {
+  const rec = (h, email, fit) => toRecord({ ig_handle: h, contact_email: email, contact_email_source: 'funnel_mailto', fit_score: fit }, 'ig.placeholder');
+  const out = resolveSharedEmails([rec('lowfit', 'info@biz.com', 5), rec('highfit', 'info@biz.com', 9), rec('alone', 'solo@biz.com', 1)], 'ig.placeholder');
+  const by = Object.fromEntries(out.map((r) => [r.ig_handle, r]));
+  assert.equal(by.highfit.email, 'info@biz.com', 'the better prospect keeps it');
+  assert.equal(by.lowfit.email, 'lowfit@ig.placeholder', 'the other falls back, so GHL never sees a duplicate');
+  assert.equal(by.lowfit.contact_email, '', 'and drops out of the has-email segment');
+  assert.equal(by.lowfit.contact_email_source, 'shared_with_highfit', 'but records who took it');
+  assert.equal(by.alone.email, 'solo@biz.com', 'an unshared address is untouched');
+  assert.deepEqual(segmentTags(by.lowfit, [{ tag: 'has-email', has_contact_email: true }]), [], 'the tag promises deliverability');
+  assert.deepEqual(segmentTags(by.highfit, [{ tag: 'has-email', has_contact_email: true }]), ['ig-has-email']);
+});
+
+test('a tie on fit score is broken by handle, not by which call lands first', () => {
+  const rec = (h) => toRecord({ ig_handle: h, contact_email: 'info@biz.com', fit_score: 6 }, 'ig.placeholder');
+  const order1 = resolveSharedEmails([rec('zeta'), rec('alpha')], 'ig.placeholder');
+  const order2 = resolveSharedEmails([rec('alpha'), rec('zeta')], 'ig.placeholder');
+  for (const out of [order1, order2]) {
+    assert.equal(out.find((r) => r.ig_handle === 'alpha').email, 'info@biz.com');
+    assert.equal(out.find((r) => r.ig_handle === 'zeta').email, 'zeta@ig.placeholder');
+  }
+});
 
 test('warm-up date helpers and stage gaps', () => {
   assert.deepEqual([0, 1, 2, 3].map((i) => gapAfter(WARM, i)), [1, 2, 1, null]);

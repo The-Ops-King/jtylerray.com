@@ -99,9 +99,11 @@ One record per Instagram handle (lowercase, no `@`). CSV columns, in order:
 
 `first_name, last_name, email, phone, ig_handle, ig_url, follower_count, offer_price, funnel_url, funnel_type, ads_running, ad_days_active, niche, team_signal, source, source_detail, date_sourced, notes` followed by `contact_email, contact_email_source` and the grading columns `fit_tier, fit_score, fit_notes, business_type, confidence, days_since_last_post, last_post_at, post_count, bio_link, fb_page_name`.
 
-`email` is `{ig_handle}@ig.placeholder`. It exists only so GHL can create and dedupe the contact. The domain is invalid by design. Never attach an email send, workflow, or campaign to these contacts.
+`email` is the prospect's real public address when one was found, and otherwise `{ig_handle}@ig.placeholder`, whose domain is invalid by design (GHL will not create a contact without an email). About a fifth of the column is deliverable and the rest hard-bounces, so **never point an email send at the whole list**: `ig-has-email` is the only safe audience, and a send to `ig-prospect` would hard-bounce on every placeholder and take the sending domain with it.
 
 `contact_email` is a real public address when one was found: mined from the Instagram bio and the cached funnel HTML (`mailto:` links and page text), filtered by `config/emails.json` (vendor/platform domains such as skool.com or thrivecart.com, template placeholders, asset file names) and dropped when the same address shows up for three or more unrelated advertisers (a page builder's template). `contact_email_source` is `bio`, `funnel_mailto`, `funnel_text`, `destination_mailto` or `destination_text`. Bio beats funnel; an address on the advertiser's own domain beats one elsewhere. Edit `config/emails.json` and rerun `npm run filter && npm run export` to re-pick without refetching.
+
+When two prospects mine the same address — sibling accounts of one business share an inbox — only one can carry it, because GHL enforces unique emails per location. The owner is the higher `fit_score`, then the first handle alphabetically, so the choice never depends on which API call lands first; the others fall back to their placeholder, drop out of `ig-has-email`, and get `contact_email_source` = `shared_with_<owner>`.
 
 ## GHL behavior
 
@@ -109,9 +111,9 @@ One record per Instagram handle (lowercase, no `@`). CSV columns, in order:
 
 Every synced contact is tagged `ig-prospect`, `ig-src-<source>`, `ig-tier-<tier>` and `ig-niche-<niche>`, plus one tag per matching segment in `config/ghl.json`. GHL exposes no endpoint for saved smart lists, so a segment *is* a tag: filter on it once in Contacts and save that as a smart list, or use it directly in a workflow. Underscores in a value become hyphens, so `ig_search` tags as `ig-src-ig-search`.
 
-Segments ship with two entries: `ig-shortlist` (the funnel asks for a call, an application or a webinar seat, and the account has 3,000 to 100,000 followers) and `ig-has-email` (a real public address was found). A segment matches only when every clause it declares holds; supported clauses are `funnel_type_in`, `min_followers`, `max_followers` and `has_contact_email`. After editing them, run `npm run export -- --ghl --retag` to re-apply tags to contacts already in GHL without re-pushing every field.
+Segments ship with two entries: `ig-shortlist` (the funnel asks for a call, an application or a webinar seat, and the account has 3,000 to 100,000 followers) and `ig-has-email` (a deliverable address, the only safe audience for an email send). A segment matches only when every clause it declares holds; supported clauses are `funnel_type_in`, `min_followers`, `max_followers` and `has_contact_email`. After editing them, run `npm run export -- --ghl --retag` to re-apply tags to contacts already in GHL without re-pushing every field.
 
-- Contact upsert is keyed on the placeholder email (`POST /contacts/upsert`).
+- Contacts are matched by their `IG Handle` custom field and updated in place (`PUT /contacts/{id}`), and only created with `POST /contacts/upsert` when the handle is genuinely new. Matching on the handle is what keeps a rerun safe: the email column now holds real addresses, so it is no longer a stable dedupe key, and an upsert against a changed email would create a second contact. Every handle GHL already holds is read once at the start of a `--ghl` run, so a fresh checkout with no local `data/ghl-sync.ndjson` does not duplicate the list.
 - Tags `source-{source}` and `niche-{niche}` are added with the append endpoint, not the upsert body (the upsert body's `tags` field overwrites all tags).
 - An opportunity is created in `IG Outreach` / `Sourced` only if the contact has no opportunity in that pipeline. An existing opportunity in any stage is left alone. The tool never moves a contact backward.
 - `data/ghl-sync.ndjson` records synced handles; rerun skips them unless `--force`.

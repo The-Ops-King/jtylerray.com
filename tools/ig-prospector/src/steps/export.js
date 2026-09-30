@@ -1,8 +1,10 @@
 /**
  * Step 7: export. Write data/export.csv (exact column contract) and upsert qualified records into GHL.
- * GHL: upsert the contact keyed on the placeholder email (the key is derived from ig_handle, so it never changes and a
- * rerun can never duplicate), append the ig-* tags, and write every field including the real contact_email as a custom
- * field. Opportunities are OFF by default: pass --opportunities to also create one in the configured pipeline's Sourced
+ * GHL: match the contact by its IG Handle custom field and update it in place, or create it when it is genuinely new,
+ * then append the ig-* tags and write every field. Matching on the handle rather than letting GHL dedupe on email is
+ * what makes a rerun safe: the email column now carries the prospect's real address where one was found, so it is no
+ * longer a stable key, and an upsert against a changed email would create a second contact.
+ * Opportunities are OFF by default: pass --opportunities to also create one in the configured pipeline's Sourced
  * stage, and only when the contact has none there yet (an existing opportunity in any stage is never moved backward).
  * data/ghl-sync.ndjson records every synced handle; rerun skips them unless --force.
  * --retag revisits contacts that are already synced and only re-applies their tags (append-only, so it is safe to
@@ -17,14 +19,14 @@ import { readNdjson, readNdjsonMap, appendNdjson, removeFromNdjson } from '../li
 import { GhlClient } from '../lib/ghl.js';
 import { createLimiter } from '../lib/limiter.js';
 import { createProgress } from '../lib/log.js';
-import { toRecord, toCsv, tagSafe, segmentTags } from '../lib/export-format.js';
+import { toRecord, toCsv, tagSafe, segmentTags, resolveSharedEmails } from '../lib/export-format.js';
 
 const args = parseArgs();
 ensureDirs();
 const ghlCfg = readConfig('ghl.json');
 
 const qualified = readNdjson(FILES.qualified);
-const records = qualified.map((r) => toRecord(r, ghlCfg.placeholder_email_domain));
+const records = resolveSharedEmails(qualified.map((r) => toRecord(r, ghlCfg.placeholder_email_domain)), ghlCfg.placeholder_email_domain);
 fs.writeFileSync(FILES.exportCsv, toCsv(records), 'utf8');
 console.log(`[export] wrote ${records.length} rows -> ${FILES.exportCsv}`);
 
@@ -36,6 +38,17 @@ const fieldMap = JSON.parse(fs.readFileSync(fieldMapFile, 'utf8'));
 if (args.opportunities && !fieldMap.pipelineId) throw new Error(`--opportunities needs a pipeline: no "${ghlCfg.pipeline_name}" pipeline was found when \`npm run ghl:setup\` last ran. Create it in GHL with a "${ghlCfg.sourced_stage_name}" stage, rerun ghl:setup, then retry.`);
 const ghl = new GhlClient();
 if (fieldMap.locationId !== ghl.locationId) throw new Error(`config/ghl-fields.json was generated for location ${fieldMap.locationId}, but GHL_LOCATION_ID is ${ghl.locationId}. Rerun \`npm run ghl:setup\`.`);
+
+// Every handle GHL already holds, read once. data/ghl-sync.ndjson is local and gitignored, so a fresh checkout (the
+// VPS, a rebuilt container) would otherwise believe nothing had ever been exported and duplicate the whole list.
+const handleFieldId = fieldMap.fields.ig_handle;
+const existingByHandle = new Map();
+for (const c of await ghl.searchByTag(`${ghlCfg.tag_prefix || 'ig'}-prospect`, { max: 20000 })) {
+  const h = (c.customFields || []).find((f) => f.id === handleFieldId);
+  const handle = String(h?.value ?? h?.fieldValue ?? '').trim();
+  if (handle) existingByHandle.set(handle, c.id);
+}
+console.log(`[export:ghl] GHL already holds ${existingByHandle.size} tagged contact(s), matched by IG Handle`);
 
 const synced = readNdjsonMap(FILES.ghlSync);
 const pending = records.filter((rec) => args.force || args.retag || !synced.has(rec.ig_handle)).slice(0, args.limit);
@@ -62,7 +75,7 @@ await Promise.all(pending.map((rec) => limit(async () => {
     const customFields = Object.entries(fieldMap.fields)
       .filter(([key]) => rec[key] !== '' && rec[key] != null)
       .map(([key, id]) => ({ id, field_value: rec[key] }));
-    const up = await ghl.upsertContact({
+    const body = {
       email: rec.email,
       firstName: rec.first_name || undefined,
       lastName: rec.last_name || undefined,
@@ -72,9 +85,12 @@ await Promise.all(pending.map((rec) => limit(async () => {
       website: rec.ig_url,
       source: `ig-prospector:${rec.source}`,
       customFields,
-    });
-    const contactId = up?.contact?.id;
-    if (!contactId) throw new Error(`upsert returned no contact id: ${JSON.stringify(up).slice(0, 200)}`);
+    };
+    const known = existingByHandle.get(rec.ig_handle) || prior?.contact_id || null;
+    const up = known ? await ghl.updateContact(known, body) : await ghl.upsertContact(body);
+    const contactId = up?.contact?.id || known;
+    if (!contactId) throw new Error(`${known ? 'update' : 'upsert'} returned no contact id: ${JSON.stringify(up).slice(0, 200)}`);
+    existingByHandle.set(rec.ig_handle, contactId);
     const tags = tagsFor(rec);
     await ghl.addTags(contactId, tags);
 
