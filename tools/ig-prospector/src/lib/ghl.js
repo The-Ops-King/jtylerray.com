@@ -64,11 +64,14 @@ export class GhlClient {
     return out;
   }
 
+  deleteOpportunity(opportunityId) { return this.request('DELETE', `/opportunities/${opportunityId}`); }
+
   moveOpportunity(opportunityId, pipelineId, pipelineStageId) {
     return this.request('PUT', `/opportunities/${opportunityId}`, { body: { pipelineId, pipelineStageId } });
   }
 
   listTasks(contactId) { return this.request('GET', `/contacts/${contactId}/tasks`).then((r) => r?.tasks || []); }
+  deleteTask(contactId, taskId) { return this.request('DELETE', `/contacts/${contactId}/tasks/${taskId}`); }
   createTask(contactId, { title, body, dueDate }) { return this.request('POST', `/contacts/${contactId}/tasks`, { body: { title, body, dueDate, completed: false } }).then((r) => r?.task || r); }
   /** Move an open task's due date (the touch cap pushes work to another day rather than piling it onto one). */
   updateTask(contactId, taskId, { title, body, dueDate }) { return this.request('PUT', `/contacts/${contactId}/tasks/${taskId}`, { body: { title, body, dueDate, completed: false } }).then((r) => r?.task || r); }
