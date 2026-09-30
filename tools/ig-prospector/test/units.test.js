@@ -11,7 +11,7 @@ import { buildRules, evaluate, CriteriaSchema } from '../src/lib/criteria.js';
 import { toRecord, toCsv, CSV_COLUMNS, segmentTags } from '../src/lib/export-format.js';
 import { appendNdjson, readNdjson, readNdjsonMap, writeNdjson } from '../src/lib/ndjson.js';
 import { parseArgs } from '../src/lib/cli.js';
-import { ClassificationSchema } from '../src/lib/anthropic.js';
+import { ClassificationSchema } from '../src/lib/classification.js';
 import { extractEmails, candidatesFromHtml, candidatesFromBio, countSharedEmails, pickContactEmail } from '../src/lib/emails.js';
 import { parseDiscovery, parseAbout } from '../src/lib/skool.js';
 import { planDay, renderDigest, taskTitle, taskForStage, addDays, dueAt, gapAfter, WarmupSchema } from '../src/lib/warmup.js';

@@ -4,7 +4,7 @@ import crypto from 'node:crypto';
 import { CACHE_DIR } from './paths.js';
 
 /**
- * Disk cache for every external response. Namespaces: apify-adlib, apify-ig, http, anthropic.
+ * Disk cache for every external response. Namespaces: apify-adlib, apify-ig, http, classify.
  * Keys that are not filesystem-safe (URLs, JSON) are hashed. Writes are atomic (tmp + rename).
  */
 export function sha(input) {

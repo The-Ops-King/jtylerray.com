@@ -16,7 +16,7 @@ It builds and tracks a list. It never sends a message.
 ```bash
 cd tools/ig-prospector
 npm install
-cp .env.example .env   # fill in APIFY_TOKEN, ANTHROPIC_API_KEY, GHL_PRIVATE_TOKEN, GHL_LOCATION_ID
+cp .env.example .env   # fill in APIFY_TOKEN, GHL_PRIVATE_TOKEN, GHL_LOCATION_ID
 ```
 
 In GHL, create a pipeline named `IG Outreach` with a first stage named `Sourced` (names are configurable in `config/ghl.json`). Then:
@@ -148,7 +148,6 @@ roughly 3 new prospects and 3 DMs a day, with about 30 in flight. Raise `daily_t
 Two modes, set by `mode` in `config/classify.json`:
 
 - `agent` (default, no API key). `npm run classify` writes the pending inputs to `data/classify-queue.ndjson` and the exact prompt, schema and answer format to `data/classify-instructions.md`. A Claude Code session (or sub-agents, one slice of the queue each) writes one line per handle to `data/classify-answers.ndjson`. Running the step again validates every answer with zod, checks its `input_hash` against the current input (stale answers are rejected), caches it, and writes the row. Bad answers land in `data/classify-failures.ndjson` with the reason and the step exits non-zero.
-- `api`. Calls the Anthropic API (`ANTHROPIC_API_KEY`) with Sonnet and structured outputs, validated again with zod, one retry then the failures file. `claude-sonnet-5` rejects `temperature`; it is sent only when non-null.
 
 In both modes prices are never guessed: `offer_price_usd` is `null` unless a number is stated. `confidence` is `low` when the page is thin. Results are cached by input hash in `cache/classify/`, so unchanged inputs are never classified twice.
 

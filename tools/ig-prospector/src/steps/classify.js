@@ -1,14 +1,12 @@
 /**
  * Step 5: classify. Bio + funnel text -> strict JSON. The only LLM step in the pipeline; extraction, not judgment.
  *
- * Two modes (config/classify.json "mode"):
- *   "agent" (default): no API key. `npm run classify` first ingests any answers found in data/classify-answers.ndjson
- *     (validated against the schema, matched to the current input by hash), then writes the still-pending inputs to
- *     data/classify-queue.ndjson plus data/classify-instructions.md for whoever does the classifying (a Claude Code
- *     session or sub-agents). Run it again after answers are written.
- *   "api": calls the Anthropic API directly (needs ANTHROPIC_API_KEY).
- * Results in either mode are cached under cache/classify keyed by a hash of (prompt_version, prompt, model, input),
- * so an unchanged input never costs anything again. Invalid answers go to data/classify-failures.ndjson.
+ * No API key and no model call from this process. `npm run classify` first ingests any answers found in
+ * data/classify-answers.ndjson (validated against the schema, matched to the current input by hash), then writes the
+ * still-pending inputs to data/classify-queue.ndjson plus data/classify-instructions.md for whoever does the
+ * classifying (a Claude Code session or sub-agents). Run it again after the answers are written.
+ * Results are cached under cache/classify keyed by a hash of (prompt_version, prompt, input), so an unchanged input is
+ * never classified twice. Invalid answers go to data/classify-failures.ndjson.
  * Output: data/classified.ndjson (funnel row + classification fields).
  * Usage: node src/steps/classify.js [--force] [--limit N]
  */
@@ -18,29 +16,26 @@ import { parseArgs } from '../lib/cli.js';
 import { ensureDirs, readConfig, FILES, DATA_DIR } from '../lib/paths.js';
 import { readNdjsonMap, appendNdjson, removeFromNdjson, writeNdjson, pruneOrphans, compactNdjson } from '../lib/ndjson.js';
 import { cacheGet, cacheSet, sha } from '../lib/cache.js';
-import { SYSTEM_PROMPT, ClassificationSchema, CLASSIFICATION_JSON_SCHEMA } from '../lib/anthropic.js';
-import { createLimiter } from '../lib/limiter.js';
-import { createProgress } from '../lib/log.js';
+import { SYSTEM_PROMPT, ClassificationSchema, CLASSIFICATION_JSON_SCHEMA } from '../lib/classification.js';
 import { loadCriteria, buildPreRules, evaluate } from '../lib/criteria.js';
 import { loadJoined } from '../lib/records.js';
 
 const args = parseArgs();
 ensureDirs();
 const cfg = readConfig('classify.json');
-const mode = cfg.mode || 'agent';
-if (!['agent', 'api'].includes(mode)) throw new Error(`config/classify.json mode must be "agent" or "api", got ${mode}`);
 const CACHE_NS = 'classify';
 const QUEUE = path.join(DATA_DIR, 'classify-queue.ndjson');
 const ANSWERS = path.join(DATA_DIR, 'classify-answers.ndjson');
 const INSTRUCTIONS = path.join(DATA_DIR, 'classify-instructions.md');
 
 const promptHash = sha(SYSTEM_PROMPT);
-const modelTag = mode === 'agent' ? 'agent' : cfg.model;
 
 export function buildInput(r) {
   return { handle: r.ig_handle, bio: r.bio || '', bioLink: r.bio_link ?? null, funnelUrl: r.funnel_final_url || r.funnel_url || null, funnelText: (r.funnel_text || '').slice(0, cfg.max_funnel_chars), followerCount: r.follower_count ?? null };
 }
-const keyFor = (input) => sha({ v: cfg.prompt_version, promptHash, model: modelTag, input });
+// The literal 'agent' stays in the key: every cached classification was written under it, and changing the shape of
+// this object would invalidate all of them and re-queue the whole list.
+const keyFor = (input) => sha({ v: cfg.prompt_version, promptHash, model: 'agent', input });
 
 const funnels = [...loadJoined(['resolved', 'profiles', 'funnels']).values()];
 pruneOrphans(FILES.classified, new Set(funnels.map((r) => r.ig_handle)));
@@ -78,66 +73,37 @@ function writeClassified(r, result) {
   return c;
 }
 
-const progress = createProgress('classify', pending.length);
-
-if (mode === 'api') {
-  const { classifyProspect } = await import('../lib/anthropic.js');
-  const limit = createLimiter(3);
-  await Promise.all(pending.map((r) => limit(async () => {
-    const input = buildInput(r);
-    const cacheKey = keyFor(input);
-    let result = args.force ? null : cacheGet(CACHE_NS, cacheKey)?.value;
-    if (result) progress.skip();
-    else {
-      try {
-        result = await classifyProspect(input, cfg);
-        cacheSet(CACHE_NS, cacheKey, result);
-        progress.spend({ provider: 'anthropic', units: 1, usd: result.usd, detail: { handle: r.ig_handle, model: result.model, usage: result.usage, attempts: result.attempts } });
-      } catch (err) {
-        if (err.usd) progress.spend({ provider: 'anthropic', units: 1, usd: err.usd, detail: { handle: r.ig_handle, failed: true } });
-        appendNdjson(FILES.classifyFailures, { ig_handle: r.ig_handle, error: err.message, raw: err.raw ?? null, ts: new Date().toISOString() });
-        progress.fail(`@${r.ig_handle} ${err.message}`);
-        return;
-      }
-    }
-    const c = writeClassified(r, result);
-    progress.tick(`@${r.ig_handle} ${c.niche}/${c.funnel_type} $${c.offer_price_usd ?? '?'} conf=${c.confidence}`);
-  })));
-  progress.done();
-  if (progress.state.failed) process.exitCode = 1;
-} else {
-  // 1) Ingest answers: validate, match hash, cache, write.
-  const answers = readNdjsonMap(ANSWERS);
-  const byHandle = new Map(pending.map((r) => [r.ig_handle, r]));
-  let ingested = 0, rejected = 0;
-  for (const [handle, a] of answers) {
-    const r = byHandle.get(handle);
-    if (!r) continue; // already classified or not pending
-    const input = buildInput(r);
-    const cacheKey = keyFor(input);
-    if (a.input_hash !== cacheKey) { appendNdjson(FILES.classifyFailures, { ig_handle: handle, error: `stale answer: input_hash ${a.input_hash} != current ${cacheKey}`, ts: new Date().toISOString() }); rejected++; continue; }
-    const parsed = ClassificationSchema.safeParse(a.classification);
-    if (!parsed.success) { appendNdjson(FILES.classifyFailures, { ig_handle: handle, error: `schema: ${parsed.error.issues.map((i) => `${i.path.join('.')}: ${i.message}`).join('; ')}`, raw: a.classification, ts: new Date().toISOString() }); rejected++; continue; }
-    const result = { classification: parsed.data, model: a.model || 'agent', usd: 0, attempts: 1 };
-    cacheSet(CACHE_NS, cacheKey, result);
-    writeClassified(r, result);
-    byHandle.delete(handle);
-    ingested++;
-  }
-  // 2) Cache hits (e.g. a rerun after --force, or an answer produced under the same hash before).
-  let cached = 0;
-  for (const [handle, r] of [...byHandle]) {
-    const hit = args.force ? null : cacheGet(CACHE_NS, keyFor(buildInput(r)))?.value;
-    if (hit) { writeClassified(r, hit); byHandle.delete(handle); cached++; }
-  }
-  // 3) Queue what is still pending.
-  const queue = [...byHandle.values()].map((r) => { const input = buildInput(r); return { ig_handle: r.ig_handle, input_hash: keyFor(input), ...input }; });
-  writeNdjson(QUEUE, queue);
-  fs.writeFileSync(INSTRUCTIONS, instructions(queue.length));
-  console.log(`[classify:agent] ingested ${ingested} answer(s), ${rejected} rejected -> ${path.basename(FILES.classifyFailures)}, ${cached} from cache, ${queue.length} still pending`);
-  if (queue.length) console.log(`[classify:agent] queue: ${QUEUE}\n[classify:agent] instructions: ${INSTRUCTIONS}\n[classify:agent] write answers to ${ANSWERS} then rerun this step`);
-  if (rejected) process.exitCode = 1;
+// 1) Ingest answers: validate, match hash, cache, write.
+const answers = readNdjsonMap(ANSWERS);
+const byHandle = new Map(pending.map((r) => [r.ig_handle, r]));
+let ingested = 0, rejected = 0;
+for (const [handle, a] of answers) {
+  const r = byHandle.get(handle);
+  if (!r) continue; // already classified or not pending
+  const input = buildInput(r);
+  const cacheKey = keyFor(input);
+  if (a.input_hash !== cacheKey) { appendNdjson(FILES.classifyFailures, { ig_handle: handle, error: `stale answer: input_hash ${a.input_hash} != current ${cacheKey}`, ts: new Date().toISOString() }); rejected++; continue; }
+  const parsed = ClassificationSchema.safeParse(a.classification);
+  if (!parsed.success) { appendNdjson(FILES.classifyFailures, { ig_handle: handle, error: `schema: ${parsed.error.issues.map((i) => `${i.path.join('.')}: ${i.message}`).join('; ')}`, raw: a.classification, ts: new Date().toISOString() }); rejected++; continue; }
+  const result = { classification: parsed.data, model: a.model || 'agent', usd: 0, attempts: 1 };
+  cacheSet(CACHE_NS, cacheKey, result);
+  writeClassified(r, result);
+  byHandle.delete(handle);
+  ingested++;
 }
+// 2) Cache hits (e.g. a rerun after --force, or an answer produced under the same hash before).
+let cached = 0;
+for (const [handle, r] of [...byHandle]) {
+  const hit = args.force ? null : cacheGet(CACHE_NS, keyFor(buildInput(r)))?.value;
+  if (hit) { writeClassified(r, hit); byHandle.delete(handle); cached++; }
+}
+// 3) Queue what is still pending.
+const queue = [...byHandle.values()].map((r) => { const input = buildInput(r); return { ig_handle: r.ig_handle, input_hash: keyFor(input), ...input }; });
+writeNdjson(QUEUE, queue);
+fs.writeFileSync(INSTRUCTIONS, instructions(queue.length));
+console.log(`[classify:agent] ingested ${ingested} answer(s), ${rejected} rejected -> ${path.basename(FILES.classifyFailures)}, ${cached} from cache, ${queue.length} still pending`);
+if (queue.length) console.log(`[classify:agent] queue: ${QUEUE}\n[classify:agent] instructions: ${INSTRUCTIONS}\n[classify:agent] write answers to ${ANSWERS} then rerun this step`);
+if (rejected) process.exitCode = 1;
 
 function instructions(n) {
   return `# Classification instructions (generated, ${new Date().toISOString()})

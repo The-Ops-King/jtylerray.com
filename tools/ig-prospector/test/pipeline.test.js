@@ -18,7 +18,7 @@ import { fileURLToPath } from 'node:url';
 const here = path.dirname(fileURLToPath(import.meta.url));
 const PKG = path.resolve(here, '..');
 const HOME = fs.mkdtempSync(path.join(os.tmpdir(), 'igp-'));
-const env = { ...process.env, IG_PROSPECTOR_HOME: HOME, APIFY_TOKEN: 'test-token', ANTHROPIC_API_KEY: '', GHL_PRIVATE_TOKEN: '', GHL_LOCATION_ID: '' };
+const env = { ...process.env, IG_PROSPECTOR_HOME: HOME, APIFY_TOKEN: 'test-token', GHL_PRIVATE_TOKEN: '', GHL_LOCATION_ID: '' };
 const D = (f) => path.join(HOME, 'data', f);
 import { readNdjson } from '../src/lib/ndjson.js';
 const lines = (f) => readNdjson(D(f));
