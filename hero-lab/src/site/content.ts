@@ -26,8 +26,12 @@ export const BOOKING =
 export const HERO = {
   eyebrow: "Sales infrastructure for high-ticket coaching and education",
   headline: ["I build the ", "systems", " sales teams run on."] as const,
+  /* The headline says "systems", which is the one word on the page that needs
+     defining. This names them, puts the border around the work ("after the
+     lead"), and then says what the engagement is like: nothing gets ripped out
+     that is not costing him anything. */
   subtext:
-    "I start with the tools you already run, keep what works, and rebuild the parts that don't. When no-code runs out of road, I write the code.",
+    "Everything that happens after marketing generates the lead: the CRM, the routing, the follow-up, the reporting. I start with what you already run and rebuild only the parts that are costing you.",
 };
 
 /** The five things I build, named the way the buyer names them. GoHighLevel
