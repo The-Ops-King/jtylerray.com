@@ -9,8 +9,11 @@
   /* text */
   --bone: #f5f3ee;
   --bone-rgb: 245, 243, 238;
-  --grey-mid: #8a857c;
-  --grey-dim: #5e5a54;
+  /* lifted for contrast on the ink ground: the old pair measured 5.36:1 and
+     2.87:1, and 2.87 fails WCAG AA outright. These read 7.55:1 and 5.81:1,
+     on the same warm axis so the palette is unchanged in character. */
+  --grey-mid: #a4a098;
+  --grey-dim: #8f8b86;
 
   /* accent — fills use --accent, type uses --accent-text (lifted so a word
      still reads on the dark ground). Nothing structural is ever accent. */
@@ -43,7 +46,7 @@
   --display-tracking: -0.032em;
   --display-leading: 0.98;
   --display-size: clamp(44px, 7.4vw, 92px);
-  --lede-size: 18px;
+  --lede-size: 20px;
   --lede-color: var(--grey-mid);
 
   /* shape — themes override */
@@ -122,7 +125,7 @@ body {
 /* type */
 .eyebrow {
   font-family: var(--mono);
-  font-size: calc(12px * var(--type-scale, 1));
+  font-size: calc(14px * var(--type-scale, 1));
   font-weight: 500;
   letter-spacing: 0.14em;
   text-transform: uppercase;
@@ -283,9 +286,12 @@ h1.display.md { font-size: clamp(42px, 6.4vw, 84px); line-height: 1.0; }
 
 /* wide — no rule, wide tracking, quiet */
 [data-eyebrow="wide"] .eyebrow {
-  letter-spacing: 0.26em;
+  /* 0.26em was set when this ran at 11px, where wide tracking reads as a
+     device. At 14px that much air starts breaking the phrase into letters,
+     so the tracking comes back as the size goes up. */
+  letter-spacing: 0.2em;
   color: var(--grey-mid);
-  font-size: calc(11px * var(--type-scale, 1));
+  font-size: calc(14px * var(--type-scale, 1));
 }
 [data-eyebrow="wide"] .eyebrow::before { display: none; }
 

@@ -52,7 +52,7 @@ html:has(.site) body {
   text-shadow: none;
 }
 .site .lede {
-  font-size: 18px;
+  font-size: 20px;
   line-height: 1.65;
   color: var(--grey-mid);
   max-width: 58ch;
@@ -63,7 +63,7 @@ html:has(.site) body {
   color: var(--grey-dim);
 }
 .site .prose p {
-  font-size: 17.5px;
+  font-size: 19px;
   line-height: 1.65;
   color: var(--grey-mid);
 }
@@ -85,7 +85,9 @@ html:has(.site) body {
 .v1-body {
   flex: 1;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 300px;
+  /* 360, not 300: the sub-lines set at 13px now, and at 300 "GoHighLevel ·
+     HubSpot · Close" broke across two lines with one word orphaned. */
+  grid-template-columns: minmax(0, 1fr) 360px;
   gap: clamp(32px, 6vw, 88px);
   align-items: center;
   padding-top: 4vh;
@@ -93,9 +95,9 @@ html:has(.site) body {
 .v1-left > * + * { margin-top: 28px; }
 .v1-rail { border-left: 1px solid var(--hair); padding-left: 22px; display: flex; flex-direction: column; gap: 20px; }
 .v1-row { display: grid; grid-template-columns: 26px minmax(0, 1fr); gap: 12px; align-items: start; }
-.v1-idx { font-size: 11px; color: var(--accent); letter-spacing: 0.06em; padding-top: 2px; }
-.v1-k { font-size: 15px; letter-spacing: -0.01em; }
-.v1-t { font-size: 11px; color: var(--grey-dim); letter-spacing: 0.04em; margin-top: 4px; }
+.v1-idx { font-size: 12.5px; color: var(--accent); letter-spacing: 0.06em; padding-top: 2px; }
+.v1-k { font-size: 19px; letter-spacing: -0.01em; }
+.v1-t { font-size: 13px; color: var(--grey-dim); letter-spacing: 0.04em; margin-top: 4px; }
 @media (max-width: 900px) {
   .v1-body { grid-template-columns: 1fr; align-items: start; }
   .v1-rail { display: none; }
@@ -128,7 +130,7 @@ html:has(.site) body {
   margin: 0 0 16px;
 }
 .section-label .mono {
-  font-size: 11px;
+  font-size: 12.5px;
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
@@ -304,11 +306,11 @@ html:has(.site) body {
 .wordmark {
   font-family: var(--display);
   font-weight: 500;
-  font-size: 16px;
+  font-size: 17px;
   letter-spacing: -0.022em;
 }
 .descriptor {
-  font-size: 10px;
+  font-size: 11.5px;
   letter-spacing: 0.16em;
   text-transform: uppercase;
 }
@@ -320,7 +322,7 @@ html:has(.site) body {
   flex: 0 0 auto;
 }
 .masthead-nav a {
-  font-size: 15px;
+  font-size: 16px;
   color: var(--grey-mid);
   text-decoration: none;
   transition: color 0.18s ease;
@@ -366,11 +368,6 @@ html:has(.site) body {
   align-items: center;
   gap: 12px;
   margin-top: 40px;
-}
-.hero-note {
-  font-size: 11px;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
 }
 /* the rail numerals are index numbering, which is structure: grey, never
    accent. The hero's accent budget is the headline word and the button. */
@@ -429,21 +426,24 @@ html:has(.site) body {
   }
 }
 
-/* the rail stays two-up on a phone — one column ran the hero 60px past the
-   fold. The sub-line drops to keep each cell to two lines. */
+/* One column on a phone. Two-up was right when the label ran at 14px and the
+   sub-line at 10.5: each cell held two lines. At 17 and 12.5 a 165px cell
+   turns "CRM architecture / GoHighLevel · HubSpot · Close" into four, which is
+   less readable than the extra scroll costs. */
 @media (max-width: 520px) {
   .site .v1-rail {
-    gap: 14px 20px;
+    grid-template-columns: 1fr;
+    gap: 18px;
   }
   .site .v1-row {
-    grid-template-columns: 20px minmax(0, 1fr);
-    gap: 8px;
+    grid-template-columns: 24px minmax(0, 1fr);
+    gap: 10px;
   }
   .site .v1-k {
-    font-size: 14px;
+    font-size: 17px;
   }
   .site .v1-t {
-    font-size: 10.5px;
+    font-size: 12.5px;
   }
 }
 
@@ -506,7 +506,7 @@ html:has(.site) body {
   max-width: 66ch;
 }
 .site #what .prose p {
-  font-size: 21px;
+  font-size: 22px;
   line-height: 1.75;
   max-width: 60ch;
 }
@@ -609,7 +609,7 @@ html:has(.site) body {
   margin-left: 5px;
 }
 .about .era-period {
-  font-size: 11px;
+  font-size: 12.5px;
   letter-spacing: 0.16em;
   text-transform: uppercase;
   padding-bottom: 12px;
@@ -623,7 +623,7 @@ html:has(.site) body {
 }
 .era-line {
   margin-top: 12px;
-  font-size: 18px;
+  font-size: 19px;
   line-height: 1.65;
   color: var(--grey-mid);
 }
@@ -735,7 +735,7 @@ html:has(.site) body {
 }
 .contact-email {
   margin-top: 20px;
-  font-size: 17px;
+  font-size: 18px;
   color: var(--bone);
   user-select: all;
 }
@@ -752,7 +752,7 @@ html:has(.site) body {
   color: var(--grey-mid);
 }
 .foot-in .mono {
-  font-size: 11px;
+  font-size: 12px;
   letter-spacing: 0.1em;
   text-transform: uppercase;
 }
@@ -775,7 +775,7 @@ html:has(.site) body {
   .site #what .prose p {
     /* holds the measure near 66 characters across the whole band: 21px was a
        poster setting at this width, 18px ran 71 characters on a tablet */
-    font-size: clamp(17.5px, 2.3vw, 19.5px);
+    font-size: clamp(19px, 2.4vw, 21px);
     line-height: 1.7;
   }
   .site #what .prose p + p {
@@ -864,16 +864,21 @@ html:has(.site) body {
     flex: 1 1 auto;
   }
   .site .lede {
-    font-size: 17px;
+    font-size: 18.5px;
+  }
+  /* the tracking is the eyebrow's treatment, but a 360px phone has no room
+     for 0.2em across a line this long */
+  .site .eyebrow {
+    letter-spacing: 0.12em;
   }
   .era-title {
-    font-size: 21px;
+    font-size: 22px;
   }
   .era-line {
-    font-size: 16.5px;
+    font-size: 18px;
   }
   .contact-email {
-    font-size: 16px;
+    font-size: 17px;
     overflow-wrap: anywhere;
   }
 }
@@ -925,7 +930,7 @@ html:has(.site) body {
 }
 .pov-sym-head {
   margin-top: 48px;
-  font-size: 11px;
+  font-size: 12.5px;
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
@@ -941,7 +946,7 @@ html:has(.site) body {
   padding: 14px 0;
   border-top: 0.5px solid var(--rule);
   color: var(--bone);
-  font-size: 17px;
+  font-size: 19px;
 }
 .pov-sym li:last-child {
   border-bottom: 0.5px solid var(--rule);
@@ -950,6 +955,6 @@ html:has(.site) body {
 .contact-qualifier {
   margin-top: 28px;
   max-width: 46ch;
-  font-size: 15px;
+  font-size: 16.5px;
   color: var(--grey-dim);
 }

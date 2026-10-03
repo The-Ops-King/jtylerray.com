@@ -28,7 +28,6 @@ export const HERO = {
   headline: ["I build the ", "systems", " sales teams run on."] as const,
   subtext:
     "I start with the tools you already run, keep what works, and rebuild the parts that don't. When no-code runs out of road, I write the code.",
-  note: "One person. Not an agency.",
 };
 
 /** The five things I build, named the way the buyer names them. GoHighLevel

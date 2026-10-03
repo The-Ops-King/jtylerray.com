@@ -130,7 +130,6 @@ function body(c, reviews) {
 
         <h1>${esc(headline)}</h1>
         <p class="pre-lede">${esc(HERO.subtext)}</p>
-        <p class="pre-note">${esc(HERO.note)}</p>
 
         <p>
           <a class="pre-cta" href="${esc(CONTACT_URL)}">Get in touch</a>

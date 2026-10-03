@@ -112,7 +112,6 @@ function Hero() {
                 See the work
               </a>
             </div>
-            <p className="mono hero-note rise rise-4">{HERO.note}</p>
           </div>
           {/* the rail: the five things I build, on a grey datum. It steps
               aside for a real screenshot the day one exists. */}
