@@ -39,9 +39,8 @@ export default function WorkSuite() {
 
   /* Below 900 the split is one column, and the pane sitting above the list was
      showing the same entry the list was already showing underneath it. There
-     the detail opens inside the row instead, which means the reading-position
-     follow has to stop: a row that grows as you scroll past it moves the thing
-     you were reading. Narrow is tap-to-open. */
+     the detail opens inside the row instead, and the reading-position follow
+     keeps working: scrolling the list still opens each build as you reach it. */
   const [narrow, setNarrow] = useState(false);
   useEffect(() => {
     const mq = window.matchMedia("(max-width: 900px)");
@@ -52,7 +51,7 @@ export default function WorkSuite() {
   }, []);
 
   useEffect(() => {
-    if (still || narrow) return;
+    if (still) return;
     const list = listRef.current;
     if (!list) return;
 
@@ -60,21 +59,39 @@ export default function WorkSuite() {
     let raf = 0;
     let last = -1;
 
-    // nearest row centre to the reading line — one pass, one winner, so there
-    // is no boundary for two rows to argue over
+    /* Two rules, because narrow rows change height when they open.
+     *
+     * Wide: nearest row centre to the reading line. One pass, one winner, so
+     * there is no boundary for two rows to argue over. Nothing resizes, so a
+     * centre is the truest point.
+     *
+     * Narrow: the last row whose top has passed the line. A centre cannot be
+     * used here — the row that opens grows downward, its own centre drops past
+     * the line, the row above wins it back, and the two trade places for as
+     * long as you hold still. A top edge does not move when its own row opens,
+     * and the rows below only move further away, so the choice settles.
+     */
     const measure = () => {
       raf = 0;
       const line = window.innerHeight * LINE;
-      let best = Infinity;
       let hit = 0;
-      rows.forEach((el, i) => {
-        const box = el.getBoundingClientRect();
-        const d = Math.abs(box.top + box.height / 2 - line);
-        if (d < best) {
-          best = d;
-          hit = i;
-        }
-      });
+
+      if (narrow) {
+        rows.forEach((el, i) => {
+          if (el.getBoundingClientRect().top <= line) hit = i;
+        });
+      } else {
+        let best = Infinity;
+        rows.forEach((el, i) => {
+          const box = el.getBoundingClientRect();
+          const d = Math.abs(box.top + box.height / 2 - line);
+          if (d < best) {
+            best = d;
+            hit = i;
+          }
+        });
+      }
+
       if (hit !== last) {
         last = hit;
         setAt(hit);
