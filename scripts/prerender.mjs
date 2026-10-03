@@ -84,7 +84,7 @@ async function findPortrait(dist) {
 /* ── the block that goes in #root ──────────────────────────────────── */
 
 function body(c, reviews) {
-  const { HERO, POV, RAIL, WHAT_I_DO, SUITE, TIMELINE, CONTACT, CONTACT_URL, EMAIL, BOOKING } = c;
+  const { HERO, POV, RAIL, WHAT_I_DO, SUITE, TIMELINE, CONTACT, CONTACT_URL, BOOKING } = c;
 
   const rail = RAIL.map(
     (r) => `<li><strong>${esc(r.label)}</strong> — ${esc(r.sub)}</li>`
@@ -113,7 +113,7 @@ function body(c, reviews) {
   ).join('');
 
   const says = reviews.length
-    ? `<h2>04 · What people say</h2>
+    ? `<h2>05 · What people say</h2>
         <p class="pre-note">Transcribed from the screenshots on the page.</p>
         <ul>${reviews.map((r) => `<li>${esc(r)}</li>`).join('')}</ul>`
     : '';
@@ -150,22 +150,22 @@ function body(c, reviews) {
         <h2>02 · The work</h2>
         ${suite}
 
-        <h2>03 · Who I am</h2>
+        <h2>03 · ${esc(CONTACT.headline)}</h2>
+        <p>${esc(CONTACT.line)}</p>
+        <p><a class="pre-cta" href="${esc(CONTACT_URL)}">Fix your systems</a></p>
+
+        <h2>04 · Who I am</h2>
         <ul class="pre-timeline">${timeline}</ul>
 
         ${says}
 
-        <h2>05 · ${esc(CONTACT.headline)}</h2>
-        <p>${esc(CONTACT.line)}</p>
-        <p>${esc(CONTACT.qualifier)}</p>
-        <p><a href="mailto:${esc(EMAIL)}">${esc(EMAIL)}</a> · <a href="${esc(CONTACT_URL)}">Contact card</a></p>
       </main>`;
 }
 
 /* ── the block that goes in <head> ─────────────────────────────────── */
 
 function head(c, description, portrait) {
-  const { POV, RAIL, SUITE, WHAT_I_DO, EMAIL, CONTACT_URL } = c;
+  const { POV, RAIL, SUITE, WHAT_I_DO, CONTACT_URL } = c;
   const title = 'J. Tyler Ray — Systems & Operations';
 
   /* Claims are the page's own. Nothing is asserted here that a reader would
@@ -184,7 +184,6 @@ function head(c, description, portrait) {
       name: 'J. Tyler Ray',
       jobTitle: 'Systems and operations consultant',
       description: WHAT_I_DO.prose[2],
-      email: `mailto:${EMAIL}`,
       url: `${SITE}/`,
     },
     hasOfferCatalog: {

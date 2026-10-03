@@ -933,11 +933,18 @@ html:has(.site) body {
 .site .pov-prose {
   margin-top: 28px;
 }
-.pov-sym-head {
+/* the same treatment as the section register: this heads the symptom list the
+   way 01 heads the section under it, so it carries the same weight and colour */
+/* `.site .mono` sets every mono element grey at weight 400, and it is two
+   classes, so a single-class rule here never landed. Naming both classes
+   under .site beats it on specificity rather than on source order. */
+.site .mono.pov-sym-head {
   margin-top: 48px;
-  font-size: 12.5px;
+  font-size: 16px;
+  font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
+  color: var(--accent-text);
 }
 .pov-sym {
   margin: 16px 0 0;

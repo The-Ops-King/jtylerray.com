@@ -8,7 +8,6 @@ import portrait from "../assets/suit.jpeg";
 import {
   CONTACT,
   CONTACT_URL,
-  EMAIL,
   HERO,
   POV,
   RAIL,
@@ -41,9 +40,9 @@ export default function Site() {
       <Argument />
       <WhatIDo />
       <Work />
+      <Contact />
       <WhoIAm />
       <WhatPeopleSay />
-      <Contact />
       <Footer />
       <div className="scanline" aria-hidden="true" />
     </div>
@@ -238,7 +237,7 @@ function WhoIAm() {
         <img src={portrait} alt="J. Tyler Ray" />
       </figure>
       <div className="col about-col">
-        <SectionLabel n="03">Who I am</SectionLabel>
+        <SectionLabel n="04">Who I am</SectionLabel>
         <Timeline />
       </div>
     </section>
@@ -285,8 +284,11 @@ function WhatPeopleSay() {
   return (
     <section className="section says" id="says">
       <div className="col">
-        <SectionLabel n="04">What people say</SectionLabel>
+        <SectionLabel n="05">What people say</SectionLabel>
         <Reviews />
+        {/* the ask moved up to 03, so the page would otherwise finish with
+            nothing to act on. Same button, same wording as everywhere else. */}
+        <CtaLink />
       </div>
     </section>
   );
@@ -298,18 +300,13 @@ function Contact() {
   return (
     <section className="section contact" id="contact">
       <div className="col">
-        <SectionLabel n="05">Get in touch</SectionLabel>
+        <SectionLabel n="03">Get in touch</SectionLabel>
         <h2 className="display contact-head">{CONTACT.headline}</h2>
         <p className="lede">{CONTACT.line}</p>
         {/* one wording for every ask on the page */}
         <a className="btn btn-fill" href={CONTACT_URL}>
           Fix your systems
         </a>
-        {/* not everyone books a call, and they should not have to */}
-        <p className="contact-email">{EMAIL}</p>
-        {/* who this is sized for, so the wrong enquiry can rule itself out
-            before it reaches the calendar */}
-        <p className="contact-qualifier">{CONTACT.qualifier}</p>
       </div>
     </section>
   );

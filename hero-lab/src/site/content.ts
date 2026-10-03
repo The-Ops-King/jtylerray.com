@@ -7,8 +7,6 @@
  * hype adjectives.
  */
 
-export const EMAIL = "jt@jtylerray.com";
-
 /** Where every "Fix your systems" goes. The card carries email, SMS, WhatsApp and
  *  both booking lengths, so it answers the question a mailto: only half
  *  answers — and it opens in the browser rather than in a mail client the
@@ -229,11 +227,8 @@ export const TIMELINE: Era[] = [
 
 export const CONTACT = {
   headline: "How can I help?",
-  line: "Bring the part of the operation you don't trust: a booking that never reaches the CRM, reporting nobody believes, or a launch the current setup will not survive.",
-  /* Two numbers doing two jobs. The programme price says which category this
-     is, and the monthly revenue says whether the problem exists yet: at low
-     volume a thin operation still holds. "Around" is deliberate. A hard floor
-     reads as a gate and turns away the team six weeks from needing this. */
-  qualifier:
-    "Most of the teams I work with sell programs between $3,000 and $30,000 and are doing around $100,000 a month.",
+  /* The span, then the ask. The list is the questions a founder has about
+     their own pipeline rather than the tools it runs on, so it does not
+     repeat the rail sitting up in the hero. */
+  line: "I handle everything between the lead arriving and the handoff to fulfillment: where it lands, who owns it, what happens next, and what you can see about any of it. Bring the part you don't trust.",
 };

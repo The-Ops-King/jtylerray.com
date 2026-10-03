@@ -18,7 +18,7 @@
   gap: 32px;
 }
 .work .work-count {
-  font-size: 11px;
+  font-size: 12.5px;
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
@@ -46,11 +46,16 @@
 .spl-group + .spl-group {
   margin-top: 40px;
 }
-.work .spl-cat {
-  font-size: 12px;
+/* same treatment as the section register and the symptom head: every label
+   that heads a group is mono, bold and accent */
+/* two classes ties with `.site .mono` and the winner would come down to
+   bundle order; naming both classes settles it */
+.site .work .mono.spl-cat {
+  font-size: 15px;
+  font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--bone);
+  color: var(--accent-text);
   padding-bottom: 16px;
 }
 .spl-row {
@@ -68,14 +73,14 @@
   cursor: pointer;
 }
 .spl-n {
-  font-size: 12px;
+  font-size: 13px;
   letter-spacing: 0.08em;
   color: var(--grey-dim);
   padding-top: 3px;
   transition: color 0.2s ease;
 }
 .spl-t {
-  font-size: 17px;
+  font-size: 20px;
   line-height: 1.45;
   letter-spacing: -0.01em;
   color: var(--grey-mid);
@@ -131,10 +136,12 @@
   position: absolute;
   inset: 0;
 }
-.work .spl-d-cat {
-  font-size: 10px;
+.site .work .mono.spl-d-cat {
+  font-size: 13px;
   letter-spacing: 0.16em;
   text-transform: uppercase;
+  font-weight: 700;
+  color: var(--accent-text);
 }
 /* the numeral rolls inside a clip, so it arrives from below and leaves
    upward instead of cross-fading in place */
@@ -155,7 +162,7 @@
   margin-top: 16px;
   font-family: var(--display);
   font-weight: 500;
-  font-size: 31px;
+  font-size: 33px;
   line-height: 1.16;
   letter-spacing: -0.028em;
   color: var(--bone);
@@ -173,7 +180,7 @@
   transform-origin: 0 50%;
 }
 .spl-d-line {
-  font-size: 17px;
+  font-size: 19px;
   line-height: 1.65;
   color: var(--grey-mid);
 }
@@ -271,11 +278,11 @@
     font-size: 34px;
   }
   .spl-d-t {
-    font-size: 24px;
+    font-size: 26px;
     margin-top: 12px;
   }
   .spl-d-line {
-    font-size: 15.5px;
+    font-size: 17px;
   }
   .spl-d-rule {
     margin: 14px 0;
@@ -291,6 +298,6 @@
     padding: 14px 4px 14px 12px;
   }
   .spl-t {
-    font-size: 15.5px;
+    font-size: 18px;
   }
 }

@@ -37,7 +37,10 @@
   --grid-line: rgba(var(--struct), var(--grid-a));
 
   /* type */
-  --display: "Inter Tight", ui-sans-serif, system-ui, -apple-system, sans-serif;
+  /* Two families on the page, not three. Inter Tight was a width variant of
+     Inter doing headline duty; Inter carries both now, with the display
+     tracking below closing the gap. */
+  --display: "Inter", ui-sans-serif, system-ui, -apple-system, sans-serif;
   --sans: "Inter", ui-sans-serif, system-ui, -apple-system, sans-serif;
   --mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
 
