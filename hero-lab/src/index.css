@@ -10,10 +10,15 @@
   --bone: #f5f3ee;
   --bone-rgb: 245, 243, 238;
   /* lifted for contrast on the ink ground: the old pair measured 5.36:1 and
-     2.87:1, and 2.87 fails WCAG AA outright. These read 7.55:1 and 5.81:1,
-     on the same warm axis so the palette is unchanged in character. */
+     2.87:1, and 2.87 fails WCAG AA outright. These read 7.55:1 and 9.02:1,
+     on the same warm axis so the palette is unchanged in character.
+
+     --grey-dim is every mono label on the page: the eyebrow, the section
+     meta, the timeline periods, the rail sub-lines, the footer. It is the
+     brighter of the two on purpose, because small uppercase mono at wide
+     tracking needs more contrast than body text at 20px, not less. */
   --grey-mid: #a4a098;
-  --grey-dim: #8f8b86;
+  --grey-dim: #b3afaa;
 
   /* accent — fills use --accent, type uses --accent-text (lifted so a word
      still reads on the dark ground). Nothing structural is ever accent. */

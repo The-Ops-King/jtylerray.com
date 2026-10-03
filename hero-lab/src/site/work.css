@@ -18,7 +18,7 @@
   gap: 32px;
 }
 .work .work-count {
-  font-size: 12.5px;
+  font-size: 14px;
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
@@ -221,8 +221,24 @@
     grid-template-columns: 1fr;
     gap: 40px;
   }
-  /* the pane leads on a narrow screen: it sits above the list and holds */
+  /* The pane is gone here. It led above the list and held the active entry,
+     which meant the first thing under the heading was a copy of the first row
+     in the list directly beneath it. The row opens in place instead. */
   .spl-detail {
+    display: none;
+  }
+  .spl-row {
+    grid-template-rows: auto auto;
+  }
+  .spl-row-detail {
+    grid-column: 2;
+    margin-top: 8px;
+    font-size: 17px;
+    line-height: 1.6;
+    color: var(--grey-mid);
+    text-align: left;
+  }
+  .spl-detail-unused {
     position: sticky;
     top: 0;
     z-index: 2;
@@ -299,5 +315,26 @@
   }
   .spl-t {
     font-size: 18px;
+  }
+}
+
+/* ── phone · the asks ─────────────────────────────────────────────── */
+
+/* Side by side, the two hero buttons each came out under 170px on a 390px
+   screen, which is a small target for the main thing the page asks for. They
+   stack and fill the measure instead, and every other ask on the page does
+   the same so none of them reads as the lesser one. */
+@media (max-width: 620px) {
+  .site .btns {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+  .site .btns .btn,
+  .site .cta-btn,
+  .site .contact .btn-fill {
+    width: 100%;
+    justify-content: center;
+    text-align: center;
   }
 }

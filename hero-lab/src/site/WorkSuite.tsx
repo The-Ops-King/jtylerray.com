@@ -37,8 +37,22 @@ export default function WorkSuite() {
   const still = useReducedMotion();
   const row = ROWS[at];
 
+  /* Below 900 the split is one column, and the pane sitting above the list was
+     showing the same entry the list was already showing underneath it. There
+     the detail opens inside the row instead, which means the reading-position
+     follow has to stop: a row that grows as you scroll past it moves the thing
+     you were reading. Narrow is tap-to-open. */
+  const [narrow, setNarrow] = useState(false);
   useEffect(() => {
-    if (still) return;
+    const mq = window.matchMedia("(max-width: 900px)");
+    const sync = () => setNarrow(mq.matches);
+    sync();
+    mq.addEventListener("change", sync);
+    return () => mq.removeEventListener("change", sync);
+  }, []);
+
+  useEffect(() => {
+    if (still || narrow) return;
     const list = listRef.current;
     if (!list) return;
 
@@ -79,7 +93,7 @@ export default function WorkSuite() {
       window.removeEventListener("resize", onScroll);
       if (raf) cancelAnimationFrame(raf);
     };
-  }, [still]);
+  }, [still, narrow]);
 
   return (
     <>
@@ -125,6 +139,9 @@ export default function WorkSuite() {
                     )}
                     <span className="spl-n mono">{r.n}</span>
                     <span className="spl-t">{r.title}</span>
+                    {narrow && on && r.detail && (
+                      <span className="spl-row-detail">{r.detail}</span>
+                    )}
                   </button>
                 );
               })}
