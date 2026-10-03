@@ -24,8 +24,10 @@ import "./site.css";
  * The page, as a technical drawing. Four sections under the hero, each
  * answering one question in the order the reader has it.
  *
- * Structure is grey, always: grid, ticks, rules, index numerals, the register
- * and the timeline datum. Accent is content only, two elements a viewport.
+ * Structure is grey: grid, ticks, rules, index numerals and the timeline
+ * datum. The section register is the exception, and the only one — it carries
+ * the accent at heading weight so the five parts of the page announce
+ * themselves. Everything else holding the drawing together stays grey.
  *
  * The branding dimensions are the lab's, fixed here rather than switchable:
  * mark = text colour, eyebrow = wide, motion = the scan line along the bottom

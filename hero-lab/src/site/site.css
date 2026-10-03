@@ -129,10 +129,15 @@ html:has(.site) body {
   border-top: 0.5px solid var(--rule);
   margin: 0 0 16px;
 }
+/* The register reads as a heading now rather than a caption: bigger, bold,
+   and in the accent. This is the one place structure takes colour, and it is
+   deliberate — see the note at the top of Site.tsx. */
 .section-label .mono {
-  font-size: 12.5px;
+  font-size: 16px;
+  font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
+  color: var(--accent-text);
 }
 
 /* the section CTA: the primary button, not a link dressed as one */
