@@ -63,7 +63,7 @@ function SectionLabel({ n, children }: { n: string; children: string }) {
 
 /** The section CTA is the primary button, filled in the accent. It is the
  *  same ask as the hero's, so it is drawn the same way. */
-function CtaLink({ children = "Get in touch" }: { children?: string }) {
+function CtaLink({ children = "Fix your systems" }: { children?: string }) {
   return (
     <a className="btn btn-fill cta-btn" href={CONTACT_URL}>
       {children}
@@ -90,7 +90,7 @@ function Hero() {
             <a href="#about">About</a>
             <a href="#contact">Contact</a>
             <a className="btn btn-outline" href={CONTACT_URL}>
-              Get in touch
+              Fix your systems
             </a>
           </nav>
         </header>
@@ -106,7 +106,7 @@ function Hero() {
             <p className="lede rise rise-3">{HERO.subtext}</p>
             <div className="btns rise rise-4">
               <a className="btn btn-fill" href={CONTACT_URL}>
-                Get in touch
+                Fix your systems
               </a>
               <a className="btn btn-outline" href="#work">
                 See the work
@@ -301,7 +301,7 @@ function Contact() {
         <p className="lede">{CONTACT.line}</p>
         {/* one wording for every ask on the page */}
         <a className="btn btn-fill" href={CONTACT_URL}>
-          Get in touch
+          Fix your systems
         </a>
         {/* not everyone books a call, and they should not have to */}
         <p className="contact-email">{EMAIL}</p>

@@ -132,7 +132,7 @@ function body(c, reviews) {
         <p class="pre-lede">${esc(HERO.subtext)}</p>
 
         <p>
-          <a class="pre-cta" href="${esc(CONTACT_URL)}">Get in touch</a>
+          <a class="pre-cta" href="${esc(CONTACT_URL)}">Fix your systems</a>
           <a class="pre-cta pre-cta-ghost" href="${esc(BOOKING)}">Book a call</a>
         </p>
 
