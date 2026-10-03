@@ -166,7 +166,7 @@ function body(c, reviews) {
 
 function head(c, description, portrait) {
   const { POV, RAIL, SUITE, WHAT_I_DO, CONTACT_URL } = c;
-  const title = 'J. Tyler Ray — Systems & Operations';
+  const title = 'J. Tyler Ray — Sales Ops | Fractional COO/CTO';
 
   /* Claims are the page's own. Nothing is asserted here that a reader would
      not find in the copy above. */

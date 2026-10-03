@@ -84,7 +84,7 @@ function Hero() {
         <header className="masthead">
           <a className="wordmark-block" href="#top">
             <span className="wordmark">J. Tyler Ray</span>
-            <span className="mono descriptor">Systems &amp; Operations</span>
+            <span className="mono descriptor">Sales Ops | Fractional COO/CTO</span>
           </a>
           <nav className="masthead-nav">
             <a href="#work">Work</a>
@@ -317,7 +317,7 @@ function Footer() {
     <footer className="foot">
       <div className="col foot-in">
         <span>J. Tyler Ray</span>
-        <span className="mono">Systems &amp; Operations</span>
+        <span className="mono">Sales Ops | Fractional COO/CTO</span>
         <span className="mono">2026</span>
       </div>
     </footer>
