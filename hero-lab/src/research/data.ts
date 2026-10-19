@@ -19,9 +19,11 @@ export const INTRO = {
 /* ── the list ──────────────────────────────────────────────────────── */
 
 /**
- * The twelve builds from the work section, rewritten as the complaint the
- * buyer actually has. Nobody taps "AI call scorecard"; everybody taps "no idea
- * what's said on calls".
+ * The twelve builds from the work section, written as the owner would say them
+ * out loud. Every label is a literal statement about the business, because the
+ * reader has to recognise themselves in it at a glance: a figure of speech
+ * costs them a second of interpretation, and a second of interpretation is a
+ * tap they do not make.
  *
  * `id` is what gets stored and tagged, so these are stable: changing a label
  * is a copy edit, changing an id splits the data in two.
@@ -29,18 +31,18 @@ export const INTRO = {
 export type Problem = { id: string; label: string };
 
 export const PROBLEMS: Problem[] = [
-  { id: "lead-ownership", label: "Nobody owns new leads" },
-  { id: "crm-junk", label: "CRM is a junk drawer" },
-  { id: "speed-to-lead", label: "Too slow to call new leads" },
-  { id: "call-outcomes", label: "Call outcomes never get logged" },
-  { id: "follow-up", label: "Follow-up falls through" },
-  { id: "rep-numbers", label: "No per-rep numbers" },
-  { id: "trust-reporting", label: "Can't trust the reporting" },
-  { id: "call-visibility", label: "No idea what's said on calls" },
-  { id: "commissions", label: "Commissions are manual" },
-  { id: "handoff", label: "Messy handoff to onboarding" },
-  { id: "one-person", label: "It all lives in one person's head" },
-  { id: "workarounds", label: "Automations the team works around" },
+  { id: "speed-to-lead", label: "It takes too long to contact new leads" },
+  { id: "lead-ownership", label: "It's not clear who should call a new lead" },
+  { id: "crm-junk", label: "The CRM is messy and out of date" },
+  { id: "call-outcomes", label: "Reps don't record what happened on their calls" },
+  { id: "follow-up", label: "Follow-up only happens if someone remembers" },
+  { id: "call-visibility", label: "Don't know what reps say on calls" },
+  { id: "rep-numbers", label: "Can't see how each rep is performing" },
+  { id: "trust-reporting", label: "Can't trust the numbers in the reports" },
+  { id: "commissions", label: "Commissions take hours to work out by hand" },
+  { id: "handoff", label: "New clients get missed after they buy" },
+  { id: "one-person", label: "Only one person knows how the process works" },
+  { id: "workarounds", label: "The team works around the system we built" },
 ];
 
 /* ── the options ───────────────────────────────────────────────────── */
@@ -52,18 +54,9 @@ export const DURATION = [
   "Longer than I want to admit",
 ] as const;
 
-/** A number, because a number is the question. Ranges rather than a free box:
- *  nobody has the figure to hand, everybody can pick the band it falls in, and
- *  picking one is the moment the problem stops being an annoyance and starts
- *  being an amount. The last option is there because at this size it is often
- *  the honest answer, and a cost nobody can measure is itself a finding. */
-export const COST = [
-  "Under $10k",
-  "$10k to $50k",
-  "$50k to $250k",
-  "More than $250k",
-  "Hard to put a number on it",
-] as const;
+/** Asked as a guess, in a box, because nobody has the figure to hand and
+ *  bands make them pick the nearest wall rather than say what they think. */
+export const COST_PLACEHOLDER = "A rough guess is fine";
 
 export const SPEND = [
   "No, not yet",

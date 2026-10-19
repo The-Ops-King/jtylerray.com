@@ -47,7 +47,7 @@ const COLUMNS = [
   ['All Problems, Ranked', 'problems'],
   ['Something Else', 'problemsOther'],
   ['How Long', 'duration'],
-  ['What It Has Cost', 'cost'],
+  ['Guessed Cost', 'cost'],
   ['Spent Money', 'spend'],
   ['Spent Money, Other', 'spendOther'],
   ['What Happened', 'happened'],

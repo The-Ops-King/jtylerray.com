@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import GridBackdrop from "../components/GridBackdrop";
 import { ACCENTS, applyAccent } from "../accents";
 import {
-  COST,
+  COST_PLACEHOLDER,
   DONE,
   DURATION,
   INTENT,
@@ -125,7 +125,7 @@ function ResearchForm({ handle, ref_ }: { handle: string; ref_: string }) {
        last question is the one being asked. */
     if (!picked.length && !other.trim()) {
       setState("error");
-      setError("Pick at least one thing that is real for you.");
+      setError("Pick at least one that sounds like you.");
       return;
     }
     if (!intent) {
@@ -191,10 +191,16 @@ function ResearchForm({ handle, ref_ }: { handle: string; ref_: string }) {
    * not labelled by hand. Half of them only exist once a problem is picked, so
    * hand-written numerals ran 03 then 09 on a form nobody had answered yet.
    */
-  const questions: { key: string; label: string; note?: string; body: React.ReactNode }[] = [
+  const questions: {
+    key: string;
+    label: string;
+    note?: string;
+    ctx?: string;
+    body: React.ReactNode;
+  }[] = [
     {
       key: "problems",
-      label: "Which of these are real for you?",
+      label: "Which of these sound like you?",
       body: (
         <Picker picked={picked} setPicked={setPicked} other={other} setOther={setOther} />
       ),
@@ -203,15 +209,26 @@ function ResearchForm({ handle, ref_ }: { handle: string; ref_: string }) {
 
   if (top) {
     questions.push(
+      /* The problem sits on its own line rather than inside the question.
+         Quoting a whole sentence back inside another sentence reads badly, and
+         these labels are sentences now. */
       {
         key: "duration",
-        label: `How long has "${top}" been going on?`,
+        label: "How long has this been going on?",
+        ctx: top,
         body: <Options options={[...DURATION]} value={duration} onPick={setDuration} />,
       },
       {
         key: "cost",
-        label: "How much has it cost you?",
-        body: <Options options={[...COST]} value={cost} onPick={setCost} />,
+        label: "How much would you guess this has cost you?",
+        body: (
+          <input
+            className="field-i"
+            value={cost}
+            onChange={(e) => setCost(e.target.value)}
+            placeholder={COST_PLACEHOLDER}
+          />
+        ),
       },
       {
         key: "spend",
@@ -243,7 +260,7 @@ function ResearchForm({ handle, ref_ }: { handle: string; ref_: string }) {
             rows={4}
             value={happened}
             onChange={(e) => setHappened(e.target.value)}
-            placeholder="Why it did not stick, or did not finish, or did not get used."
+            placeholder="What you tried, and why it didn't work"
           />
         ),
       });
@@ -291,7 +308,13 @@ function ResearchForm({ handle, ref_ }: { handle: string; ref_: string }) {
   return (
     <form className="form research-form" onSubmit={onSubmit}>
       {questions.map((q, i) => (
-        <Q key={q.key} n={String(i + 1).padStart(2, "0")} label={q.label} note={q.note}>
+        <Q
+          key={q.key}
+          n={String(i + 1).padStart(2, "0")}
+          label={q.label}
+          note={q.note}
+          ctx={q.ctx}
+        >
           {q.body}
         </Q>
       ))}
@@ -385,11 +408,13 @@ function Q({
   n,
   label,
   note,
+  ctx,
   children,
 }: {
   n: string;
   label: string;
   note?: string;
+  ctx?: string;
   children: React.ReactNode;
 }) {
   return (
@@ -400,6 +425,7 @@ function Q({
         </span>
         {label}
       </h2>
+      {ctx && <p className="r-q-ctx">{ctx}</p>}
       {note && <p className="mono r-q-note">{note}</p>}
       <div className="r-q-body">{children}</div>
     </section>

@@ -53,6 +53,17 @@
   letter-spacing: 0.1em;
   color: var(--accent-text, var(--accent));
 }
+/* the problem this question is about, in the reader's own sentence rather
+   than quoted back inside the question */
+.r-q-ctx {
+  margin: 9px 0 0 34px;
+  padding-left: 10px;
+  border-left: 2px solid var(--accent-text, var(--accent));
+  font-size: 15px;
+  line-height: 1.45;
+  color: var(--bone);
+}
+
 .r-q-note {
   margin: 8px 0 0 34px;
   font-size: 11px;
@@ -73,6 +84,7 @@
     gap: 6px;
     font-size: 18px;
   }
+  .r-q-ctx,
   .r-q-note,
   .r-q-body {
     margin-left: 0;

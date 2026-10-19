@@ -67,13 +67,13 @@ const INTENT_IDS = ['looking', 'open'];
 
 const CHOICES: Record<string, string[]> = {
   duration: ['A few months', '6 to 12 months', '1 to 2 years', 'Longer than I want to admit'],
-  cost: ['Under $10k', '$10k to $50k', '$50k to $250k', 'More than $250k', 'Hard to put a number on it'],
   spend: ['No, not yet', 'Tried to fix it in-house', 'Bought software', 'Hired someone', 'Something else'],
 };
 
 /** the free-text boxes, and how much of each is kept. Generous for a person,
  *  closed for a script posting a megabyte into a spreadsheet. */
 const TEXT_LIMIT: Record<string, number> = {
+  cost: 80,
   problemsOther: 300,
   spendOther: 300,
   happened: 4000,
@@ -134,7 +134,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     problems: allowList(body.problems, PROBLEM_IDS),
     problemsOther: text(body.problemsOther, TEXT_LIMIT.problemsOther),
     duration: CHOICES.duration.includes(body.duration) ? body.duration : '',
-    cost: CHOICES.cost.includes(body.cost) ? body.cost : '',
+    cost: text(body.cost, TEXT_LIMIT.cost),
     spend: allowList(body.spend, CHOICES.spend),
     spendOther: text(body.spendOther, TEXT_LIMIT.spendOther),
     happened: text(body.happened, TEXT_LIMIT.happened),
@@ -182,7 +182,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           problems: a.problems.join(', '),
           problemsOther: sheetSafe(a.problemsOther),
           duration: a.duration,
-          cost: a.cost,
+          cost: sheetSafe(a.cost),
           spend: a.spend.join(', '),
           spendOther: sheetSafe(a.spendOther),
           happened: sheetSafe(a.happened),
@@ -265,7 +265,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     ['All problems, ranked', a.problems.join(' → ')],
     ['Something else', a.problemsOther],
     ['How long', a.duration],
-    ['What it has cost', a.cost],
+    ['Guessed cost', a.cost],
     ['Spent money', a.spend.join(', ')],
     ['Spent money, other', a.spendOther],
     ['What happened', a.happened],
