@@ -1,11 +1,12 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Build the two pages that live in hero-lab/ and put them where the site
+# Build the pages that live in hero-lab/ and put them where the site
 # serves them from.
 #
 #   / and /new-home  ← hero-lab/dist-new-home  → public/new-home
 #   /card            ← hero-lab/dist-card      → public/card
+#   /apply           ← hero-lab/dist-apply     → public/apply
 #
 # This was a copy-paste step for a while, and a failed build still left the
 # previous bundle sitting in public/ looking like a successful one. `set -e`
@@ -20,8 +21,9 @@ cd "$root/hero-lab"
 
 npm run build        # the page
 npm run build:card   # the card
+npm run build:apply  # the closer application
 
-for target in new-home card; do
+for target in new-home card apply; do
   src="$root/hero-lab/dist-$target"
   dest="$root/public/$target"
   [ -d "$src" ] || { echo "missing $src"; exit 1; }
@@ -31,4 +33,4 @@ for target in new-home card; do
 done
 
 echo
-echo "Built. Commit public/new-home and public/card, then push to deploy."
+echo "Built. Commit public/new-home, public/card and public/apply, then push to deploy."

@@ -1,0 +1,149 @@
+/* ═══════════════════════════════════════════════════════════════════
+   jtylerray.com/apply
+
+   card.css does the structure — the sheet, the corners, the block heads, the
+   fields and the buttons are all the card's. This file adds what the card has
+   no equivalent of (the lede, the three terms, the experience box) and lifts
+   the contrast.
+
+   The contrast is the point of most of what follows. The card is read at a
+   glance and its greys are set for that; this page is typed into, and a label
+   at --grey-dim (#5e5a54) on --ink is about 3:1 — under AA, and visibly so on
+   a phone outdoors. Every label, hint and hairline here is raised, scoped to
+   .apply so the card keeps its own calibration.
+
+   Phone-first, like the card. The one media query pairs fields across two
+   columns once there is room for two 16px inputs side by side.
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* a form is read line by line, not at a glance, so it gets more measure than
+   the card's 560px — but not so much that a label sits a thumb away from the
+   input under it */
+.apply {
+  max-width: 620px;
+}
+
+/* the card's head goes left-aligned at 1000px, where the name heads three
+   columns. This page is one column at every width, so the masthead stays
+   centred and the lede stays centred under it. */
+.apply .card-head {
+  text-align: center;
+}
+
+/* ── contrast ─────────────────────────────────────────────────────── */
+
+/* the labels: ~9:1 on --ink, up from ~3:1. These are 10px and tracked wide,
+   which is exactly the size that cannot afford to be dim. */
+.apply .field-l,
+.apply .blk-sub,
+.apply .card-eyebrow,
+.apply .field-note {
+  color: #b5afa4;
+}
+/* the eyebrow is the accent's one job above the form */
+.apply .card-eyebrow {
+  color: var(--accent-text, var(--accent));
+}
+.apply .apply-lede {
+  color: #b5afa4;
+}
+.apply .card-site,
+.apply .card-year {
+  color: #8f8a80;
+}
+
+/* the inputs: a visible edge and a visible well, so an empty field reads as
+   somewhere to type rather than as a gap between two labels */
+.apply .field-i {
+  background: rgba(138, 133, 124, 0.09);
+  border-color: rgba(181, 175, 165, 0.34);
+  color: var(--bone);
+}
+.apply .field-i::placeholder {
+  color: rgba(181, 175, 165, 0.62);
+}
+.apply .field-i:focus {
+  border-color: var(--accent-text, var(--accent));
+  background: rgba(138, 133, 124, 0.13);
+  /* the ring does the work the 0.5px border cannot at this contrast */
+  box-shadow: 0 0 0 2px rgba(63, 125, 92, 0.35);
+}
+
+/* the hairlines under the head and the block title */
+.apply .card-head,
+.apply .blk-head {
+  border-bottom-color: rgba(181, 175, 165, 0.24);
+}
+.apply .card-foot {
+  border-top-color: rgba(181, 175, 165, 0.24);
+}
+
+/* the secondary button was a grey outline on black */
+.apply .btn-ghost {
+  border-color: rgba(181, 175, 165, 0.34);
+}
+
+/* ── the lede and the terms ───────────────────────────────────────── */
+
+.apply-lede {
+  margin: 16px auto 0;
+  max-width: 46ch;
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+/* the terms, before the form asks for anything. A closer decides whether to
+   fill this in on these three lines. */
+.apply-notes {
+  margin-top: 28px;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.apply-note {
+  display: grid;
+  grid-template-columns: 18px minmax(0, 1fr);
+  gap: 10px;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--bone);
+}
+.apply-note-tick {
+  color: var(--accent-text, var(--accent));
+  font-size: 12px;
+  line-height: 1.75;
+}
+
+/* the hint under a field: same voice as the card's reach-note, but readable */
+.field-note {
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  line-height: 1.7;
+}
+
+/* ── the experience box ───────────────────────────────────────────── */
+
+/* one box, not a structured list. It is the substance of the application, so
+   it is given the height that says so — a 3-row box asks for a sentence. */
+.exp-t {
+  min-height: 200px;
+}
+
+/* ── pairs ────────────────────────────────────────────────────────── */
+
+/* stacked on a phone: two 16px inputs side by side at 360px leaves neither
+   one wide enough to show what was typed in it */
+.field-pair {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 18px;
+  min-width: 0;
+}
+
+@media (min-width: 560px) {
+  .field-pair {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+}

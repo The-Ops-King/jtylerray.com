@@ -9,8 +9,10 @@
     "lint": "oxlint",
     "preview": "vite preview",
     "build:card": "tsc -b && VITE_CARD=1 vite build",
+    "build:apply": "tsc -b && VITE_APPLY=1 vite build",
     "build:lab": "tsc -b && VITE_LAB=1 vite build",
-    "dev:card": "VITE_CARD=1 vite"
+    "dev:card": "VITE_CARD=1 vite",
+    "dev:apply": "VITE_APPLY=1 vite"
   },
   "dependencies": {
     "framer-motion": "^13.1.0",

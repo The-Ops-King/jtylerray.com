@@ -1,9 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  Two pages, because there are two pages. /apply, /real-estate and /resume
-  were retired and now redirect to the root; the old landing page at /legacy
-  was removed with them. /brand-1 is the design lab, reachable by direct URL
-  only and disallowed in robots.txt.
+  Three pages, because there are three pages. /apply came back on 2026-09-01
+  as the closer application; /real-estate and /resume are retired and redirect
+  to the root, and the old landing page at /legacy was removed with them.
+  /brand-1 is the design lab, reachable by direct URL only and disallowed in
+  robots.txt.
 -->
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
@@ -17,5 +18,11 @@
     <lastmod>2026-08-13</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://jtylerray.com/apply</loc>
+    <lastmod>2026-09-01</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
   </url>
 </urlset>
