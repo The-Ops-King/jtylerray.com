@@ -81,13 +81,30 @@
 
 /* ── chips ────────────────────────────────────────────────────────── */
 
-.r-chips {
-  display: flex;
-  flex-wrap: wrap;
+/* an even grid, not a ragged wrap. Four options of uneven length flex-wrapped
+   leave one stranded alone on the last row, which reads as a different kind of
+   answer than the three above it. auto-fit gives every option the same width
+   and drops a column at a time as the page narrows. */
+.r-opts {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   gap: 9px;
 }
+/* Two fixed columns rather than auto-fit, so the count is known: an odd number
+   of options always leaves the last one alone in a half-width cell, and a
+   stranded option reads as a different kind of answer than the ones above it.
+   Knowing there are two columns is what lets the odd one out take the row. */
+.r-opts > :last-child:nth-child(odd) {
+  grid-column: 1 / -1;
+}
 
-.r-chip,
+@media (max-width: 540px) {
+  .r-opts {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.r-opt,
 .r-prob,
 .r-door {
   min-height: 44px;
@@ -106,7 +123,7 @@
     background 0.14s,
     color 0.14s;
 }
-.r-chip:hover,
+.r-opt:hover,
 .r-prob:hover,
 .r-door:hover {
   border-color: rgba(181, 175, 165, 0.6);
@@ -115,7 +132,7 @@
 
 /* selected: the accent fills, because a tapped chip has to read as tapped
    from a arm's length away and a border change does not */
-.r-chip[aria-pressed="true"],
+.r-opt[aria-pressed="true"],
 .r-prob[aria-pressed="true"],
 .r-door[aria-pressed="true"] {
   border-color: var(--accent-text, var(--accent));
@@ -123,7 +140,7 @@
   color: #fff;
 }
 
-.r-chip:focus-visible,
+.r-opt:focus-visible,
 .r-prob:focus-visible,
 .r-door:focus-visible,
 .r-nudge:focus-visible {
@@ -153,19 +170,10 @@
 
 /* ── the ranking ──────────────────────────────────────────────────── */
 
-.r-rank {
-  margin-top: 22px;
-  padding: 16px 0 0;
-  border-top: 1px dashed rgba(181, 175, 165, 0.26);
-}
-.r-rank-head {
-  font-size: 10px;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: #b5afa4;
-}
 .r-rank-list {
-  margin-top: 12px;
+  margin-top: 22px;
+  padding-top: 16px;
+  border-top: 1px dashed rgba(181, 175, 165, 0.26);
   list-style: none;
   display: flex;
   flex-direction: column;
@@ -187,6 +195,24 @@
   border-color: rgba(63, 125, 92, 0.5);
   background: rgba(63, 125, 92, 0.1);
 }
+/* grab on a mouse; the arrows carry the touchscreen, where HTML5 drag events
+   never fire at all */
+.r-rank-row {
+  cursor: grab;
+}
+.r-rank-row:active {
+  cursor: grabbing;
+}
+.r-rank-row[aria-grabbed="true"] {
+  opacity: 0.55;
+  border-style: dashed;
+}
+/* the handles stay clickable while the row is draggable */
+.r-rank-acts,
+.r-nudge {
+  cursor: pointer;
+}
+
 .r-rank-n {
   font-size: 11px;
   font-weight: 700;
