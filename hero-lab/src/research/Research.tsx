@@ -158,6 +158,18 @@ function ResearchForm({ handle, ref_ }: { handle: string; ref_: string }) {
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
+
+    /* Asking me to follow up and leaving nowhere to follow up to. The browser
+       cannot catch this one: required on both fields would demand both, and
+       required on neither accepts an answer with no reply address on it. A
+       handle is not a way to reach someone either, so arriving through a link
+       does not excuse it. */
+    if (wantsContact && !email.trim() && !phone.trim()) {
+      setState("error");
+      setError("Add an email or a phone number so I have somewhere to reply.");
+      return;
+    }
+
     setState("sending");
     setError("");
 
