@@ -1,0 +1,260 @@
+/* ═══════════════════════════════════════════════════════════════════
+   jtylerray.com/research
+
+   The page carries .apply as well as .research, so the sheet, the fields, the
+   buttons and apply.css's contrast lift all come for free. This file adds only
+   what a question does not have an equivalent of on the card: the numbered
+   question head, the tappable chip, the twelve-problem grid and the ranked
+   list underneath it.
+
+   One rule governs the whole file: a tap target is 44px. Half of these will be
+   filled in on a phone, with one thumb, and a 32px chip in a twelve-item grid
+   is how a two-minute form becomes a four-minute form.
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* the questions need more measure than the application's 620px: a chip grid
+   two columns wide at 620 leaves labels wrapping to three lines */
+.research {
+  max-width: 680px;
+}
+
+/* ── a question ───────────────────────────────────────────────────── */
+
+.research-form {
+  gap: 0;
+}
+
+.r-q {
+  padding: 30px 0;
+  border-top: 1px solid rgba(181, 175, 165, 0.17);
+}
+.r-q:first-child {
+  border-top: 0;
+  padding-top: 8px;
+}
+
+/* the numeral sits in its own column so a two-line question wraps against the
+   question, not under the number */
+.r-q-head {
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr);
+  gap: 4px;
+  align-items: baseline;
+  font-family: var(--display, inherit);
+  font-size: 19px;
+  font-weight: 600;
+  line-height: 1.35;
+  letter-spacing: -0.01em;
+  color: var(--bone);
+}
+.r-q-n {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: var(--accent-text, var(--accent));
+}
+.r-q-note {
+  margin: 8px 0 0 34px;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  line-height: 1.6;
+  color: #b5afa4;
+}
+.r-q-body {
+  margin: 18px 0 0 34px;
+}
+
+/* on a phone the 34px indent is a third of the chip's width, so the column
+   collapses and everything runs full-bleed */
+@media (max-width: 540px) {
+  .r-q-head {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 6px;
+    font-size: 18px;
+  }
+  .r-q-note,
+  .r-q-body {
+    margin-left: 0;
+  }
+}
+
+/* ── chips ────────────────────────────────────────────────────────── */
+
+.r-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 9px;
+}
+
+.r-chip,
+.r-prob,
+.r-door {
+  min-height: 44px;
+  padding: 10px 15px;
+  border: 1px solid rgba(181, 175, 165, 0.32);
+  border-radius: 2px;
+  background: rgba(138, 133, 124, 0.07);
+  color: var(--bone);
+  font: inherit;
+  font-size: 15px;
+  line-height: 1.35;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    border-color 0.14s,
+    background 0.14s,
+    color 0.14s;
+}
+.r-chip:hover,
+.r-prob:hover,
+.r-door:hover {
+  border-color: rgba(181, 175, 165, 0.6);
+  background: rgba(138, 133, 124, 0.13);
+}
+
+/* selected: the accent fills, because a tapped chip has to read as tapped
+   from a arm's length away and a border change does not */
+.r-chip[aria-pressed="true"],
+.r-prob[aria-pressed="true"],
+.r-door[aria-pressed="true"] {
+  border-color: var(--accent-text, var(--accent));
+  background: rgba(63, 125, 92, 0.22);
+  color: #fff;
+}
+
+.r-chip:focus-visible,
+.r-prob:focus-visible,
+.r-door:focus-visible,
+.r-nudge:focus-visible {
+  outline: 2px solid var(--accent-text, var(--accent));
+  outline-offset: 2px;
+}
+
+/* ── the twelve ───────────────────────────────────────────────────── */
+
+.r-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 9px;
+}
+
+/* one column under 540px. Two columns of a five-word label at 360px is four
+   lines a cell, which is unreadable and unscannable at once. */
+@media (max-width: 540px) {
+  .r-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.r-other {
+  margin-top: 14px;
+}
+
+/* ── the ranking ──────────────────────────────────────────────────── */
+
+.r-rank {
+  margin-top: 22px;
+  padding: 16px 0 0;
+  border-top: 1px dashed rgba(181, 175, 165, 0.26);
+}
+.r-rank-head {
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #b5afa4;
+}
+.r-rank-list {
+  margin-top: 12px;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.r-rank-row {
+  display: grid;
+  grid-template-columns: 26px minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: center;
+  padding: 7px 10px;
+  border: 1px solid rgba(181, 175, 165, 0.2);
+  border-radius: 2px;
+  background: rgba(138, 133, 124, 0.05);
+}
+/* the one that questions 04 to 08 are about, marked so the reader can see
+   which answer they are giving */
+.r-rank-row:first-child {
+  border-color: rgba(63, 125, 92, 0.5);
+  background: rgba(63, 125, 92, 0.1);
+}
+.r-rank-n {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--accent-text, var(--accent));
+}
+.r-rank-l {
+  font-size: 14px;
+  line-height: 1.35;
+  color: var(--bone);
+}
+.r-rank-acts {
+  display: flex;
+  gap: 2px;
+}
+.r-nudge {
+  /* narrow but full height: in a vertical list it is the vertical travel of a
+     thumb that misses, and three 44px squares would leave the label a third of
+     a 390px row */
+  width: 36px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 2px;
+  background: transparent;
+  color: #b5afa4;
+  font: inherit;
+  font-size: 15px;
+  cursor: pointer;
+  transition:
+    color 0.14s,
+    background 0.14s;
+}
+.r-nudge:hover:not(:disabled) {
+  color: #fff;
+  background: rgba(138, 133, 124, 0.16);
+}
+.r-nudge:disabled {
+  opacity: 0.28;
+  cursor: default;
+}
+.r-drop:hover {
+  color: #e4867c;
+}
+
+/* ── the last question, and who is asking ─────────────────────────── */
+
+/* the four doors stack. They are sentences, not labels, and a wrapped
+   sentence in a flex row reads as two options. */
+.r-doors {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+
+.r-who {
+  margin-top: 4px;
+  padding: 26px 0 0;
+  border-top: 1px solid rgba(181, 175, 165, 0.17);
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+.r-note {
+  margin-top: -6px;
+  color: #b5afa4;
+}
+
+.research .form-send {
+  margin-top: 30px;
+}

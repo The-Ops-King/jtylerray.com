@@ -1,11 +1,13 @@
 # jtylerray.com — all crawlers and AI agents welcome
 #
-# Two pages are public: the page itself and /card. /brand-1 is the design
-# lab: reachable by direct URL, not worth indexing.
+# Three pages are public: the page itself, /card and /apply. /brand-1 is the
+# design lab and /research is a form that gets sent to people rather than
+# found: both are reachable by direct URL and neither is worth indexing.
 
 User-agent: *
 Allow: /
 Disallow: /brand-1
+Disallow: /research
 Disallow: /api/
 
 Sitemap: https://jtylerray.com/sitemap.xml
