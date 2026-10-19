@@ -1,19 +1,126 @@
 /* ═══════════════════════════════════════════════════════════════════
    jtylerray.com/research
 
-   The page carries .apply as well as .research, so the sheet, the fields, the
-   buttons and apply.css's contrast lift all come for free. This file adds only
-   what a question does not have an equivalent of on the card: the numbered
-   question head, the tappable chip, the twelve-problem grid and the ranked
-   list underneath it.
+   The page carries .apply as well as .research, so the sheet, the fields and
+   the buttons come from card.css. This file adds the numbered question, the
+   tappable option, the twelve-problem grid and the ranked list, and it turns
+   the whole thing light.
 
-   One rule governs the whole file: a tap target is 44px. Half of these will be
-   filled in on a phone, with one thumb, and a 32px chip in a twelve-item grid
-   is how a two-minute form becomes a four-minute form.
+   Two rules run through it:
+
+   Every colour is a token on .research-root. The dark page was a page of
+   hardcoded hexes, and inverting it meant finding all of them. Declaring them
+   once means the light theme is a second block of values, not a second
+   stylesheet.
+
+   A tap target is 44px. Half of these arrive on a phone, with one thumb, and
+   a 32px option in a twelve-item grid is how a two-minute form becomes four.
    ═══════════════════════════════════════════════════════════════════ */
 
-/* the questions need more measure than the application's 620px: a chip grid
-   two columns wide at 620 leaves labels wrapping to three lines */
+.research-root {
+  --r-line: rgba(181, 175, 165, 0.17);
+  --r-edge: rgba(181, 175, 165, 0.32);
+  --r-edge-hi: rgba(181, 175, 165, 0.6);
+  --r-fill: rgba(138, 133, 124, 0.07);
+  --r-fill-hi: rgba(138, 133, 124, 0.13);
+  --r-label: #b5afa4;
+  --r-text: var(--bone);
+  --r-on-edge: var(--accent-text, var(--accent));
+  --r-on-fill: rgba(63, 125, 92, 0.22);
+  --r-on-text: #fff;
+  --r-lift: 0 18px 40px rgba(0, 0, 0, 0.5);
+}
+
+/* ── light ────────────────────────────────────────────────────────── */
+
+/* Black on white rather than white on black, which is what a form full of
+   small type wants: the page is read closely and typed into, not glanced at.
+   The green is untouched — it is the one thing carried over from the site. */
+.research-root[data-theme="light"] {
+  --ink: #faf9f6;
+  --ink-deep: #f1efea;
+  --raised: #fff;
+  --bone: #15140f;
+  --bone-rgb: 21, 20, 15;
+  --grey-mid: #56524b;
+  --grey-dim: #5f5b54;
+
+  /* #3f7d5c reads 5.05:1 on this ground and the darker one 6.98:1, which is
+     what the 10px mono labels need. The fills keep the original green. */
+  --accent-text: #2f6347;
+  --accent-ink: #fff;
+
+  /* the backdrop grid is grey on grey either way, but a line that reads at
+     0.028 alpha on near-black disappears entirely on near-white */
+  --grid-a: 0.07;
+
+  --r-line: rgba(90, 85, 76, 0.2);
+  --r-edge: rgba(90, 85, 76, 0.3);
+  --r-edge-hi: rgba(90, 85, 76, 0.62);
+  --r-fill: #fff;
+  --r-fill-hi: rgba(90, 85, 76, 0.07);
+  --r-label: #6b665e;
+  --r-on-edge: var(--accent);
+  --r-on-fill: rgba(63, 125, 92, 0.14);
+  --r-on-text: #10281c;
+  --r-lift: 0 16px 34px rgba(26, 22, 15, 0.22);
+}
+
+/* The backdrop's bottom fade is a hardcoded near-black, which on a light
+   ground is a grey fog over the last third of the page. The radial already
+   uses --ink and needs nothing. */
+.research-root[data-theme="light"] .backdrop-vignette {
+  background:
+    radial-gradient(120% 100% at 50% 45%, transparent 38%, var(--ink) 100%),
+    linear-gradient(to bottom, transparent 60%, rgba(241, 239, 234, 0.9) 100%);
+}
+
+/* what card.css and apply.css hardcoded for a dark ground */
+.research-root[data-theme="light"] .corners span {
+  border-color: rgba(90, 85, 76, 0.26);
+}
+.research-root[data-theme="light"] .field-l,
+.research-root[data-theme="light"] .blk-sub,
+.research-root[data-theme="light"] .field-note {
+  color: var(--r-label);
+}
+.research-root[data-theme="light"] .card-eyebrow {
+  color: var(--accent-text);
+}
+.research-root[data-theme="light"] .card-site,
+.research-root[data-theme="light"] .card-year {
+  color: var(--r-label);
+}
+.research-root[data-theme="light"] .field-i {
+  background: #fff;
+  border-color: var(--r-edge);
+  color: var(--bone);
+}
+.research-root[data-theme="light"] .field-i::placeholder {
+  color: rgba(90, 85, 76, 0.55);
+}
+.research-root[data-theme="light"] .field-i:focus {
+  border-color: var(--accent);
+  background: #fff;
+  box-shadow: 0 0 0 2px rgba(63, 125, 92, 0.28);
+}
+.research-root[data-theme="light"] .card-head,
+.research-root[data-theme="light"] .blk-head {
+  border-bottom-color: var(--r-line);
+}
+.research-root[data-theme="light"] .card-foot {
+  border-top-color: var(--r-line);
+}
+.research-root[data-theme="light"] .form-done {
+  border-color: var(--r-edge);
+  background: #fff;
+}
+.research-root[data-theme="light"] .form-err {
+  color: #a33a22;
+}
+
+/* ── the sheet ────────────────────────────────────────────────────── */
+
 .research {
   max-width: 680px;
 }
@@ -26,15 +133,15 @@
 
 .r-q {
   padding: 30px 0;
-  border-top: 1px solid rgba(181, 175, 165, 0.17);
+  border-top: 1px solid var(--r-line);
 }
 .r-q:first-child {
   border-top: 0;
   padding-top: 8px;
 }
 
-/* the numeral sits in its own column so a two-line question wraps against the
-   question, not under the number */
+/* the numeral sits in its own column so a two-line question wraps against
+   the question, not under the number */
 .r-q-head {
   display: grid;
   grid-template-columns: 34px minmax(0, 1fr);
@@ -53,6 +160,7 @@
   letter-spacing: 0.1em;
   color: var(--accent-text, var(--accent));
 }
+
 /* the problem this question is about, in the reader's own sentence rather
    than quoted back inside the question */
 .r-q-ctx {
@@ -70,13 +178,13 @@
   letter-spacing: 0.1em;
   text-transform: uppercase;
   line-height: 1.6;
-  color: #b5afa4;
+  color: var(--r-label);
 }
 .r-q-body {
   margin: 18px 0 0 34px;
 }
 
-/* on a phone the 34px indent is a third of the chip's width, so the column
+/* on a phone the 34px indent is a third of an option's width, so the column
    collapses and everything runs full-bleed */
 @media (max-width: 540px) {
   .r-q-head {
@@ -91,22 +199,37 @@
   }
 }
 
-/* ── chips ────────────────────────────────────────────────────────── */
+/* ── options ──────────────────────────────────────────────────────── */
 
-/* an even grid, not a ragged wrap. Four options of uneven length flex-wrapped
-   leave one stranded alone on the last row, which reads as a different kind of
-   answer than the three above it. auto-fit gives every option the same width
-   and drops a column at a time as the page narrows. */
+/* An even grid, not a ragged wrap. Four options of uneven length flex-wrapped
+   leave one stranded alone on the last row, which reads as a different kind
+   of answer than the three above it. */
 .r-opts {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   gap: 9px;
 }
-/* Two fixed columns rather than auto-fit, so the count is known: an odd number
-   of options always leaves the last one alone in a half-width cell, and a
-   stranded option reads as a different kind of answer than the ones above it.
-   Knowing there are two columns is what lets the odd one out take the row. */
+/* an odd number always strands the last one, so it takes the row */
 .r-opts > :last-child:nth-child(odd) {
+  grid-column: 1 / -1;
+}
+
+/* the noes in one column, the yeses in the other: the side answers the
+   question before a word of the option is read */
+.r-split {
+  align-items: start;
+}
+.r-split-col {
+  display: grid;
+  gap: 9px;
+  align-content: start;
+}
+.r-split-tail {
+  grid-column: 1 / -1;
+  display: grid;
+  gap: 9px;
+}
+.r-split > :last-child:nth-child(odd) {
   grid-column: 1 / -1;
 }
 
@@ -121,10 +244,10 @@
 .r-door {
   min-height: 44px;
   padding: 10px 15px;
-  border: 1px solid rgba(181, 175, 165, 0.32);
+  border: 1px solid var(--r-edge);
   border-radius: 2px;
-  background: rgba(138, 133, 124, 0.07);
-  color: var(--bone);
+  background: var(--r-fill);
+  color: var(--r-text);
   font: inherit;
   font-size: 15px;
   line-height: 1.35;
@@ -138,23 +261,25 @@
 .r-opt:hover,
 .r-prob:hover,
 .r-door:hover {
-  border-color: rgba(181, 175, 165, 0.6);
-  background: rgba(138, 133, 124, 0.13);
+  border-color: var(--r-edge-hi);
+  background: var(--r-fill-hi);
 }
 
-/* selected: the accent fills, because a tapped chip has to read as tapped
-   from a arm's length away and a border change does not */
+/* selected: the accent fills, because a tapped option has to read as tapped
+   from arm's length and a border change does not */
 .r-opt[aria-pressed="true"],
 .r-prob[aria-pressed="true"],
 .r-door[aria-pressed="true"] {
-  border-color: var(--accent-text, var(--accent));
-  background: rgba(63, 125, 92, 0.22);
-  color: #fff;
+  border-color: var(--r-on-edge);
+  background: var(--r-on-fill);
+  color: var(--r-on-text);
+  font-weight: 500;
 }
 
 .r-opt:focus-visible,
 .r-prob:focus-visible,
 .r-door:focus-visible,
+.r-grip:focus-visible,
 .r-nudge:focus-visible {
   outline: 2px solid var(--accent-text, var(--accent));
   outline-offset: 2px;
@@ -168,7 +293,7 @@
   gap: 9px;
 }
 
-/* one column under 540px. Two columns of a five-word label at 360px is four
+/* one column under 540px. Two columns of a seven-word label at 360px is four
    lines a cell, which is unreadable and unscannable at once. */
 @media (max-width: 540px) {
   .r-grid {
@@ -180,7 +305,7 @@
   margin-top: 14px;
 }
 
-/* the box an option opens, sitting under the grid it belongs to */
+/* the box an option opens, under the grid it belongs to */
 .r-sub {
   margin-top: 9px;
 }
@@ -190,13 +315,13 @@
 .r-rank {
   margin-top: 22px;
   padding-top: 16px;
-  border-top: 1px dashed rgba(181, 175, 165, 0.26);
+  border-top: 1px dashed var(--r-edge);
 }
 .r-rank-head {
   font-size: 10px;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: #b5afa4;
+  color: var(--r-label);
 }
 .r-rank-list {
   margin-top: 10px;
@@ -211,19 +336,25 @@
   gap: 8px;
   align-items: center;
   padding: 7px 10px;
-  border: 1px solid rgba(181, 175, 165, 0.2);
+  border: 1px solid var(--r-edge);
   border-radius: 2px;
-  background: rgba(138, 133, 124, 0.05);
+  background: var(--r-fill);
 }
-/* the one that questions 04 to 08 are about, marked so the reader can see
-   which answer they are giving */
+/* the one every question after this is about */
 .r-rank-row:first-child {
-  border-color: rgba(63, 125, 92, 0.5);
-  background: rgba(63, 125, 92, 0.1);
+  border-color: var(--r-on-edge);
+  background: var(--r-on-fill);
 }
-/* the grip is the only thing that drags, and the only thing that gives up its
-   touch gestures. touch-action on the whole row would stop the page scrolling
-   past the list on a phone. */
+/* the row the pointer is carrying: the ghost is the thing being moved, so
+   the row it came from reads as the gap it will drop into */
+.r-rank-row[data-dragging] {
+  opacity: 0.4;
+  border-style: dashed;
+}
+
+/* the grip is the only thing that drags, and the only thing that gives up
+   its touch gestures. touch-action on the whole row would stop the page
+   scrolling past the list on a phone. */
 .r-grip {
   width: 30px;
   height: 44px;
@@ -232,7 +363,7 @@
   border: 0;
   border-radius: 2px;
   background: transparent;
-  color: #8f8a80;
+  color: var(--r-label);
   font: inherit;
   font-size: 15px;
   line-height: 1;
@@ -241,15 +372,7 @@
 }
 .r-grip:active {
   cursor: grabbing;
-  color: #fff;
-}
-.r-rank-row[data-dragging] {
-  border-color: var(--accent-text, var(--accent));
-  background: rgba(63, 125, 92, 0.16);
-}
-.r-grip:focus-visible {
-  outline: 2px solid var(--accent-text, var(--accent));
-  outline-offset: 2px;
+  color: var(--bone);
 }
 
 .r-rank-n {
@@ -262,14 +385,7 @@
   line-height: 1.35;
   color: var(--bone);
 }
-.r-rank-acts {
-  display: flex;
-  gap: 2px;
-}
 .r-nudge {
-  /* narrow but full height: in a vertical list it is the vertical travel of a
-     thumb that misses, and three 44px squares would leave the label a third of
-     a 390px row */
   width: 36px;
   height: 44px;
   display: grid;
@@ -277,7 +393,7 @@
   border: 0;
   border-radius: 2px;
   background: transparent;
-  color: #b5afa4;
+  color: var(--r-label);
   font: inherit;
   font-size: 15px;
   cursor: pointer;
@@ -286,21 +402,43 @@
     background 0.14s;
 }
 .r-nudge:hover:not(:disabled) {
-  color: #fff;
-  background: rgba(138, 133, 124, 0.16);
+  color: var(--bone);
+  background: var(--r-fill-hi);
 }
 .r-nudge:disabled {
   opacity: 0.28;
   cursor: default;
 }
 .r-drop:hover {
-  color: #e4867c;
+  color: #c0442a;
+}
+
+/* the row lifted off the list, following the pointer. Fixed to the viewport
+   so a scrolled list cannot drag it out of place, and out of hit-testing so
+   it never becomes the row the pointer is measured against. */
+.r-ghost {
+  position: fixed;
+  z-index: 60;
+  transform: translate(-22px, -50%) rotate(-1deg);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  max-width: min(420px, 82vw);
+  padding: 10px 14px;
+  border: 1px solid var(--r-on-edge);
+  border-radius: 3px;
+  background: var(--raised);
+  box-shadow: var(--r-lift);
+  color: var(--bone);
+  font-size: 14px;
+  line-height: 1.3;
+  pointer-events: none;
 }
 
 /* ── the last question, and who is asking ─────────────────────────── */
 
-/* the four doors stack. They are sentences, not labels, and a wrapped
-   sentence in a flex row reads as two options. */
+/* the answers stack. They are sentences, not labels, and a wrapped sentence
+   in a flex row reads as two options. */
 .r-doors {
   display: flex;
   flex-direction: column;
@@ -310,14 +448,14 @@
 .r-who {
   margin-top: 4px;
   padding: 26px 0 0;
-  border-top: 1px solid rgba(181, 175, 165, 0.17);
+  border-top: 1px solid var(--r-line);
   display: flex;
   flex-direction: column;
   gap: 18px;
 }
 .r-note {
   margin-top: -6px;
-  color: #b5afa4;
+  color: var(--r-label);
 }
 
 .research .form-send {

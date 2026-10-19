@@ -47,7 +47,7 @@ export default function Research() {
   const ref = useMemo(() => readParam("r", REF_OK, false), []);
 
   return (
-    <div className="card-page" data-mark="color" data-eyebrow="wide">
+    <div className="card-page research-root" data-theme="light" data-mark="color" data-eyebrow="wide">
       <GridBackdrop cell={48} crosshairs={4} ticks={false} interactive={false} />
       <div className="corners" aria-hidden="true">
         <span />
@@ -237,7 +237,7 @@ function ResearchForm({ handle, ref_ }: { handle: string; ref_: string }) {
         label: "Have you spent money trying to fix it?",
         body: (
           <>
-            <Options options={[...SPEND]} value={spend} onPick={setSpend} />
+            <Options options={[...SPEND]} value={spend} onPick={setSpend} split />
             {spentOther && (
               <input
                 className="field-i r-sub"
@@ -441,8 +441,11 @@ function Options(props: {
   value: string | string[];
   onPick: ((v: string) => void) | ((v: string[]) => void);
   multi?: boolean;
+  /** group the noes into one column and the yeses into the other, so the
+   *  answer is picked by side before a word of it is read */
+  split?: boolean;
 }) {
-  const { options, value, multi } = props;
+  const { options, value, multi, split } = props;
   const on = (o: string) => (multi ? (value as string[]).includes(o) : value === o);
 
   function pick(o: string) {
@@ -455,21 +458,26 @@ function Options(props: {
     }
   }
 
-  return (
-    <div className="r-opts">
-      {options.map((o) => (
-        <button
-          type="button"
-          key={o}
-          className="r-opt"
-          aria-pressed={on(o)}
-          onClick={() => pick(o)}
-        >
-          {o}
-        </button>
-      ))}
-    </div>
+  const opt = (o: string) => (
+    <button type="button" key={o} className="r-opt" aria-pressed={on(o)} onClick={() => pick(o)}>
+      {o}
+    </button>
   );
+
+  if (split) {
+    const no = options.filter((o) => o.startsWith("No"));
+    const yes = options.filter((o) => o.startsWith("Yes"));
+    const rest = options.filter((o) => !o.startsWith("No") && !o.startsWith("Yes"));
+    return (
+      <div className="r-opts r-split">
+        <div className="r-split-col">{no.map(opt)}</div>
+        <div className="r-split-col">{yes.map(opt)}</div>
+        {rest.length > 0 && <div className="r-split-tail">{rest.map(opt)}</div>}
+      </div>
+    );
+  }
+
+  return <div className="r-opts">{options.map(opt)}</div>;
 }
 
 /**
@@ -499,6 +507,9 @@ function Picker({
   setOther: (v: string) => void;
 }) {
   const [dragId, setDragId] = useState<string | null>(null);
+  /* where the pointer is, so the dragged label can follow it. Kept apart from
+     dragId because the ghost needs a position before the first move. */
+  const [at, setAt] = useState({ x: 0, y: 0 });
   const rows = useRef(new Map<string, HTMLLIElement>());
 
   function toggle(id: string) {
@@ -508,11 +519,13 @@ function Picker({
   function onDown(e: React.PointerEvent, id: string) {
     e.preventDefault();
     e.currentTarget.setPointerCapture(e.pointerId);
+    setAt({ x: e.clientX, y: e.clientY });
     setDragId(id);
   }
 
   function onMove(e: React.PointerEvent) {
     if (!dragId) return;
+    setAt({ x: e.clientX, y: e.clientY });
     const from = picked.indexOf(dragId);
     if (from < 0) return;
 
@@ -563,6 +576,16 @@ function Picker({
           placeholder="In your words"
         />
       </label>
+
+      {/* the row lifted off the list and following the pointer. Fixed to the
+          viewport and out of the hit-testing, so it never becomes the thing
+          the pointer is measured against. */}
+      {dragId && (
+        <div className="r-ghost" style={{ left: at.x, top: at.y }} aria-hidden="true">
+          <span aria-hidden="true">⠿</span>
+          {PROBLEMS.find((p) => p.id === dragId)?.label}
+        </div>
+      )}
 
       {picked.length > 0 && (
         <div className="r-rank">
