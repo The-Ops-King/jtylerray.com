@@ -70,7 +70,11 @@ export const SPEND = [
   "Tried to fix it in-house",
   "Bought software",
   "Hired someone",
+  "Something else",
 ] as const;
+
+/** picking this one opens a box */
+export const SPEND_OTHER = "Something else";
 
 /** The last question, as asked: are you looking, or open to a call. Two
  *  options, and no answer is an answer — the form submits without one. */

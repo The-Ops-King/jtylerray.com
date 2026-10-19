@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import GridBackdrop from "../components/GridBackdrop";
 import { ACCENTS, applyAccent } from "../accents";
 import {
@@ -10,6 +10,7 @@ import {
   PROBLEMS,
   RESEARCH_ENDPOINT,
   SPEND,
+  SPEND_OTHER,
 } from "./data";
 import "../card/card.css";
 import "../apply/apply.css";
@@ -89,12 +90,12 @@ function ResearchForm({ handle, ref_ }: { handle: string; ref_: string }) {
   const [state, setState] = useState<State>("idle");
   const [error, setError] = useState("");
 
-  const [sell, setSell] = useState("");
   const [picked, setPicked] = useState<string[]>([]);
   const [other, setOther] = useState("");
   const [duration, setDuration] = useState("");
   const [cost, setCost] = useState("");
   const [spend, setSpend] = useState<string[]>([]);
+  const [spendOther, setSpendOther] = useState("");
   const [happened, setHappened] = useState("");
   const [sources, setSources] = useState("");
   const [intent, setIntent] = useState("");
@@ -108,6 +109,7 @@ function ResearchForm({ handle, ref_ }: { handle: string; ref_: string }) {
     ? (PROBLEMS.find((p) => p.id === picked[0])?.label ?? "")
     : "";
   const tried = spend.some((s) => s !== "No, not yet");
+  const spentOther = spend.includes(SPEND_OTHER);
   const wantsContact = Boolean(intent);
   const needsHandle = !handle && !ref_;
 
@@ -118,7 +120,20 @@ function ResearchForm({ handle, ref_ }: { handle: string; ref_: string }) {
        cannot catch this: required on both fields would demand both, required
        on neither accepts the empty case. A handle is a way to know who
        answered, not a way to reach them, so a link does not excuse it. */
-    if (wantsContact && !email.trim() && !phone.trim()) {
+    /* The form used to send with a single tap on it. These two are the whole
+       point of the page: without a problem there is nothing to report, and the
+       last question is the one being asked. */
+    if (!picked.length && !other.trim()) {
+      setState("error");
+      setError("Pick at least one thing that is real for you.");
+      return;
+    }
+    if (!intent) {
+      setState("error");
+      setError("Answer the last question before sending.");
+      return;
+    }
+    if (!email.trim() && !phone.trim()) {
       setState("error");
       setError("Add an email or a phone number so I have somewhere to reply.");
       return;
@@ -132,12 +147,12 @@ function ResearchForm({ handle, ref_ }: { handle: string; ref_: string }) {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          sell,
           problems: picked,
           problemsOther: other,
           duration,
           cost,
           spend,
+          spendOther: spentOther ? spendOther : "",
           happened,
           sources,
           intent,
@@ -178,21 +193,8 @@ function ResearchForm({ handle, ref_ }: { handle: string; ref_: string }) {
    */
   const questions: { key: string; label: string; note?: string; body: React.ReactNode }[] = [
     {
-      key: "sell",
-      label: "What does your business sell?",
-      body: (
-        <input
-          className="field-i"
-          value={sell}
-          onChange={(e) => setSell(e.target.value)}
-          placeholder="One line is plenty"
-        />
-      ),
-    },
-    {
       key: "problems",
       label: "Which of these are real for you?",
-      note: "First tap is the most important.",
       body: (
         <Picker picked={picked} setPicked={setPicked} other={other} setOther={setOther} />
       ),
@@ -214,7 +216,19 @@ function ResearchForm({ handle, ref_ }: { handle: string; ref_: string }) {
       {
         key: "spend",
         label: "Have you spent money trying to fix it?",
-        body: <Options options={[...SPEND]} value={spend} onPick={setSpend} multi />,
+        body: (
+          <>
+            <Options options={[...SPEND]} value={spend} onPick={setSpend} multi />
+            {spentOther && (
+              <input
+                className="field-i r-sub"
+                value={spendOther}
+                onChange={(e) => setSpendOther(e.target.value)}
+                placeholder="What did you try?"
+              />
+            )}
+          </>
+        ),
       }
     );
 
@@ -434,10 +448,17 @@ function Options(props: {
 /**
  * Tap to select, and tap order is the ranking.
  *
- * The ranked list reorders three ways, because no one way covers both inputs:
- * drag with a mouse, arrows with a thumb. HTML5 drag events do not fire on a
- * touchscreen at all, so the arrows are not a fallback for the drag — they are
- * the only thing half the readers will have.
+ * Reordering is a pointer drag off the grip, not HTML5 drag-and-drop. The
+ * drag events are a desktop-mouse API: they never fire on a touchscreen at
+ * all, and several desktop browsers refuse to start a drag unless dragstart
+ * primes dataTransfer, so it silently did nothing. Pointer events are the same
+ * code path for a mouse and a thumb.
+ *
+ * Only the grip takes touch-action: none. Putting it on the whole row would
+ * mean the page could not be scrolled past the list on a phone.
+ *
+ * The drag tracks the id, not the index. The row under the pointer changes
+ * position as the list reorders beneath it, so an index would chase itself.
  */
 function Picker({
   picked,
@@ -450,18 +471,44 @@ function Picker({
   other: string;
   setOther: (v: string) => void;
 }) {
-  const [from, setFrom] = useState<number | null>(null);
+  const [dragId, setDragId] = useState<string | null>(null);
+  const rows = useRef(new Map<string, HTMLLIElement>());
 
   function toggle(id: string) {
     setPicked(picked.includes(id) ? picked.filter((x) => x !== id) : [...picked, id]);
   }
 
-  function move(a: number, b: number) {
-    if (a === b || b < 0 || b >= picked.length) return;
+  function onDown(e: React.PointerEvent, id: string) {
+    e.preventDefault();
+    e.currentTarget.setPointerCapture(e.pointerId);
+    setDragId(id);
+  }
+
+  function onMove(e: React.PointerEvent) {
+    if (!dragId) return;
+    const from = picked.indexOf(dragId);
+    if (from < 0) return;
+
+    // the row whose box the pointer is inside, by its own midpoint
+    let to = from;
+    picked.forEach((id, i) => {
+      const el = rows.current.get(id);
+      if (!el) return;
+      const box = el.getBoundingClientRect();
+      if (e.clientY >= box.top && e.clientY <= box.bottom) to = i;
+    });
+    if (to === from) return;
+
     const next = [...picked];
-    const [row] = next.splice(a, 1);
-    next.splice(b, 0, row);
+    next.splice(to, 0, next.splice(from, 1)[0]);
     setPicked(next);
+  }
+
+  function onUp(e: React.PointerEvent) {
+    if (e.currentTarget.hasPointerCapture(e.pointerId)) {
+      e.currentTarget.releasePointerCapture(e.pointerId);
+    }
+    setDragId(null);
   }
 
   return (
@@ -491,48 +538,32 @@ function Picker({
       </label>
 
       {picked.length > 0 && (
-        <ol className="r-rank-list">
-          {picked.map((id, i) => (
-            <li
-              className="r-rank-row"
-              key={id}
-              draggable
-              aria-grabbed={from === i}
-              onDragStart={() => setFrom(i)}
-              onDragOver={(e) => e.preventDefault()}
-              onDragEnter={() => {
-                if (from !== null && from !== i) {
-                  move(from, i);
-                  setFrom(i);
-                }
-              }}
-              onDragEnd={() => setFrom(null)}
-              onDrop={(e) => {
-                e.preventDefault();
-                setFrom(null);
-              }}
-            >
-              <span className="mono r-rank-n">{String(i + 1).padStart(2, "0")}</span>
-              <span className="r-rank-l">{PROBLEMS.find((p) => p.id === id)?.label}</span>
-              <span className="r-rank-acts">
+        <div className="r-rank">
+          <p className="mono r-rank-head">Worst first</p>
+          <ol className="r-rank-list">
+            {picked.map((id, i) => (
+              <li
+                className="r-rank-row"
+                key={id}
+                data-dragging={dragId === id || undefined}
+                ref={(el) => {
+                  if (el) rows.current.set(id, el);
+                  else rows.current.delete(id);
+                }}
+              >
                 <button
                   type="button"
-                  className="r-nudge"
-                  onClick={() => move(i, i - 1)}
-                  disabled={i === 0}
-                  aria-label="Move up"
+                  className="r-grip"
+                  aria-label="Drag to reorder"
+                  onPointerDown={(e) => onDown(e, id)}
+                  onPointerMove={onMove}
+                  onPointerUp={onUp}
+                  onPointerCancel={onUp}
                 >
-                  ↑
+                  <span aria-hidden="true">⠿</span>
                 </button>
-                <button
-                  type="button"
-                  className="r-nudge"
-                  onClick={() => move(i, i + 1)}
-                  disabled={i === picked.length - 1}
-                  aria-label="Move down"
-                >
-                  ↓
-                </button>
+                <span className="mono r-rank-n">{String(i + 1).padStart(2, "0")}</span>
+                <span className="r-rank-l">{PROBLEMS.find((p) => p.id === id)?.label}</span>
                 <button
                   type="button"
                   className="r-nudge r-drop"
@@ -541,10 +572,10 @@ function Picker({
                 >
                   ×
                 </button>
-              </span>
-            </li>
-          ))}
-        </ol>
+              </li>
+            ))}
+          </ol>
+        </div>
       )}
     </>
   );

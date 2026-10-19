@@ -68,14 +68,14 @@ const INTENT_IDS = ['looking', 'open'];
 const CHOICES: Record<string, string[]> = {
   duration: ['A few months', '6 to 12 months', '1 to 2 years', 'Longer than I want to admit'],
   cost: ['Under $10k', '$10k to $50k', '$50k to $250k', 'More than $250k', 'Hard to put a number on it'],
-  spend: ['No, not yet', 'Tried to fix it in-house', 'Bought software', 'Hired someone'],
+  spend: ['No, not yet', 'Tried to fix it in-house', 'Bought software', 'Hired someone', 'Something else'],
 };
 
 /** the free-text boxes, and how much of each is kept. Generous for a person,
  *  closed for a script posting a megabyte into a spreadsheet. */
 const TEXT_LIMIT: Record<string, number> = {
-  sell: 300,
   problemsOther: 300,
+  spendOther: 300,
   happened: 4000,
   sources: 500,
   name: 100,
@@ -131,12 +131,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   const handleRaw = (body.instagram ?? '').toString().trim().replace(/^@+/, '');
   const a = {
-    sell: text(body.sell, TEXT_LIMIT.sell),
     problems: allowList(body.problems, PROBLEM_IDS),
     problemsOther: text(body.problemsOther, TEXT_LIMIT.problemsOther),
     duration: CHOICES.duration.includes(body.duration) ? body.duration : '',
     cost: CHOICES.cost.includes(body.cost) ? body.cost : '',
     spend: allowList(body.spend, CHOICES.spend),
+    spendOther: text(body.spendOther, TEXT_LIMIT.spendOther),
     happened: text(body.happened, TEXT_LIMIT.happened),
     sources: text(body.sources, TEXT_LIMIT.sources),
     intent: INTENT_IDS.includes(body.intent) ? body.intent : '',
@@ -154,7 +154,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   // a row with no answers on it is not research
-  if (!a.problems.length && !a.problemsOther && !a.sell) {
+  if (!a.problems.length && !a.problemsOther) {
     return res.status(400).json({ ok: false, error: 'Nothing was answered' });
   }
 
@@ -178,13 +178,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           name: sheetSafe(a.name),
           email: sheetSafe(a.email),
           phone: sheetSafe(a.phone),
-          sells: sheetSafe(a.sell),
           topProblem: top,
           problems: a.problems.join(', '),
           problemsOther: sheetSafe(a.problemsOther),
           duration: a.duration,
           cost: a.cost,
           spend: a.spend.join(', '),
+          spendOther: sheetSafe(a.spendOther),
           happened: sheetSafe(a.happened),
           sources: sheetSafe(a.sources),
           intent: a.intent,
@@ -219,13 +219,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         tags,
         source: a.source ? `research (${a.source})` : 'research form',
         customFields: [
-          ['research_sells', a.sell],
           ['research_top_problem', top],
           ['research_problems', a.problems.join(', ')],
           ['research_problems_other', a.problemsOther],
           ['research_duration', a.duration],
           ['research_cost', a.cost],
           ['research_spend', a.spend.join(', ')],
+          ['research_spend_other', a.spendOther],
           ['research_happened', a.happened],
           ['research_sources', a.sources],
           ['research_intent', a.intent],
@@ -261,13 +261,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const ROWS: [string, string][] = [
     ['Who', who],
     ['Instagram', a.instagram ? `@${a.instagram}` : ''],
-    ['Sells', a.sell],
     ['Worst problem', top],
     ['All problems, ranked', a.problems.join(' → ')],
     ['Something else', a.problemsOther],
     ['How long', a.duration],
     ['What it has cost', a.cost],
     ['Spent money', a.spend.join(', ')],
+    ['Spent money, other', a.spendOther],
     ['What happened', a.happened],
     ['Goes to', a.sources],
     ['Where they are', a.intent],
