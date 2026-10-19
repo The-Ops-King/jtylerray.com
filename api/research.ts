@@ -63,11 +63,19 @@ const PROBLEM_IDS = [
   'workarounds',
 ];
 
-const INTENT_IDS = ['looking', 'open'];
+const INTENT_IDS = ['looking', 'open', 'no'];
 
 const CHOICES: Record<string, string[]> = {
   duration: ['A few months', '6 to 12 months', '1 to 2 years', 'Longer than I want to admit'],
-  spend: ['No, not yet', 'Tried to fix it in-house', 'Bought software', 'Hired someone', 'Something else'],
+  spend: [
+    "No, it's not that important to me",
+    "No, I don't know where to find help",
+    "No, I don't know how to fix it",
+    "Yes, I've tried a few things myself",
+    'Yes, I bought software',
+    'Yes, I hired someone',
+    'Something else',
+  ],
 };
 
 /** the free-text boxes, and how much of each is kept. Generous for a person,
@@ -135,7 +143,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     problemsOther: text(body.problemsOther, TEXT_LIMIT.problemsOther),
     duration: CHOICES.duration.includes(body.duration) ? body.duration : '',
     cost: text(body.cost, TEXT_LIMIT.cost),
-    spend: allowList(body.spend, CHOICES.spend),
+    spend: CHOICES.spend.includes(body.spend) ? body.spend : '',
     spendOther: text(body.spendOther, TEXT_LIMIT.spendOther),
     happened: text(body.happened, TEXT_LIMIT.happened),
     sources: text(body.sources, TEXT_LIMIT.sources),
@@ -183,7 +191,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           problemsOther: sheetSafe(a.problemsOther),
           duration: a.duration,
           cost: sheetSafe(a.cost),
-          spend: a.spend.join(', '),
+          spend: a.spend,
           spendOther: sheetSafe(a.spendOther),
           happened: sheetSafe(a.happened),
           sources: sheetSafe(a.sources),
@@ -224,7 +232,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           ['research_problems_other', a.problemsOther],
           ['research_duration', a.duration],
           ['research_cost', a.cost],
-          ['research_spend', a.spend.join(', ')],
+          ['research_spend', a.spend],
           ['research_spend_other', a.spendOther],
           ['research_happened', a.happened],
           ['research_sources', a.sources],
@@ -266,7 +274,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     ['Something else', a.problemsOther],
     ['How long', a.duration],
     ['Guessed cost', a.cost],
-    ['Spent money', a.spend.join(', ')],
+    ['Spent money', a.spend],
     ['Spent money, other', a.spendOther],
     ['What happened', a.happened],
     ['Goes to', a.sources],

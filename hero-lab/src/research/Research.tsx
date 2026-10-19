@@ -11,6 +11,8 @@ import {
   RESEARCH_ENDPOINT,
   SPEND,
   SPEND_OTHER,
+  SPEND_YES,
+  WANTS_CONTACT,
 } from "./data";
 import "../card/card.css";
 import "../apply/apply.css";
@@ -94,7 +96,7 @@ function ResearchForm({ handle, ref_ }: { handle: string; ref_: string }) {
   const [other, setOther] = useState("");
   const [duration, setDuration] = useState("");
   const [cost, setCost] = useState("");
-  const [spend, setSpend] = useState<string[]>([]);
+  const [spend, setSpend] = useState("");
   const [spendOther, setSpendOther] = useState("");
   const [happened, setHappened] = useState("");
   const [sources, setSources] = useState("");
@@ -108,9 +110,9 @@ function ResearchForm({ handle, ref_ }: { handle: string; ref_: string }) {
   const top = picked[0]
     ? (PROBLEMS.find((p) => p.id === picked[0])?.label ?? "")
     : "";
-  const tried = spend.some((s) => s !== "No, not yet");
-  const spentOther = spend.includes(SPEND_OTHER);
-  const wantsContact = Boolean(intent);
+  const tried = SPEND_YES(spend);
+  const spentOther = spend === SPEND_OTHER;
+  const wantsContact = WANTS_CONTACT.includes(intent);
   const needsHandle = !handle && !ref_;
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -133,7 +135,7 @@ function ResearchForm({ handle, ref_ }: { handle: string; ref_: string }) {
       setError("Answer the last question before sending.");
       return;
     }
-    if (!email.trim() && !phone.trim()) {
+    if (wantsContact && !email.trim() && !phone.trim()) {
       setState("error");
       setError("Add an email or a phone number so I have somewhere to reply.");
       return;
@@ -235,7 +237,7 @@ function ResearchForm({ handle, ref_ }: { handle: string; ref_: string }) {
         label: "Have you spent money trying to fix it?",
         body: (
           <>
-            <Options options={[...SPEND]} value={spend} onPick={setSpend} multi />
+            <Options options={[...SPEND]} value={spend} onPick={setSpend} />
             {spentOther && (
               <input
                 className="field-i r-sub"
@@ -283,8 +285,7 @@ function ResearchForm({ handle, ref_ }: { handle: string; ref_: string }) {
     },
     {
       key: "intent",
-      label:
-        "Are you actively looking for help with this, or open to a call about how we might solve it?",
+      label: "Are you looking for help with this?",
       body: (
         <div className="r-doors">
           {INTENT.map((d) => (

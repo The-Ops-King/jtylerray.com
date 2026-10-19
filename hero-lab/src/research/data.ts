@@ -58,25 +58,39 @@ export const DURATION = [
  *  bands make them pick the nearest wall rather than say what they think. */
 export const COST_PLACEHOLDER = "A rough guess is fine";
 
+/** Every answer opens with yes or no, so the question can be answered without
+ *  reading to the end of the option. The three noes are the three different
+ *  reasons for not having spent anything, and which one it is matters more
+ *  than the fact of it: not important, nowhere to look, no idea how. */
 export const SPEND = [
-  "No, not yet",
-  "Tried to fix it in-house",
-  "Bought software",
-  "Hired someone",
+  "No, it's not that important to me",
+  "No, I don't know where to find help",
+  "No, I don't know how to fix it",
+  "Yes, I've tried a few things myself",
+  "Yes, I bought software",
+  "Yes, I hired someone",
   "Something else",
 ] as const;
 
 /** picking this one opens a box */
 export const SPEND_OTHER = "Something else";
 
-/** The last question, as asked: are you looking, or open to a call. Two
- *  options, and no answer is an answer — the form submits without one. */
+/** the answers that mean they did something about it */
+export const SPEND_YES = (v: string) => v.startsWith("Yes") || v === SPEND_OTHER;
+
 export type Intent = { id: string; label: string };
 
+/** The last question. Three answers, each opening with yes or no, and one of
+ *  them is a real no: without it both answers mean yes and anyone who wants
+ *  neither has to either lie or close the tab. */
 export const INTENT: Intent[] = [
-  { id: "looking", label: "I'm actively looking for help with this" },
-  { id: "open", label: "I'm open to a call about how we might solve it" },
+  { id: "looking", label: "Yes, I'm actively looking for help" },
+  { id: "open", label: "Yes, I'm open to a call about it" },
+  { id: "no", label: "No, I'm not looking for help" },
 ];
+
+/** the two that need somewhere to reply to */
+export const WANTS_CONTACT = ["looking", "open"];
 
 export const DONE = {
   title: "Thank you.",
