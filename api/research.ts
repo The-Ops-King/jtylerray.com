@@ -18,10 +18,16 @@ import { Resend } from 'resend';
  *   an identifier GHL can hold a contact by, so handle-only responses live in
  *   the Sheet alone and that is the correct outcome.
  *
- * Env: GSHEET_WEBHOOK_URL, RESEND_API_KEY, RESEND_FROM, NOTIFY_EMAIL,
+ * Env: GSHEET_RESEARCH_URL, RESEND_API_KEY, RESEND_FROM, NOTIFY_EMAIL,
  * GHL_PIT, GHL_LOCATION_ID. Each sink skips itself when its own variable is
  * missing, so the form works before GHL is wired and keeps working if a
  * credential is rotated out.
+ *
+ * The Sheet gets its own variable rather than sharing GSHEET_WEBHOOK_URL with
+ * the application form. That script writes applicant columns and ignores what
+ * else is in the payload, so pointing this at it would append a row of mostly
+ * blanks to the hiring sheet for every research response. See
+ * Resources/research-sheet.gs for this one's script and setup.
  *
  * A submission succeeds if any sink took it. Losing research to a service
  * being down is the only outcome worth writing code against.
@@ -174,10 +180,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   /* ── the sheet: every submission ─────────────────────────────────── */
   let sheetOk = false;
-  let sheetError = 'GSHEET_WEBHOOK_URL is not set';
-  if (process.env.GSHEET_WEBHOOK_URL) {
+  let sheetError = 'GSHEET_RESEARCH_URL is not set';
+  if (process.env.GSHEET_RESEARCH_URL) {
     try {
-      const sr = await fetch(process.env.GSHEET_WEBHOOK_URL, {
+      const sr = await fetch(process.env.GSHEET_RESEARCH_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
