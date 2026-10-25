@@ -1,12 +1,12 @@
 import { useEffect, useState } from "react";
 import GridBackdrop from "../components/GridBackdrop";
 import { ACCENTS, applyAccent } from "../accents";
-import { APPLY, APPLY_ENDPOINT, EXPERIENCE_PLACEHOLDER, ROLE } from "./data";
+import { APPLY, APPLY_ENDPOINT, ROLE } from "./data";
 import "../card/card.css";
 import "./apply.css";
 
 /**
- * jtylerray.com/apply — the closer application.
+ * jtylerray.com/apply — the lead nurture specialist application.
  *
  * Drawn in the card's language on purpose: same blueprint sheet, same corner
  * registration, same mono labels, same single green accent. A candidate who
@@ -47,23 +47,25 @@ export default function Apply() {
           <p className="apply-lede">{APPLY.lede}</p>
         </header>
 
-        <ul className="apply-notes">
-          {APPLY.notes.map((n) => (
-            <li className="apply-note" key={n}>
-              <span className="apply-note-tick mono" aria-hidden="true">
-                —
-              </span>
-              {n}
-            </li>
-          ))}
-        </ul>
+        {APPLY.notes.length > 0 && (
+          <ul className="apply-notes">
+            {APPLY.notes.map((n) => (
+              <li className="apply-note" key={n}>
+                <span className="apply-note-tick mono" aria-hidden="true">
+                  —
+                </span>
+                {n}
+              </li>
+            ))}
+          </ul>
+        )}
 
         <section className="blk" aria-labelledby="blk-apply">
           <header className="blk-head">
             <h2 className="blk-title" id="blk-apply">
               Your application
             </h2>
-            <span className="blk-sub mono">Five minutes · read by me</span>
+            <span className="blk-sub mono">Read by me</span>
           </header>
           <ApplyForm />
         </section>
@@ -83,9 +85,9 @@ type State = "idle" | "sending" | "sent" | "error";
 
 /**
  * The form. Seven fields, all of them plain — the experience is one box the
- * applicant writes into, not a structured list. A closer describing three
- * years of high-ticket work in their own order says more than the same person
- * filling in a company and a date range three times.
+ * applicant writes into, not a structured list. Someone describing their own
+ * work in their own order says more than the same person filling in a company
+ * and a date range three times.
  *
  * A failed send keeps every value.
  */
@@ -206,8 +208,8 @@ function ApplyForm() {
           placeholder="https://loom.com/share/…"
         />
         <span className="field-note mono">
-          You are applying to sell on camera. Two minutes of you doing it beats two
-          paragraphs — Loom, Drive, YouTube, any link.
+          Two minutes of you talking beats two paragraphs. Loom, Drive, YouTube,
+          any link.
         </span>
       </label>
 
@@ -222,13 +224,12 @@ function ApplyForm() {
       />
 
       <label className="field">
-        <span className="field-l mono">High-ticket experience</span>
+        <span className="field-l mono">What qualifies you?</span>
         <textarea
           className="field-i field-t exp-t"
           name="experience"
           rows={8}
           required
-          placeholder={EXPERIENCE_PLACEHOLDER}
         />
       </label>
 

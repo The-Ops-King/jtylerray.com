@@ -1,23 +1,22 @@
-/** jtylerray.com/apply — the lead nurture application. */
+/** jtylerray.com/apply — the lead nurture specialist application. */
 
 export const APPLY_ENDPOINT = "/api/apply";
 
-/** One role is open. It is sent with every application and written to the
- *  Sheet, so applications stay told apart if a second role opens later, but
- *  nothing on the page asks for it: there is only one answer. */
+/** Sent with every application and written to the Sheet. Not asked for:
+ *  there is one role, so there is nothing to answer. */
 export const ROLE = "Lead Nurture Specialist";
 
+/**
+ * The page says the role, asks them to apply, and asks what qualifies them.
+ * Nothing here describes the job, because nobody has told me what it is, and
+ * a wrong description on a hiring page costs more than a short one.
+ *
+ * `notes` is where the terms go if there are any to state. The closer version
+ * carried three and they were the closer's, not this role's.
+ */
 export const APPLY = {
-  eyebrow: "Now hiring · Lead Nurture Specialist",
-  title: "Apply to book calls.",
-  lede: "High-ticket offers, a database nobody is working, and an operation that actually feeds you leads. Tell me who you are and what you have booked.",
-  /** the one thing an applicant wants to know before they fill anything in */
-  notes: [
-    "Commission only, uncapped.",
-    "You work leads that already exist. No cold prospecting.",
-    "Every application is read. You hear back either way.",
-  ],
-} as const;
-
-export const EXPERIENCE_PLACEHOLDER =
-  "Where you have worked a database or a pipeline: the offers, how you reached people, what you booked out of it, and how long you were there. Write it however you would say it.";
+  eyebrow: "Now hiring",
+  title: "Lead Nurture Specialist.",
+  lede: "Tell me who you are and what qualifies you.",
+  notes: [] as readonly string[],
+};
