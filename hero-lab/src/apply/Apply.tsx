@@ -44,7 +44,6 @@ export default function Apply() {
         <header className="card-head">
           <p className="mono card-eyebrow">{APPLY.eyebrow}</p>
           <h1 className="card-name">{APPLY.title}</h1>
-          <p className="apply-lede">{APPLY.lede}</p>
         </header>
 
         {APPLY.notes.length > 0 && (
@@ -207,10 +206,6 @@ function ApplyForm() {
           inputMode="url"
           placeholder="https://loom.com/share/…"
         />
-        <span className="field-note mono">
-          Two minutes of you talking beats two paragraphs. Loom, Drive, YouTube,
-          any link.
-        </span>
       </label>
 
       {/* the honeypot: off-screen, unlabelled, never focusable */}
