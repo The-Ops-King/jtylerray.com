@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import GridBackdrop from "../components/GridBackdrop";
 import { ACCENTS, applyAccent } from "../accents";
-import { APPLY, APPLY_ENDPOINT, ROLES } from "./data";
+import { APPLY, APPLY_ENDPOINT, EXPERIENCE_PLACEHOLDER, ROLE } from "./data";
 import "../card/card.css";
 import "./apply.css";
 
@@ -24,7 +24,7 @@ import "./apply.css";
 export default function Apply() {
   useEffect(() => {
     // one index.html serves every target, so each one names itself
-    document.title = "Apply · J. Tyler Ray";
+    document.title = "Apply — Lead Nurture · J. Tyler Ray";
     document.documentElement.setAttribute("data-style", "blueprint");
     const forest = ACCENTS.find((a) => a.id === "green") ?? ACCENTS[0];
     applyAccent(forest.hex, forest.gradient, forest.text);
@@ -92,18 +92,11 @@ type State = "idle" | "sending" | "sent" | "error";
 function ApplyForm() {
   const [state, setState] = useState<State>("idle");
   const [error, setError] = useState("");
-  const [role, setRole] = useState("");
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const form = e.currentTarget;
     const data = Object.fromEntries(new FormData(form));
-
-    if (!role) {
-      setState("error");
-      setError("Pick which role you are applying for.");
-      return;
-    }
 
     setState("sending");
     setError("");
@@ -112,11 +105,7 @@ function ApplyForm() {
       const res = await fetch(APPLY_ENDPOINT, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          ...data,
-          role: ROLES.find((r) => r.id === role)?.label ?? "",
-          submittedAt: new Date().toISOString(),
-        }),
+        body: JSON.stringify({ ...data, role: ROLE, submittedAt: new Date().toISOString() }),
       });
       const body = await res.json().catch(() => ({}));
       if (!res.ok || body.ok === false) {
@@ -124,7 +113,6 @@ function ApplyForm() {
       }
       setState("sent");
       form.reset();
-      setRole("");
     } catch (err) {
       setState("error");
       setError(err instanceof Error ? err.message : String(err));
@@ -147,24 +135,6 @@ function ApplyForm() {
 
   return (
     <form className="form" onSubmit={onSubmit}>
-      <fieldset className="field role-set">
-        <legend className="field-l mono">Which role</legend>
-        <div className="role-opts">
-          {ROLES.map((r) => (
-            <button
-              type="button"
-              key={r.id}
-              className="role-opt"
-              aria-pressed={role === r.id}
-              onClick={() => setRole(r.id)}
-            >
-              <span className="role-opt-l">{r.label}</span>
-              <span className="role-opt-b">{r.blurb}</span>
-            </button>
-          ))}
-        </div>
-      </fieldset>
-
       <div className="field-pair">
         <label className="field">
           <span className="field-l mono">First name</span>
@@ -258,9 +228,7 @@ function ApplyForm() {
           name="experience"
           rows={8}
           required
-          placeholder={
-            ROLES.find((r) => r.id === role)?.placeholder ?? ROLES[0].placeholder
-          }
+          placeholder={EXPERIENCE_PLACEHOLDER}
         />
       </label>
 
