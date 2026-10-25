@@ -97,7 +97,7 @@ Drop a JSON array into `data/raw/manual/<name>.json`. Each object may have `page
 
 One record per Instagram handle (lowercase, no `@`). CSV columns, in order:
 
-`first_name, last_name, email, phone, ig_handle, ig_url, follower_count, offer_price, funnel_url, funnel_type, ads_running, ad_days_active, niche, team_signal, source, source_detail, date_sourced, notes` followed by `contact_email, contact_email_source` and the grading columns `fit_tier, fit_score, fit_notes, business_type, confidence, days_since_last_post, last_post_at, post_count, bio_link, fb_page_name`.
+`first_name, last_name, email, phone, ig_handle, ig_url, follower_count, offer_price, funnel_url, funnel_type, ads_running, ad_days_active, niche, team_signal, source, source_detail, date_sourced, notes` followed by `contact_email, contact_email_source` and the grading columns `fit_tier, fit_score, fit_notes, business_type, confidence, days_since_last_post, last_post_at, post_count, bio_link, fb_page_name`. The last column is `form_url`.
 
 `email` is the prospect's real public address when one was found, and otherwise `{ig_handle}@ig.placeholder`, whose domain is invalid by design (GHL will not create a contact without an email). About a fifth of the column is deliverable and the rest hard-bounces, so **never point an email send at the whole list**: `ig-has-email` is the only safe audience, and a send to `ig-prospect` would hard-bounce on every placeholder and take the sending domain with it.
 
@@ -144,6 +144,18 @@ Throughput follows from the cap, not from a separate setting: four touches per p
 roughly 3 new prospects and 3 DMs a day, with about 30 in flight. Raise `daily_touch_cap` to raise both.
 
 `--dry-run` plans and writes the digest without touching GoHighLevel; `--cap N` overrides the cap for one run.
+
+### form_url (prefilled intake form)
+
+`form_url` is a Google Form link with the prospect's handle already filled in, built from `form_url_template` in
+`config/ghl.json`. The token `{ig_handle}` is replaced with their handle, stripped of any leading `@` and URL-encoded so
+a dot or underscore survives. No template configured means the column is empty rather than broken.
+
+To point it at a different form, open the form, use **Get pre-filled link**, type anything into the handle question,
+copy the link, and swap whatever you typed for `{ig_handle}`.
+
+Note that nothing needs to store this in GoHighLevel: the value is derivable from the handle, so a message template can
+build it inline with the `{{contact.ig_handle}}` merge tag instead of carrying 2,340 copies of a URL.
 
 ## Classification
 

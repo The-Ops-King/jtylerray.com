@@ -26,7 +26,7 @@ ensureDirs();
 const ghlCfg = readConfig('ghl.json');
 
 const qualified = readNdjson(FILES.qualified);
-const records = resolveSharedEmails(qualified.map((r) => toRecord(r, ghlCfg.placeholder_email_domain)), ghlCfg.placeholder_email_domain);
+const records = resolveSharedEmails(qualified.map((r) => toRecord(r, ghlCfg.placeholder_email_domain, ghlCfg.form_url_template)), ghlCfg.placeholder_email_domain);
 fs.writeFileSync(FILES.exportCsv, toCsv(records), 'utf8');
 console.log(`[export] wrote ${records.length} rows -> ${FILES.exportCsv}`);
 

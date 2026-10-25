@@ -1,6 +1,6 @@
 /** The first 18 columns are the original contract. The rest are grading and slicing columns appended after it. */
 export const CONTRACT_COLUMNS = ['first_name', 'last_name', 'email', 'phone', 'ig_handle', 'ig_url', 'follower_count', 'offer_price', 'funnel_url', 'funnel_type', 'ads_running', 'ad_days_active', 'niche', 'team_signal', 'source', 'source_detail', 'date_sourced', 'notes'];
-export const EXTRA_COLUMNS = ['contact_email', 'contact_email_source', 'fit_tier', 'fit_score', 'fit_notes', 'business_type', 'confidence', 'days_since_last_post', 'last_post_at', 'post_count', 'bio_link', 'fb_page_name', 'community_url', 'community_members', 'community_price_monthly'];
+export const EXTRA_COLUMNS = ['contact_email', 'contact_email_source', 'fit_tier', 'fit_score', 'fit_notes', 'business_type', 'confidence', 'days_since_last_post', 'last_post_at', 'post_count', 'bio_link', 'fb_page_name', 'community_url', 'community_members', 'community_price_monthly', 'form_url'];
 export const CSV_COLUMNS = [...CONTRACT_COLUMNS, ...EXTRA_COLUMNS];
 
 /**
@@ -15,6 +15,16 @@ export const CSV_COLUMNS = [...CONTRACT_COLUMNS, ...EXTRA_COLUMNS];
  * still be told apart after the fact.
  */
 export const placeholderEmail = (handle, domain) => `${handle}@${domain}`;
+
+/**
+ * A prefilled form link for one prospect. `template` comes from config/ghl.json and marks the spot with `{ig_handle}`;
+ * the handle goes in with no leading @ and URL-encoded, so a handle containing a dot or underscore survives intact.
+ * Returns '' when no template is configured, which is what keeps the column harmlessly empty rather than broken.
+ */
+export function formUrl(template, handle) {
+  if (!template || !handle) return '';
+  return template.replace(/\{ig_handle\}/g, encodeURIComponent(String(handle).replace(/^@+/, '')));
+}
 
 export function buildNotes(r) {
   return [
@@ -32,7 +42,7 @@ export function buildNotes(r) {
   ].filter(Boolean).join(' | ');
 }
 
-export function toRecord(r, placeholderDomain) {
+export function toRecord(r, placeholderDomain, formUrlTemplate = '') {
   return {
     first_name: r.first_name ?? '',
     last_name: r.last_name ?? '',
@@ -67,6 +77,7 @@ export function toRecord(r, placeholderDomain) {
     community_url: r.community_url ?? '',
     community_members: r.community_members ?? '',
     community_price_monthly: r.community_price_monthly_usd ?? '',
+    form_url: formUrl(formUrlTemplate, r.ig_handle),
   };
 }
 

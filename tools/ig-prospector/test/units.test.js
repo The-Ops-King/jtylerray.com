@@ -8,7 +8,7 @@ import { cleanUrl, htmlToText, firstOutboundLink, isLinkInBio } from '../src/lib
 import { pick, fillTemplate } from '../src/lib/fields.js';
 import { toEpochMs, daysBetween } from '../src/lib/time.js';
 import { buildRules, evaluate, CriteriaSchema } from '../src/lib/criteria.js';
-import { toRecord, toCsv, CSV_COLUMNS, segmentTags, resolveSharedEmails } from '../src/lib/export-format.js';
+import { toRecord, toCsv, CSV_COLUMNS, segmentTags, resolveSharedEmails, formUrl } from '../src/lib/export-format.js';
 import { appendNdjson, readNdjson, readNdjsonMap, writeNdjson } from '../src/lib/ndjson.js';
 import { parseArgs } from '../src/lib/cli.js';
 import { ClassificationSchema } from '../src/lib/classification.js';
@@ -234,6 +234,18 @@ test('a tie on fit score is broken by handle, not by which call lands first', ()
     assert.equal(out.find((r) => r.ig_handle === 'alpha').email, 'info@biz.com');
     assert.equal(out.find((r) => r.ig_handle === 'zeta').email, 'zeta@ig.placeholder');
   }
+});
+
+test('form_url prefills the form with the handle, no @ and URL-safe', () => {
+  const t = 'https://docs.google.com/forms/d/e/FORMID/viewform?usp=pp_url&entry.2010480040={ig_handle}';
+  assert.equal(formUrl(t, 'coachalice'), 'https://docs.google.com/forms/d/e/FORMID/viewform?usp=pp_url&entry.2010480040=coachalice');
+  assert.equal(formUrl(t, '@coachalice'), 'https://docs.google.com/forms/d/e/FORMID/viewform?usp=pp_url&entry.2010480040=coachalice', 'a stray @ is stripped');
+  assert.equal(formUrl(t, 'coach.alice_fit'), 'https://docs.google.com/forms/d/e/FORMID/viewform?usp=pp_url&entry.2010480040=coach.alice_fit', 'dots and underscores are legal in a handle and must survive');
+  assert.equal(formUrl('', 'coachalice'), '', 'no template configured leaves the column empty, not broken');
+  assert.equal(formUrl(t, ''), '');
+  assert.equal(toRecord({ ig_handle: 'coachalice' }, 'ig.placeholder', t).form_url, formUrl(t, 'coachalice'));
+  assert.equal(toRecord({ ig_handle: 'coachalice' }, 'ig.placeholder').form_url, '', 'the template is optional');
+  assert.equal(CSV_COLUMNS.at(-1), 'form_url', 'appended, so the existing column contract is unchanged');
 });
 
 test('warm-up date helpers and stage gaps', () => {

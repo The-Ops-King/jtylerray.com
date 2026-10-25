@@ -170,7 +170,7 @@ test('export writes the CSV contract and is CSV-only by default', async () => {
   const csv = fs.readFileSync(D('export.csv'), 'utf8').trim().split('\n');
   assert.match(csv[0], /^first_name,last_name,email,phone,ig_handle,ig_url,follower_count,offer_price,funnel_url,funnel_type,ads_running,ad_days_active,niche,team_signal,source,source_detail,date_sourced,notes,/);
   assert.equal(csv.length, 3);
-  assert.match(csv[0], /,notes,contact_email,contact_email_source,fit_tier,fit_score,fit_notes,business_type,confidence,days_since_last_post,last_post_at,post_count,bio_link,fb_page_name,community_url,community_members,community_price_monthly$/);
+  assert.match(csv[0], /,notes,contact_email,contact_email_source,fit_tier,fit_score,fit_notes,business_type,confidence,days_since_last_post,last_post_at,post_count,bio_link,fb_page_name,community_url,community_members,community_price_monthly,form_url$/);
   const aliceRow = csv.find((l) => l.startsWith('Alice,'));
   // The email column is the real address when one was found: Alice's came from a mailto on her funnel page.
   assert.match(aliceRow, /^Alice,A,alice@coachalice\.com,,coach\.alice,https:\/\/www\.instagram\.com\/coach\.alice\/,12000,5000,http:\/\/127\.0\.0\.1:\d+\/funnel-a,application,2,400,business,has_setter,adlibrary,test term,\d{4}-\d{2}-\d{2},/);
@@ -244,7 +244,7 @@ test('skool seed source -> resolve -> enrich -> filter carries community fields 
   const qs = lines('qualified.ndjson').find((r) => r.ig_handle === 'sam.host');
   assert.ok(qs, 'seed row qualifies'); assert.match(qs.fit_notes, /community_50\+, community_paid/);
   const csv = fs.readFileSync(D('export.csv'), 'utf8');
-  assert.match(csv.split('\n')[0], /,community_url,community_members,community_price_monthly$/);
+  assert.match(csv.split('\n')[0], /,community_url,community_members,community_price_monthly,form_url$/);
   assert.match(csv, new RegExp(`sam\\.host,.*,skool,skool:airbnb,.*${base.replace(/[.]/g, '\\.')}/air-bnb-pros/about,120,49`));
   assert.equal(fs.existsSync(D('costs.ndjson')), false, 'skool source spends nothing');
 });

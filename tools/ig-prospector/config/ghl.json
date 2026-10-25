@@ -105,5 +105,7 @@
       "_comment": "A real public address was found, so these can be emailed as well as DMed. This tag is the ONLY safe audience for an email send: every other contact carries a placeholder address that hard-bounces.",
       "has_contact_email": true
     }
-  ]
+  ],
+  "form_url_template": "https://docs.google.com/forms/d/e/1FAIpQLScPWrTP0Njgb5E5pnyCixX34_wJqkdJpnWOIhtumaQzkg5DwQ/viewform?usp=pp_url&entry.2010480040={ig_handle}",
+  "_form_url_comment": "Prefilled Google Form link, one per prospect: {ig_handle} is replaced with their handle (no @, URL-encoded) and the result lands in the form_url column. Get a new template from the form's Get pre-filled link, then swap the handle you typed for {ig_handle}."
 }
