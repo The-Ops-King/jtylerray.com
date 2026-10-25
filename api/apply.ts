@@ -2,7 +2,7 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { Resend } from 'resend';
 
 /**
- * POST /api/apply — the closer application at jtylerray.com/apply.
+ * POST /api/apply — the application at jtylerray.com/apply, for either role.
  *
  * The Google Sheet is where applications live: one row per applicant, appended
  * through an Apps Script web app whose /exec URL is GSHEET_WEBHOOK_URL. See
@@ -20,6 +20,7 @@ const FROM = process.env.RESEND_FROM || 'Applications <onboarding@resend.dev>';
 const TO = process.env.NOTIFY_EMAIL || 'jt@jtylerray.com';
 
 type Payload = {
+  role?: string;
   firstName?: string;
   lastName?: string;
   email?: string;
@@ -33,6 +34,7 @@ type Payload = {
 };
 
 const FIELDS: [keyof Payload, string][] = [
+  ['role', 'Role'],
   ['firstName', 'First name'],
   ['lastName', 'Last name'],
   ['email', 'Email'],
@@ -55,6 +57,9 @@ const SHEET_TEXT: (keyof Payload)[] = [
   'facebook',
   'videoUrl',
   'experience',
+  /* appended, not inserted: the Sheet's columns are positional, and a new one
+     in the middle would shift every row already in it by one */
+  'role',
 ];
 
 /**
@@ -91,6 +96,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   const required: (keyof Payload)[] = [
+    'role',
     'firstName',
     'lastName',
     'email',
@@ -143,7 +149,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }).join('');
 
   const html =
-    `<h2>New closer application — ${escapeHtml(name)}</h2>` +
+    `<h2>New ${escapeHtml((data.role || 'Closer').toString().toLowerCase())} application — ${escapeHtml(name)}</h2>` +
     `<table style="border-collapse:collapse;font-family:sans-serif;font-size:14px">${rows}</table>` +
     (sheetOk ? '' : `<p style="color:#b00">Not written to the Sheet: ${escapeHtml(sheetError)}</p>`);
 
@@ -156,7 +162,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         from: FROM,
         to: TO,
         replyTo: email,
-        subject: `Closer application: ${name}`,
+        subject: `${(data.role || 'Closer').toString()} application: ${name}`,
         html,
       });
       mailOk = !error;

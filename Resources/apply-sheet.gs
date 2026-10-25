@@ -1,5 +1,5 @@
 /**
- * jtylerray.com/apply → a row per closer application in the bound Google Sheet.
+ * jtylerray.com/apply → a row per application in the bound Google Sheet.
  *
  * The email copy is Resend's job (api/apply.ts). This script only appends the
  * row, and it is the record: if this is not deployed, GSHEET_WEBHOOK_URL is
@@ -27,6 +27,9 @@
  * means updating GSHEET_WEBHOOK_URL too.
  */
 
+/* Role is last, not second. The columns are positional and this script has
+   already written rows without it, so inserting it where it reads best would
+   have shifted every one of them by a column. */
 const HEADERS = [
   'Submitted At',
   'First Name',
@@ -36,6 +39,7 @@ const HEADERS = [
   'Facebook',
   'Intro Video',
   'Experience',
+  'Role',
 ];
 
 function doPost(e) {
@@ -49,6 +53,12 @@ function doPost(e) {
       sheet.appendRow(HEADERS);
       sheet.getRange(1, 1, 1, HEADERS.length).setFontWeight('bold');
       sheet.setFrozenRows(1);
+    } else if (sheet.getLastColumn() < HEADERS.length) {
+      // a sheet that predates a column gets the heading written in, so the
+      // first application of the new kind does not land under a blank one
+      const from = sheet.getLastColumn() + 1;
+      const added = HEADERS.slice(from - 1);
+      sheet.getRange(1, from, 1, added.length).setValues([added]).setFontWeight('bold');
     }
 
     const values = [
@@ -61,6 +71,7 @@ function doPost(e) {
       data.videoUrl || '',
       // one box on the form, one cell here — the applicant's own words
       data.experience || '',
+      data.role || '',
     ];
 
     // Everything an applicant typed is written as text, and it has to be
