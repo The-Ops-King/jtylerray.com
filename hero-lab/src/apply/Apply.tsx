@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import GridBackdrop from "../components/GridBackdrop";
 import { ACCENTS, applyAccent } from "../accents";
-import { APPLY, APPLY_ENDPOINT, ROLE } from "./data";
+import { APPLY, APPLY_ENDPOINT, CLOSED, OPEN, ROLE } from "./data";
 import "../card/card.css";
 import "./apply.css";
 
@@ -40,10 +40,11 @@ export default function Apply() {
         <span />
       </div>
 
-      <main className="card apply">
+      <main className={OPEN ? "card apply" : "card apply apply-closed"}>
         <header className="card-head">
-          <p className="mono card-eyebrow">{APPLY.eyebrow}</p>
-          <h1 className="card-name">{APPLY.title}</h1>
+          {OPEN && <p className="mono card-eyebrow">{APPLY.eyebrow}</p>}
+          <h1 className="card-name">{OPEN ? APPLY.title : CLOSED.title}</h1>
+          {!OPEN && <p className="apply-lede">{CLOSED.line}</p>}
         </header>
 
         {APPLY.notes.length > 0 && (
@@ -59,15 +60,17 @@ export default function Apply() {
           </ul>
         )}
 
-        <section className="blk" aria-labelledby="blk-apply">
-          <header className="blk-head">
-            <h2 className="blk-title" id="blk-apply">
-              Your application
-            </h2>
-            <span className="blk-sub mono">Read by me</span>
-          </header>
-          <ApplyForm />
-        </section>
+        {OPEN && (
+          <section className="blk" aria-labelledby="blk-apply">
+            <header className="blk-head">
+              <h2 className="blk-title" id="blk-apply">
+                Your application
+              </h2>
+              <span className="blk-sub mono">Read by me</span>
+            </header>
+            <ApplyForm />
+          </section>
+        )}
 
         <footer className="card-foot">
           <a className="card-site mono" href="https://jtylerray.com">

@@ -7,13 +7,22 @@ export const APPLY_ENDPOINT = "/api/apply";
 export const ROLE = "Lead Nurture Specialist";
 
 /**
- * The role and the form, and nothing else. Nothing here describes the job,
- * because nobody has described it to me.
+ * Whether the role is taking applications.
  *
- * `notes` is where the terms go if there are ever any to state.
+ * Flip this to true to reopen. The form is still here, still wired to
+ * /api/apply and still writing to the Sheet, so reopening is this one line
+ * and a deploy rather than a rebuild.
  */
+export const OPEN = false;
+
 export const APPLY = {
   eyebrow: "Now hiring",
   title: "Lead Nurture Specialist.",
   notes: [] as readonly string[],
+};
+
+/** what the page says while it is closed */
+export const CLOSED = {
+  title: "Thank you.",
+  line: "We're no longer taking applications for this role.",
 };

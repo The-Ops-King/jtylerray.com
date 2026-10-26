@@ -147,3 +147,13 @@
     grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   }
 }
+
+/* ── closed ───────────────────────────────────────────────────────── */
+
+/* With no form between them, the head's rule and the footer's rule sit 64px
+   apart with nothing in between, which reads as something that failed to
+   load rather than a page with little to say. One rule, not two. */
+.apply-closed .card-head {
+  border-bottom: 0;
+  padding-bottom: 0;
+}
