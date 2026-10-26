@@ -9,9 +9,10 @@ export const ROLE = "Lead Nurture Specialist";
 /**
  * Whether the role is taking applications.
  *
- * Flip this to true to reopen. The form is still here, still wired to
- * /api/apply and still writing to the Sheet, so reopening is this one line
- * and a deploy rather than a rebuild.
+ * Flip this to reopen, AND flip OPEN in api/apply.ts to match. The page and
+ * the function are built separately, so neither can read the other's value,
+ * and taking the form off the page does not stop a cached copy of it posting
+ * to the endpoint.
  */
 export const OPEN = false;
 

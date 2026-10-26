@@ -16,6 +16,23 @@ import { Resend } from 'resend';
  * one of two services was down is the only outcome worth writing code against.
  */
 
+/**
+ * Whether the role is taking applications. MUST match OPEN in
+ * hero-lab/src/apply/data.ts, which is what decides whether the page draws
+ * the form. They are separate because the page is a static bundle and this is
+ * a function, so neither can read the other's value at runtime.
+ *
+ * Taking the form off the page does not close this endpoint. Anyone holding
+ * the page in an open tab, or any cached copy of it, can still post here, and
+ * an application arriving for a role that is closed is worse than one that is
+ * refused.
+ *
+ * Flip both or neither. Open here with the page closed is harmless, because
+ * nothing renders a form to post from. Closed here with the page open means
+ * every real applicant gets an error.
+ */
+const OPEN = false;
+
 const FROM = process.env.RESEND_FROM || 'Applications <onboarding@resend.dev>';
 const TO = process.env.NOTIFY_EMAIL || 'jt@jtylerray.com';
 
@@ -84,6 +101,15 @@ function sheetSafe(value: unknown): string {
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST') {
     return res.status(405).json({ ok: false, error: 'Method not allowed' });
+  }
+
+  if (!OPEN) {
+    // 410: the role was here and is not any more. The message is what a
+    // cached page shows the applicant, so it says the thing rather than
+    // failing at them.
+    return res
+      .status(410)
+      .json({ ok: false, error: 'This role is no longer taking applications.' });
   }
 
   const data: Payload =
