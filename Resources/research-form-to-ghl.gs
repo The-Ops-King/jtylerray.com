@@ -1,62 +1,61 @@
 /**
- * Google Form -> GoHighLevel, on every submission.
+ * Google Form -> GoHighLevel custom fields, on every submission.
  *
  * Lives on the form itself, not the sheet: a form-bound script gets the
- * question titles with the answers, so the mapping below reads like the form
+ * question titles with the answers, so the mapping reads like the form
  * instead of like column letters.
- *
- * WHAT IT WRITES
- *   A contact, upserted on email or phone, carrying:
- *     - tags for every operational issue they ticked, the one they said costs
- *       the most, whether they are looking for help, and whether they sell a
- *       high ticket product
- *     - a note holding the whole response, so nothing needs a custom field
- *
- *   Tags are what GHL smart lists filter on, so the answers you will want to
- *   segment by are tags and the prose is a note. Custom fields would mean
- *   building eleven of them by hand before a single response could land.
- *
- * WHO IT SKIPS
- *   Anyone who did not leave an email or a phone. GHL upserts on one of those
- *   two and has nothing to match an Instagram handle against, so a handle-only
- *   response would either fail or pile up duplicates. Those stay in the
- *   responses sheet, which is where the research lives anyway.
- *
- *   Set CREATE_WITHOUT_CONTACT to true to put them in GHL regardless, named by
- *   their handle. Be deliberate about it: those contacts cannot be deduped, so
- *   a second submission makes a second contact.
  *
  * SETUP (once)
  *  1. Open the form, ⋮ (top right) > Script editor, paste this whole file in.
- *  2. Project Settings (gear, left) > Script Properties > Add script property:
+ *  2. Project Settings (gear, left) > Script Properties > add:
  *       GHL_PIT          your Private Integration Token
  *       GHL_LOCATION_ID  the sub-account id
- *       GHL_USER_ID      optional, the user notes are attributed to
- *     Put the token here rather than in the code. Script properties are not
- *     part of the file, so the token does not travel with a copy of it.
- *  3. Run > install. Authorise when asked.
- *  4. Run > test. It sends one fake submission. Check it landed in GHL, then
- *     delete the test contact.
+ *     The token goes here rather than in the code, so it does not travel with
+ *     a copy of the script.
+ *  3. Run > listFields. It prints every custom field in your location, then a
+ *     FIELD_MAP block matched to this form's questions by name.
+ *  4. Read that block, fix anything it matched wrongly, and paste it over the
+ *     FIELD_MAP below.
+ *  5. Run > test. One fake submission. Check the contact in GHL, then delete
+ *     it.
+ *  6. Run > install. Every submission from then on writes to GHL.
  *
- * The PIT needs contacts.write and contacts.readonly. The note also needs
- * whatever your account calls notes write access; without it the contact still
- * lands and only the note is missed.
+ * The PIT needs contacts.write, contacts.readonly and
+ * locations/customFields.readonly (step 3 reads the field list).
  *
- * If a call to GHL fails the function throws, which makes Apps Script email
- * you about it. A submission that silently fails to reach the CRM is worse
- * than one that complains.
+ * A failed call throws, which makes Apps Script email you. A response that
+ * silently fails to reach the CRM is worse than one that complains.
  */
 
 var API = 'https://services.leadconnectorhq.com';
 var VERSION = '2021-07-28';
 
-/** put handle-only responses in GHL too. Read the note above before enabling. */
-var CREATE_WITHOUT_CONTACT = false;
+/**
+ * Which answer goes in which custom field.
+ *
+ * `ghl` is the field's key or its id, whichever listFields printed. Leave an
+ * entry blank to skip that answer, and delete an entry to stop sending it at
+ * all. Nothing is written to a field that is not named here, so an answer with
+ * no field beside it is dropped. The run log says which ones those were.
+ */
+var FIELD_MAP = [
+  { key: 'handle', ghl: '' },      // Instagram handle
+  { key: 'highTicket', ghl: '' },  // Do you sell a high ticket coaching product?
+  { key: 'issues', ghl: '' },      // Which of these operational issues...
+  { key: 'worst', ghl: '' },       // Of the issues you picked, which has cost you the most?
+  { key: 'howLong', ghl: '' },     // How long have these been an issue?
+  { key: 'cost', ghl: '' },        // How much would you say these issues have cost you?
+  { key: 'spent', ghl: '' },       // Have you spent money trying to fix them?
+  { key: 'howItWent', ghl: '' },   // How did that go?
+  { key: 'where', ghl: '' },       // Where do you typically go to figure this out?
+  { key: 'looking', ghl: '' },     // Are you actively looking for help?
+  { key: 'contact', ghl: '' },     // ...best place to contact you
+];
 
 /**
- * Which question feeds what. Matched on a distinctive fragment rather than the
- * whole title, so editing the wording of a question does not quietly stop the
- * field from being read.
+ * Which question feeds which key. Matched on a distinctive fragment rather
+ * than the whole title, so rewording a question does not quietly stop its
+ * answer being read.
  */
 var FIELDS = [
   { key: 'handle', match: 'instagram' },
@@ -73,46 +72,31 @@ var FIELDS = [
 ];
 
 /**
- * Short names for the issues, matched on a fragment of the option text.
- *
- * Slugifying the option itself gave tags like
- * issue-takes-too-long-to-contact-new-leads-speed-to-lea, cut mid word, and
- * baked a typo in one of the options into the CRM forever. These are what you
- * will be reading in a filter list, so they are named rather than generated,
- * and a fragment match means rewording an option does not orphan its tag.
- *
- * Anything unmatched, including Other, falls back to the slug of what they
- * wrote.
+ * GHL has shipped both shapes for a custom field on upsert. If the test run
+ * writes a contact whose fields are all empty, change this to 'value' and run
+ * it again. Nothing else needs touching.
  */
-var ISSUE_TAGS = [
-  { match: 'too long to contact', tag: 'speed-to-lead' },
-  { match: 'crm is messy', tag: 'messy-crm' },
-  { match: 'low quality notes', tag: 'rep-notes' },
-  { match: 'follow up systems', tag: 'follow-up' },
-  { match: 'how reps are performing', tag: 'rep-visibility' },
-  { match: 'feelings rather than data', tag: 'no-data' },
-  { match: 'trust numbers', tag: 'reporting' },
-  { match: 'company onboarding', tag: 'onboarding' },
-  { match: 'many software', tag: 'tool-sprawl' },
-  { match: 'poor processes', tag: 'processes' },
-];
+var VALUE_KEY = 'field_value';
 
-var INTENT_TAGS = [
-  { match: 'actively looking', tag: 'research-actively-looking' },
-  { match: 'might be open', tag: 'research-open-to-it' },
-  { match: 'not right now', tag: 'research-not-now' },
-];
+/** Put responses with no email or phone into GHL too. Off, because GHL upserts
+ *  on email or phone and has nothing to match an Instagram handle against: a
+ *  handle-only response cannot be deduped, so a second submission would make a
+ *  second contact. They stay in the responses sheet either way. */
+var CREATE_WITHOUT_CONTACT = false;
 
 /* ── setup ──────────────────────────────────────────────────────────── */
 
 function install() {
-  var form = FormApp.getActiveForm();
+  var mapped = 0;
+  for (var i = 0; i < FIELD_MAP.length; i++) if (FIELD_MAP[i].ghl) mapped++;
+  if (!mapped) throw new Error('FIELD_MAP is empty. Run listFields first and paste the block it prints.');
+
   var existing = ScriptApp.getProjectTriggers();
-  for (var i = 0; i < existing.length; i++) {
-    if (existing[i].getHandlerFunction() === 'onSubmit') ScriptApp.deleteTrigger(existing[i]);
+  for (var j = 0; j < existing.length; j++) {
+    if (existing[j].getHandlerFunction() === 'onSubmit') ScriptApp.deleteTrigger(existing[j]);
   }
-  ScriptApp.newTrigger('onSubmit').forForm(form).onFormSubmit().create();
-  Logger.log('Installed. Every submission from now on goes to GHL.');
+  ScriptApp.newTrigger('onSubmit').forForm(FormApp.getActiveForm()).onFormSubmit().create();
+  Logger.log('Installed, writing ' + mapped + ' fields. Every submission from now on goes to GHL.');
 }
 
 function uninstall() {
@@ -123,24 +107,63 @@ function uninstall() {
   Logger.log('Uninstalled. Submissions still land in the sheet, just not in GHL.');
 }
 
+/**
+ * Prints every custom field in the location, then a FIELD_MAP guessed by
+ * matching each question against those field names.
+ *
+ * It is a guess and it says so. Read it before pasting it: a wrong match here
+ * writes an answer into a field that means something else, which is worse than
+ * writing nothing.
+ */
+function listFields() {
+  var creds = credentials();
+  var fields = fetchFields(creds);
+
+  var out = ['Custom fields in this location:', ''];
+  for (var i = 0; i < fields.length; i++) {
+    var f = fields[i];
+    out.push('  ' + pad(f.dataType || '?', 18) + pad(f.fieldKey || '', 42) + f.name);
+  }
+
+  out.push('', 'Suggested FIELD_MAP. Check every line, then paste over the one in the file:', '');
+  out.push('var FIELD_MAP = [');
+
+  /* A field is claimed once. Two questions here are both about cost, and left
+     to itself the matcher gave them the same field, which would have had one
+     answer overwrite the other on every submission. A blank is cheap to fill
+     in; a wrong match that looks right is not. */
+  var taken = {};
+  var unmatched = 0;
+  for (var m = 0; m < FIELD_MAP.length; m++) {
+    var question = titleFor(FIELD_MAP[m].key);
+    var best = bestMatch(question, fields, taken);
+    var ref = best ? (best.fieldKey || best.id) : '';
+    if (best) taken[best.id] = true;
+    else unmatched++;
+    var note = best ? '  // ' + question + '  ->  ' + best.name : '  // FILL IN: ' + question;
+    out.push("  { key: '" + FIELD_MAP[m].key + "', ghl: '" + ref + "' }," + note);
+  }
+  out.push('];');
+  if (unmatched) {
+    out.push('', unmatched + ' question(s) found no field with a similar enough name. Fill those in from the list above, or leave them blank to skip that answer.');
+  }
+  Logger.log(out.join('\n'));
+}
+
 /* ── the trigger ────────────────────────────────────────────────────── */
 
 function onSubmit(e) {
-  var answers = read(e.response);
-  var result = send(answers);
-  Logger.log(result);
+  Logger.log(send(read(e.response)));
 }
 
-/** Pulls the answers off a FormResponse and onto named keys. */
 function read(response) {
   var out = {};
   var items = response.getItemResponses();
   for (var i = 0; i < items.length; i++) {
     var title = items[i].getItem().getTitle().toLowerCase();
-    var value = items[i].getResponse();
     for (var f = 0; f < FIELDS.length; f++) {
       if (title.indexOf(FIELDS[f].match) !== -1) {
-        out[FIELDS[f].key] = value;
+        out[FIELDS[f].key] = items[i].getResponse();
         break;
       }
     }
@@ -151,137 +174,132 @@ function read(response) {
 /* ── GHL ────────────────────────────────────────────────────────────── */
 
 function send(a) {
+  var creds = credentials();
+  var reach = parseContact(a.contact);
+  if (!reach.email && !reach.phone && !CREATE_WITHOUT_CONTACT) {
+    return 'No email or phone given, so there is nothing to upsert on. Left in the sheet.';
+  }
+
+  var defs = index(fetchFields(creds));
+  var custom = [];
+  var skipped = [];
+  var used = {};
+
+  for (var i = 0; i < FIELD_MAP.length; i++) {
+    var row = FIELD_MAP[i];
+    var value = a[row.key];
+    if (value === undefined || value === null || value === '') continue;
+    if (!row.ghl) {
+      skipped.push(row.key + ' (no field named in FIELD_MAP)');
+      continue;
+    }
+    var def = defs[row.ghl] || defs[String(row.ghl).toLowerCase()];
+    if (!def) {
+      skipped.push(row.key + ' (no field in GHL called ' + row.ghl + ')');
+      continue;
+    }
+    /* Two rows pointing at one field means the second answer overwrites the
+       first and nobody ever sees it happen. Refuse rather than pick. */
+    if (used[def.id]) {
+      skipped.push(row.key + ' (' + row.ghl + ' is already taken by ' + used[def.id] + ')');
+      continue;
+    }
+    used[def.id] = row.key;
+
+    var entry = { id: def.id };
+    entry[VALUE_KEY] = format(value, def.dataType);
+    custom.push(entry);
+  }
+
+  var payload = {
+    locationId: creds.location,
+    source: 'Ops research form',
+    customFields: custom,
+  };
+  if (reach.email) payload.email = reach.email;
+  if (reach.phone) payload.phone = reach.phone;
+
+  /* GHL lists a contact by name, and a row called "No Name" is not findable
+     three weeks later. The handle is the only name this form collects. */
+  var handle = String(a.handle || '').replace(/^@+/, '').trim();
+  if (handle) payload.firstName = '@' + handle;
+
+  var res = call('POST', API + '/contacts/upsert', payload, creds.pit);
+  if (res.getResponseCode() >= 300) {
+    throw new Error('GHL upsert failed (' + res.getResponseCode() + '): ' + res.getContentText());
+  }
+  var body = JSON.parse(res.getContentText() || '{}');
+  var contact = body.contact || body;
+
+  return (
+    'Wrote ' + custom.length + ' fields to contact ' + (contact.id || contact._id || '?') +
+    (skipped.length ? '. Not written: ' + skipped.join(', ') : '.')
+  );
+}
+
+/** A checkbox answer is an array. A multi-select field takes it as one; every
+ *  other kind of field takes a line per answer. */
+function format(value, dataType) {
+  if (Object.prototype.toString.call(value) !== '[object Array]') return String(value);
+  if (String(dataType).toUpperCase().indexOf('MULTIPLE') !== -1) return value;
+  return value.join(', ');
+}
+
+function fetchFields(creds) {
+  var res = call('GET', API + '/locations/' + creds.location + '/customFields', null, creds.pit);
+  if (res.getResponseCode() >= 300) {
+    throw new Error('Could not read custom fields (' + res.getResponseCode() + '): ' + res.getContentText());
+  }
+  var body = JSON.parse(res.getContentText() || '{}');
+  return body.customFields || body.customField || [];
+}
+
+/** reachable by key or by id, either of which FIELD_MAP may name */
+function index(fields) {
+  var out = {};
+  for (var i = 0; i < fields.length; i++) {
+    var f = fields[i];
+    if (f.id) out[f.id] = f;
+    if (f.fieldKey) {
+      out[f.fieldKey] = f;
+      out[String(f.fieldKey).toLowerCase()] = f;
+      // listFields prints the full key; a map written by hand often drops the
+      // contact. prefix, so both reach the same field
+      var bare = String(f.fieldKey).replace(/^contact\./, '');
+      out[bare] = f;
+      out[bare.toLowerCase()] = f;
+    }
+  }
+  return out;
+}
+
+function call(method, url, payload, pit) {
+  var opts = {
+    method: method,
+    contentType: 'application/json',
+    headers: { Authorization: 'Bearer ' + pit, Version: VERSION, Accept: 'application/json' },
+    muteHttpExceptions: true,
+  };
+  if (payload) opts.payload = JSON.stringify(payload);
+  return UrlFetchApp.fetch(url, opts);
+}
+
+function credentials() {
   var props = PropertiesService.getScriptProperties();
   var pit = props.getProperty('GHL_PIT');
   var location = props.getProperty('GHL_LOCATION_ID');
   if (!pit || !location) {
     throw new Error('GHL_PIT or GHL_LOCATION_ID is not set in Script Properties.');
   }
-
-  var reach = parseContact(a.contact);
-  if (!reach.email && !reach.phone && !CREATE_WITHOUT_CONTACT) {
-    return 'No email or phone given, so nothing to upsert on. Left in the sheet.';
-  }
-
-  var payload = {
-    locationId: location,
-    tags: tagsFor(a),
-    source: 'Ops research form',
-  };
-  if (reach.email) payload.email = reach.email;
-  if (reach.phone) payload.phone = reach.phone;
-
-  /* The handle is the only name available. GHL shows a contact by name, and a
-     row called "No Name" is not findable three weeks later. */
-  var handle = String(a.handle || '').replace(/^@+/, '').trim();
-  if (handle) {
-    payload.firstName = '@' + handle;
-    payload.customField = { instagram: handle };
-  }
-
-  var res = call('POST', API + '/contacts/upsert', payload, pit);
-  var body = JSON.parse(res.getContentText() || '{}');
-  if (res.getResponseCode() >= 300) {
-    throw new Error('GHL upsert failed (' + res.getResponseCode() + '): ' + res.getContentText());
-  }
-
-  var contact = body.contact || body;
-  var id = contact.id || contact._id;
-  if (!id) return 'Contact written, but GHL returned no id, so no note was added.';
-
-  /* The note is everything they typed, in one place, so none of it depends on
-     a custom field existing first. */
-  var note = call('POST', API + '/contacts/' + id + '/notes', { body: noteFor(a), userId: props.getProperty('GHL_USER_ID') || undefined }, pit);
-  var noteOk = note.getResponseCode() < 300;
-
-  return 'Contact ' + id + ' upserted. Note ' + (noteOk ? 'added.' : 'failed: ' + note.getContentText());
+  return { pit: pit, location: location };
 }
 
-function call(method, url, payload, pit) {
-  return UrlFetchApp.fetch(url, {
-    method: method,
-    contentType: 'application/json',
-    headers: { Authorization: 'Bearer ' + pit, Version: VERSION, Accept: 'application/json' },
-    payload: JSON.stringify(payload),
-    muteHttpExceptions: true,
-  });
-}
-
-/* ── turning answers into tags ──────────────────────────────────────── */
-
-function tagsFor(a) {
-  var tags = ['research-respondent'];
-
-  var issues = [].concat(a.issues || []);
-  for (var i = 0; i < issues.length; i++) {
-    var t = issueTag(issues[i]);
-    if (t && t !== 'none-of-these') tags.push('issue-' + t);
-  }
-  if (a.worst) {
-    var w = issueTag(a.worst);
-    if (w && w !== 'none-of-these') tags.push('worst-' + w);
-  }
-
-  var looking = String(a.looking || '').toLowerCase();
-  for (var j = 0; j < INTENT_TAGS.length; j++) {
-    if (looking.indexOf(INTENT_TAGS[j].match) !== -1) tags.push(INTENT_TAGS[j].tag);
-  }
-
-  var ht = String(a.highTicket || '').toLowerCase();
-  if (ht.indexOf('yes') === 0) tags.push('high-ticket-yes');
-  else if (ht.indexOf('no') === 0) tags.push('high-ticket-no');
-
-  return tags;
-}
-
-/** the short name for an option, or the slug of it if it is not one of ours */
-function issueTag(text) {
-  var low = String(text).toLowerCase();
-  for (var i = 0; i < ISSUE_TAGS.length; i++) {
-    if (low.indexOf(ISSUE_TAGS[i].match) !== -1) return ISSUE_TAGS[i].tag;
-  }
-  return slug(text);
-}
-
-/** lowercase words joined by hyphens, cut at a word so a long answer does not
- *  become a tag ending mid-syllable */
-function slug(s) {
-  var out = String(s)
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '');
-  if (out.length <= 40) return out;
-  var cut = out.slice(0, 40);
-  var lastDash = cut.lastIndexOf('-');
-  return (lastDash > 12 ? cut.slice(0, lastDash) : cut).replace(/-+$/, '');
-}
-
-function noteFor(a) {
-  var lines = [
-    'Ops research form',
-    '',
-    'Instagram: ' + (a.handle || '-'),
-    'Sells high ticket: ' + (a.highTicket || '-'),
-    '',
-    'Issues: ' + [].concat(a.issues || []).join('; '),
-    'Costs the most: ' + (a.worst || '-'),
-    'How long: ' + (a.howLong || '-'),
-    'What it has cost: ' + (a.cost || '-'),
-    '',
-    'Spent money: ' + [].concat(a.spent || []).join('; '),
-    'How that went: ' + (a.howItWent || '-'),
-    'Goes to: ' + (a.where || '-'),
-    '',
-    'Looking for help: ' + (a.looking || '-'),
-    'Best place to reach them: ' + (a.contact || '-'),
-  ];
-  return lines.join('\n');
-}
+/* ── helpers ────────────────────────────────────────────────────────── */
 
 /**
  * The contact question is a free text box, so people answer it with an email,
  * a phone number, a handle, or a sentence. This takes whichever of the first
- * two it can find and ignores the rest.
+ * two it finds and ignores the rest.
  */
 function parseContact(raw) {
   var s = String(raw || '');
@@ -293,23 +311,72 @@ function parseContact(raw) {
   };
 }
 
+/** the real question title behind a key, for the listFields suggestion */
+function titleFor(key) {
+  var items = FormApp.getActiveForm().getItems();
+  for (var f = 0; f < FIELDS.length; f++) {
+    if (FIELDS[f].key !== key) continue;
+    for (var i = 0; i < items.length; i++) {
+      if (items[i].getTitle().toLowerCase().indexOf(FIELDS[f].match) !== -1) return items[i].getTitle();
+    }
+    return FIELDS[f].match;
+  }
+  return key;
+}
+
+/** the field whose name shares the most words with the question, ignoring any
+ *  already claimed by an earlier question */
+function bestMatch(question, fields, taken) {
+  var want = words(question);
+  var best = null;
+  var bestScore = 0;
+  for (var i = 0; i < fields.length; i++) {
+    if (taken && taken[fields[i].id]) continue;
+    var have = words(fields[i].name || '');
+    var score = 0;
+    for (var w = 0; w < want.length; w++) if (have.indexOf(want[w]) !== -1) score++;
+    if (score > bestScore) {
+      bestScore = score;
+      best = fields[i];
+    }
+  }
+  return bestScore >= 2 ? best : null;
+}
+
+function words(s) {
+  var stop = ' the a an of to in for you your is are do these it them this that how much would say which '.split(' ');
+  var raw = String(s).toLowerCase().replace(/[^a-z0-9 ]+/g, ' ').split(/\s+/);
+  var out = [];
+  for (var i = 0; i < raw.length; i++) {
+    if (raw[i].length > 2 && stop.indexOf(raw[i]) === -1) out.push(raw[i]);
+  }
+  return out;
+}
+
+function pad(s, n) {
+  s = String(s);
+  while (s.length < n) s += ' ';
+  return s;
+}
+
 /* ── test ───────────────────────────────────────────────────────────── */
 
-/** One fake submission, so the wiring can be checked before real answers
- *  depend on it. Delete the contact it makes. */
+/** One fake submission, so the wiring is checked before real answers depend on
+ *  it. Delete the contact it makes. */
 function test() {
-  var result = send({
-    handle: 'testhandle',
-    highTicket: 'Yes',
-    issues: ['CRM is messy and out of date', 'No good follow up systems for hot prospects'],
-    worst: 'CRM is messy and out of date',
-    howLong: 'A long time',
-    cost: 'no idea, a lot',
-    spent: ["Yes, I've bought software"],
-    howItWent: 'nobody used it',
-    where: 'youtube and a facebook group',
-    looking: 'Yes, actively looking to solve the problem',
-    contact: 'test.person@example.com',
-  });
-  Logger.log(result);
+  Logger.log(
+    send({
+      handle: 'testhandle',
+      highTicket: 'Yes',
+      issues: ['CRM is messy and out of date', 'No good follow up systems for hot prospects'],
+      worst: 'CRM is messy and out of date',
+      howLong: 'A long time',
+      cost: 'no idea, a lot',
+      spent: ["Yes, I've bought software"],
+      howItWent: 'nobody used it',
+      where: 'youtube and a facebook group',
+      looking: 'Yes, actively looking to solve the problem',
+      contact: 'test.person@example.com',
+    })
+  );
 }
