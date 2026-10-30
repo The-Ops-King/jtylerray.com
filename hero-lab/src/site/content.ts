@@ -232,3 +232,45 @@ export const CONTACT = {
      repeat the rail sitting up in the hero. */
   line: "I handle everything between the lead arriving and the handoff to fulfillment: where it lands, who owns it, what happens next, and what you can see about any of it. Bring the part you don't trust.",
 };
+
+/* ── 05 · the video testimonials ───────────────────────────────────── */
+
+/**
+ * The two recorded testimonials, above the screenshot receipts.
+ *
+ * Named clients, which the house style above otherwise avoids. A recorded
+ * testimonial is somebody putting their own face to it, so withholding the
+ * name would be the odd choice, not the careful one.
+ *
+ * Still no revenue figures. Patrick's number came out because a client's
+ * revenue is their number to publish, not mine.
+ *
+ * The files are in public/media rather than imported, so they are copied to
+ * dist as they are instead of going through the bundler.
+ */
+export type Testimonial = {
+  name: string;
+  org: string;
+  video: string;
+  poster: string;
+  blurb: string;
+};
+
+export const TESTIMONIALS: Testimonial[] = [
+  {
+    name: "Patrick",
+    org: "Sales coaching",
+    video: "/media/patrick.mp4",
+    poster: "/media/patrick.jpg",
+    blurb:
+      "Patrick was starting a sales coaching business from nothing. I built the operation underneath it: the CRM, the Airtable base, lead management, sales ops and fulfillment. What he already ran, I kept, replaced or rebuilt. He started with an idea and a few tools and finished with a business.",
+  },
+  {
+    name: "Jason",
+    org: "On-Screen Authority",
+    video: "/media/jason.mp4",
+    poster: "/media/jason.jpg",
+    blurb:
+      "Jason needed to move off one CRM and onto another without losing anything in the move. I ran the migration, then the sales call audits, then whatever came after. When his calendar stopped booking, I was on a call with him that day. After a while he stopped working out who to send a problem to and just sent it to me.",
+  },
+];

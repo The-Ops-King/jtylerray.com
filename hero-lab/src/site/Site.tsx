@@ -17,6 +17,7 @@ import {
 import WorkSuite from "./WorkSuite";
 import DriftWall from "./DriftWall";
 import Reviews from "./Reviews";
+import VideoSay from "./VideoSay";
 import "./site.css";
 
 /**
@@ -285,6 +286,8 @@ function WhatPeopleSay() {
     <section className="section says" id="says">
       <div className="col">
         <SectionLabel n="05">What people say</SectionLabel>
+        {/* the recorded ones first: a face and a voice outrank a screenshot */}
+        <VideoSay />
         <Reviews />
         {/* the ask moved up to 03, so the page would otherwise finish with
             nothing to act on. Same button, same wording as everywhere else. */}

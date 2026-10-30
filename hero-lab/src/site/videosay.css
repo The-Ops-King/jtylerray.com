@@ -1,0 +1,170 @@
+/* ═══════════════════════════════════════════════════════════════════
+   05 · the recorded testimonials
+
+   Two cards, side by side where there is room and stacked where there is
+   not. Each is a poster image until somebody presses play; the whole video
+   element is mounted on that press, so a page nobody scrolls to the bottom
+   of never fetches 14MB of video.
+   ═══════════════════════════════════════════════════════════════════ */
+
+.vsay {
+  margin-top: 36px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 30px;
+}
+
+@media (min-width: 900px) {
+  .vsay {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 36px;
+  }
+}
+
+.vsay-card {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+/* the box the poster and the video share, so swapping one for the other does
+   not move the copy underneath by a pixel */
+.vsay-frame {
+  position: relative;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  border: 1px solid var(--hair);
+  border-radius: 3px;
+  background: var(--ink-deep);
+}
+
+.vsay-video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.vsay-play {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.vsay-play {
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+}
+
+/* The poster is the video element's own, so the scrim does the work the
+   filter used to: the stills are brighter than the page, and without it they
+   punch two lit windows through a dark sheet. */
+.vsay-scrim {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to bottom,
+    rgba(7, 6, 5, 0.3) 0%,
+    rgba(7, 6, 5, 0.18) 45%,
+    rgba(7, 6, 5, 0.6) 100%
+  );
+  transition: opacity 0.2s;
+}
+.vsay-play:hover .vsay-scrim,
+.vsay-play:focus-visible .vsay-scrim {
+  opacity: 0.6;
+}
+
+.vsay-badge {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 62px;
+  height: 62px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--accent);
+  color: var(--accent-ink, #fff);
+  /* the arrow is optically left of centre in its own box */
+  padding-left: 3px;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.45);
+  transition: transform 0.18s, background 0.18s;
+}
+.vsay-play:hover .vsay-badge,
+.vsay-play:focus-visible .vsay-badge {
+  transform: translate(-50%, -50%) scale(1.07);
+  background: var(--accent-hover, var(--accent));
+}
+
+.vsay-cta {
+  position: absolute;
+  left: 14px;
+  bottom: 12px;
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--bone);
+  text-shadow: 0 1px 10px rgba(0, 0, 0, 0.7);
+}
+
+.vsay-play:focus-visible {
+  outline: 2px solid var(--accent-text, var(--accent));
+  outline-offset: 3px;
+}
+
+.vsay-video {
+  object-fit: cover;
+  background: #000;
+}
+
+/* ── the words under it ───────────────────────────────────────────── */
+
+.vsay-body {
+  margin-top: 16px;
+}
+
+.vsay-who {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.vsay-name {
+  font-family: var(--display);
+  font-size: 20px;
+  font-weight: 600;
+  letter-spacing: -0.012em;
+  color: var(--bone);
+}
+.vsay-org {
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--accent-text, var(--accent));
+}
+
+.vsay-blurb {
+  margin-top: 10px;
+  font-size: 16px;
+  line-height: 1.6;
+  color: var(--grey-mid);
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
