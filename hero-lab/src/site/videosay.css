@@ -1,14 +1,21 @@
 /* ═══════════════════════════════════════════════════════════════════
-   05 · the recorded testimonials
+   The recorded testimonials, under the hero
 
-   Two cards, side by side where there is room and stacked where there is
-   not. Each is a poster image until somebody presses play; the whole video
-   element is mounted on that press, so a page nobody scrolls to the bottom
-   of never fetches 14MB of video.
+   Two halves of the page block, stacked where there is no room for two.
+   Each is a poster until somebody presses play; the video element is
+   mounted the whole time but preloads nothing, so a visitor who never
+   presses either one downloads two stills and no video.
    ═══════════════════════════════════════════════════════════════════ */
 
+/* .col holds its children to the 720px text measure. Two cards inside that
+   left 560px of empty page beside them, which read as a third card that had
+   failed to load. This is a pair, so it takes the whole block and splits it
+   down the middle. */
+.site .vsay-section .col > .vsay {
+  max-width: none;
+}
+
 .vsay {
-  margin-top: 36px;
   display: grid;
   grid-template-columns: minmax(0, 1fr);
   gap: 30px;
@@ -17,7 +24,7 @@
 @media (min-width: 900px) {
   .vsay {
     grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-    gap: 36px;
+    gap: 32px;
   }
 }
 

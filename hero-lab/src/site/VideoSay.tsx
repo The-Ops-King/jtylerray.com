@@ -3,7 +3,11 @@ import { TESTIMONIALS, type Testimonial } from "./content";
 import "./videosay.css";
 
 /**
- * The recorded testimonials, above the screenshot receipts in 05.
+ * The recorded testimonials, directly under the hero.
+ *
+ * They sit here rather than down in 05 because they are the first answer to
+ * the question the headline raises, and a visitor who reads the hero and
+ * leaves should have passed two people saying it worked.
  *
  * Nothing loads until it is asked for. preload="none" means the poster is
  * all that is fetched, and the file itself only arrives when somebody presses
@@ -16,11 +20,15 @@ import "./videosay.css";
  */
 export default function VideoSay() {
   return (
-    <div className="vsay">
-      {TESTIMONIALS.map((t) => (
-        <Card key={t.name} t={t} />
-      ))}
-    </div>
+    <section className="section vsay-section" id="said">
+      <div className="col">
+        <div className="vsay">
+          {TESTIMONIALS.map((t) => (
+            <Card key={t.name} t={t} />
+          ))}
+        </div>
+      </div>
+    </section>
   );
 }
 

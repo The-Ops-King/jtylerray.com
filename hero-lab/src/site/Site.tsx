@@ -38,6 +38,7 @@ export default function Site() {
     <div className="site" data-mark="color" data-eyebrow="wide">
       <SmoothScroll />
       <Hero />
+      <VideoSay />
       <Argument />
       <WhatIDo />
       <Work />
@@ -286,8 +287,6 @@ function WhatPeopleSay() {
     <section className="section says" id="says">
       <div className="col">
         <SectionLabel n="05">What people say</SectionLabel>
-        {/* the recorded ones first: a face and a voice outrank a screenshot */}
-        <VideoSay />
         <Reviews />
         {/* the ask moved up to 03, so the page would otherwise finish with
             nothing to act on. Same button, same wording as everywhere else. */}
