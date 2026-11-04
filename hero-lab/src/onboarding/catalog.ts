@@ -22,12 +22,6 @@ export const TYLER = {
   phoneHref: "+14805163213",
 } as const;
 
-/** A tool can say "paid plan required" and the page asks about it. */
-export type Paid = {
-  /** shown when they answer "no" */
-  why: string;
-};
-
 export type Tool = {
   id: string;
   name: string;
@@ -35,11 +29,10 @@ export type Tool = {
   role: string;
   steps: string[];
   docs?: { label: string; href: string };
-  paid?: Paid;
+  /** a paid plan is needed; the page asks, and "no" is noted for Tyler */
+  paid?: boolean;
   /** a one-line note under the question, for tools with a catch */
   note?: string;
-  /** placeholder for the notes box */
-  hint?: string;
 };
 
 export type Section = {
@@ -60,7 +53,6 @@ export const otherTool = (sectionId: string, name: string): Tool => ({
     "Invite {invite} with the highest role it offers (Admin or Owner).",
     "If it only allows one user, text Tyler before you share a login.",
   ],
-  hint: "Anything about this tool Tyler should know",
 });
 
 /* ── the workspace step ─────────────────────────────────────────────── */
@@ -117,7 +109,6 @@ export const SECTIONS: Section[] = [
           "Tap Tyler in the member list and choose Make group admin.",
           "Repeat for every group, including client groups.",
         ],
-        hint: "Which groups did you add Tyler to?",
       },
       {
         id: "discord",
@@ -138,7 +129,7 @@ export const SECTIONS: Section[] = [
     tools: [
       {
         id: "fanbasis",
-        name: "Fanbasis",
+        name: "Fanbasis / Commas",
         role: "Admin",
         steps: [
           "Open your settings and find Team or Team Members.",
@@ -181,7 +172,6 @@ export const SECTIONS: Section[] = [
           "Add an employee with the email {invite}.",
           "Set User Type to Account and User Role to Admin, and leave every permission on.",
         ],
-        hint: "More than one sub-account? List them here",
       },
       {
         id: "hubspot",
@@ -213,15 +203,12 @@ export const SECTIONS: Section[] = [
         id: "zoom",
         name: "Zoom",
         role: "Admin",
-        paid: {
-          why: "Free Zoom can't add an admin and cuts group calls at 40 minutes. You'll need a paid plan.",
-        },
+        paid: true,
         steps: [
           "Sign in at zoom.us and open User Management, then Users.",
           "Click Add Users, enter {invite}, and set the type to Licensed.",
           "Open User Management, then Roles, and add Tyler to the Admin role.",
         ],
-        hint: "e.g. we're upgrading to Pro this week",
       },
       {
         id: "meet",
@@ -241,9 +228,7 @@ export const SECTIONS: Section[] = [
         id: "fathom",
         name: "Fathom",
         role: "Admin",
-        paid: {
-          why: "Fathom's free plan can't share recordings with a team. You'll need a paid team plan.",
-        },
+        paid: true,
         steps: [
           "Open Settings, then Team.",
           "Invite {invite} and make it an Admin.",
@@ -295,7 +280,6 @@ export const SECTIONS: Section[] = [
           "Under Share with specific people, add {invite}.",
           "Set it to Make changes and manage sharing.",
         ],
-        hint: "Which calendars did you share?",
       },
       {
         id: "calendly",
@@ -342,9 +326,7 @@ export const SECTIONS: Section[] = [
         id: "zapier",
         name: "Zapier",
         role: "Admin",
-        paid: {
-          why: "Zapier only shares access on its Team plan. Free and Pro are one person each.",
-        },
+        paid: true,
         steps: [
           "Open Settings, then Members.",
           "Invite {invite} and set the role to Admin.",
