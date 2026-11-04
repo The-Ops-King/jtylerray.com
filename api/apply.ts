@@ -2,18 +2,35 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { Resend } from 'resend';
 
 /**
- * POST /api/apply — the application at jtylerray.com/apply, for either role.
+ * POST /api/apply — the B2B closer application at jtylerray.com/apply.
  *
  * The Google Sheet is where applications live: one row per applicant, appended
  * through an Apps Script web app whose /exec URL is GSHEET_WEBHOOK_URL. See
  * Resources/apply-sheet.gs for the script and the one-time setup.
  *
- * The email is a copy, not the record — it is what makes a new application
- * arrive rather than wait to be noticed. Env: GSHEET_WEBHOOK_URL (the sheet),
- * RESEND_API_KEY (the copy), RESEND_FROM and NOTIFY_EMAIL (optional).
+ * There is no email per application any more. One a day goes out from the
+ * Sheet's own script instead, holding everyone who applied and qualified in
+ * the last twenty four hours. See Resources/apply-sheet.gs.
  *
- * A submission succeeds if either sink took it. Losing an application because
- * one of two services was down is the only outcome worth writing code against.
+ * Env: GSHEET_WEBHOOK_URL. RESEND_API_KEY, RESEND_FROM and NOTIFY_EMAIL are
+ * still read, but only to report that the Sheet refused a qualified
+ * application: that is the one case where something has to be said at once,
+ * because otherwise an application disappears and nothing anywhere says so.
+ *
+ * ── who gets through ───────────────────────────────────────────────────
+ *
+ * An application is recorded only if all of these hold:
+ *   - B2B experience ticked
+ *   - at least a year closing high ticket
+ *   - a call recording link
+ *   - that call dated within CALL_MAX_DAYS
+ *
+ * Everything else gets the same answer the page shows, and is not written
+ * anywhere. The reply never says which criterion failed, because a form that
+ * tells you why it rejected you can be re-run until it does not.
+ *
+ * The checks live here and not on the page. The page is a static bundle that
+ * anybody can edit before it posts.
  */
 
 /**
@@ -31,13 +48,18 @@ import { Resend } from 'resend';
  * nothing renders a form to post from. Closed here with the page open means
  * every real applicant gets an error.
  */
-const OPEN = false;
+const OPEN = true;
 
 const FROM = process.env.RESEND_FROM || 'Applications <onboarding@resend.dev>';
 const TO = process.env.NOTIFY_EMAIL || 'jt@jtylerray.com';
 
 type Payload = {
   role?: string;
+  years?: string;
+  onOffer?: string;
+  b2b?: string;
+  callRecording?: string;
+  callDate?: string;
   firstName?: string;
   lastName?: string;
   email?: string;
@@ -53,6 +75,11 @@ type Payload = {
 const FIELDS: [keyof Payload, string][] = [
   ['role', 'Role'],
   ['firstName', 'First name'],
+  ['years', 'Years closing'],
+  ['onOffer', 'On an offer now'],
+  ['b2b', 'B2B experience'],
+  ['callRecording', 'Call recording'],
+  ['callDate', 'Call date'],
   ['lastName', 'Last name'],
   ['email', 'Email'],
   ['phone', 'Phone'],
@@ -77,6 +104,11 @@ const SHEET_TEXT: (keyof Payload)[] = [
   /* appended, not inserted: the Sheet's columns are positional, and a new one
      in the middle would shift every row already in it by one */
   'role',
+  'years',
+  'onOffer',
+  'b2b',
+  'callRecording',
+  'callDate',
 ];
 
 /**
@@ -96,6 +128,52 @@ function sheetSafe(value: unknown): string {
   const s = (value ?? '').toString().trim();
   if (s.startsWith('+')) return s.replace(/^\+\s*/, '');
   return /^[=\-@]/.test(s) ? ` ${s}` : s;
+}
+
+/** How old a call recording may be. Matches CALL_MAX_DAYS in the page's data. */
+const CALL_MAX_DAYS = 31;
+const UNDER_ONE_YEAR = 'Less than 1 year';
+
+/**
+ * Whether an application is recorded at all.
+ *
+ * Returns the reasons rather than a boolean so the run can be logged with
+ * something useful in it. The reasons never leave this function: the reply is
+ * the same either way.
+ */
+function disqualify(data: Payload): string[] {
+  const out: string[] = [];
+
+  if ((data.b2b || '').toString().trim().toLowerCase() !== 'yes') {
+    out.push('no B2B experience');
+  }
+
+  if ((data.years || '').toString().trim() === UNDER_ONE_YEAR) {
+    out.push('under a year closing');
+  }
+
+  if (!(data.callRecording || '').toString().trim()) {
+    out.push('no call recording');
+  }
+
+  /* A date input posts YYYY-MM-DD with no zone. Both sides are pinned to noon
+     UTC so the gap between them is a whole number of days: anchored to the
+     moment of submission instead, the same 31 day old call qualified at 9am
+     and was turned away at 11pm, and nobody would ever have seen why.
+     Noon also absorbs the time zone, so a call filed "today" from behind UTC
+     does not read as tomorrow. */
+  const raw = (data.callDate || '').toString().trim();
+  const when = Date.parse(raw + 'T12:00:00Z');
+  const now = Date.parse(new Date().toISOString().slice(0, 10) + 'T12:00:00Z');
+  if (!raw || Number.isNaN(when)) {
+    out.push('no usable call date');
+  } else {
+    const days = Math.round((now - when) / 86400000);
+    if (days > CALL_MAX_DAYS) out.push(`call is ${days} days old`);
+    if (days < -1) out.push('call is dated in the future');
+  }
+
+  return out;
 }
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
@@ -129,6 +207,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     'phone',
     'facebook',
     'experience',
+    'years',
+    'onOffer',
+    'callRecording',
+    'callDate',
   ];
   const missing = required.filter((k) => !(data[k] || '').toString().trim());
   if (missing.length) {
@@ -146,6 +228,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     .toString()
     .trim()}`.trim();
   const submittedAt = (data.submittedAt || '').toString().trim() || new Date().toISOString();
+
+  /* Nothing is written for an application that does not qualify, and the
+     answer is a 200: as far as the applicant is concerned the form worked,
+     which it did. The page shows them the decline. */
+  const failed = disqualify(data);
+  if (failed.length) {
+    console.log(`declined ${name}: ${failed.join(', ')}`);
+    return res.status(200).json({ ok: true, qualified: false });
+  }
 
   // ── the sheet ───────────────────────────────────────────────────────
   let sheetOk = false;
@@ -165,7 +256,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
   }
 
-  // ── the copy ────────────────────────────────────────────────────────
+  /* ── the alarm ──────────────────────────────────────────────────────
+     No email per application: that is what the daily digest is for. This
+     only fires when the Sheet refused a qualified application, because the
+     digest reads the Sheet, so a row that never landed is an application
+     nothing anywhere will ever mention again. */
+  if (sheetOk) {
+    return res.status(200).json({ ok: true, qualified: true, sheet: true });
+  }
+
   const rows = FIELDS.map(([key, label]) => {
     const val = (data[key] || '').toString().trim() || '—';
     return (
@@ -175,9 +274,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }).join('');
 
   const html =
-    `<h2>New ${escapeHtml((data.role || 'Closer').toString().toLowerCase())} application — ${escapeHtml(name)}</h2>` +
-    `<table style="border-collapse:collapse;font-family:sans-serif;font-size:14px">${rows}</table>` +
-    (sheetOk ? '' : `<p style="color:#b00">Not written to the Sheet: ${escapeHtml(sheetError)}</p>`);
+    `<h2>Application NOT written to the Sheet — ${escapeHtml(name)}</h2>` +
+    `<p style="color:#b00">${escapeHtml(sheetError)}</p>` +
+    `<p>This one will not be in the daily digest. It is below in full.</p>` +
+    `<table style="border-collapse:collapse;font-family:sans-serif;font-size:14px">${rows}</table>`;
 
   let mailOk = false;
   let mailError = 'RESEND_API_KEY is not set';
@@ -188,7 +288,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         from: FROM,
         to: TO,
         replyTo: email,
-        subject: `${(data.role || 'Closer').toString()} application: ${name}`,
+        subject: `Sheet failed, application not recorded: ${name}`,
         html,
       });
       mailOk = !error;
@@ -198,13 +298,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
   }
 
-  if (!sheetOk && !mailOk) {
-    // both sinks are down, so the applicant is told rather than thanked for
+  if (!mailOk) {
+    // nothing took it, so the applicant is told rather than thanked for
     // something that went nowhere
     return res
       .status(502)
       .json({ ok: false, error: `Could not record the application (${sheetError}; ${mailError})` });
   }
 
-  return res.status(200).json({ ok: true, sheet: sheetOk, email: mailOk });
+  return res.status(200).json({ ok: true, qualified: true, sheet: false, email: true });
 }

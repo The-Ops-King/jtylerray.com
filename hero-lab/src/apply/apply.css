@@ -157,3 +157,63 @@
   border-bottom: 0;
   padding-bottom: 0;
 }
+
+/* ── the checkbox ─────────────────────────────────────────────────── */
+
+/* A real input, sized up and recoloured, rather than a hidden one with a
+   drawn box beside it. The native control already carries the focus ring,
+   the keyboard behaviour and the label association. */
+.field-check {
+  display: grid;
+  grid-template-columns: 22px minmax(0, 1fr);
+  gap: 12px;
+  align-items: start;
+  cursor: pointer;
+}
+
+.check-i {
+  width: 22px;
+  height: 22px;
+  margin: 0;
+  /* the accent is the page's, so a ticked box is the same green as the
+     buttons rather than the browser's blue */
+  accent-color: var(--accent);
+  /* and unticked it is a dark box with a light edge, not the bright white
+     square a light-scheme browser draws on a near-black page */
+  color-scheme: dark;
+  cursor: pointer;
+}
+.check-i:focus-visible {
+  outline: 2px solid var(--accent-text, var(--accent));
+  outline-offset: 2px;
+}
+
+.check-l {
+  font-size: 15px;
+  line-height: 1.45;
+  color: var(--bone);
+  /* the input is 22px and the text is 15px, so the first line needs nudging
+     onto the box's centre rather than its top */
+  padding-top: 1px;
+}
+
+/* ── the select ───────────────────────────────────────────────────── */
+
+/* The card's select was drawn for the card's one small dropdown. Here it is a
+   field among fields, so it takes the same well, edge and height as the text
+   inputs beside it, and its own arrow because appearance:none removes the
+   browser's. */
+.apply .field-s {
+  appearance: none;
+  background-image: linear-gradient(45deg, transparent 50%, #b5afa4 50%),
+    linear-gradient(135deg, #b5afa4 50%, transparent 50%);
+  background-position: calc(100% - 19px) calc(50% + 1px), calc(100% - 13px) calc(50% + 1px);
+  background-size: 6px 6px, 6px 6px;
+  background-repeat: no-repeat;
+  padding-right: 38px;
+  cursor: pointer;
+}
+/* an unchosen select should read as empty, like an unfilled input does */
+.apply .field-s:invalid {
+  color: rgba(181, 175, 165, 0.62);
+}

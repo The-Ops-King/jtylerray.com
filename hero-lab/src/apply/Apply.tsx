@@ -1,7 +1,18 @@
 import { useEffect, useState } from "react";
 import GridBackdrop from "../components/GridBackdrop";
 import { ACCENTS, applyAccent } from "../accents";
-import { APPLY, APPLY_ENDPOINT, CLOSED, OPEN, ROLE } from "./data";
+import {
+  APPLY,
+  APPLY_ENDPOINT,
+  CALL_IDEAL_DAYS,
+  CLOSED,
+  DECLINED,
+  ON_OFFER,
+  OPEN,
+  ROLE,
+  SENT,
+  YEARS,
+} from "./data";
 import "../card/card.css";
 import "./apply.css";
 
@@ -24,7 +35,7 @@ import "./apply.css";
 export default function Apply() {
   useEffect(() => {
     // one index.html serves every target, so each one names itself
-    document.title = "Apply — Lead Nurture · J. Tyler Ray";
+    document.title = "Apply — B2B Closer · J. Tyler Ray";
     document.documentElement.setAttribute("data-style", "blueprint");
     const forest = ACCENTS.find((a) => a.id === "green") ?? ACCENTS[0];
     applyAccent(forest.hex, forest.gradient, forest.text);
@@ -83,15 +94,27 @@ export default function Apply() {
   );
 }
 
-type State = "idle" | "sending" | "sent" | "error";
+type State = "idle" | "sending" | "sent" | "declined" | "error";
+
+/** today where the applicant is, so the date picker cannot offer tomorrow */
+function today(): string {
+  const d = new Date();
+  return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+}
 
 /**
- * The form. Seven fields, all of them plain — the experience is one box the
- * applicant writes into, not a structured list. Someone describing their own
- * work in their own order says more than the same person filling in a company
- * and a date range three times.
+ * The form.
  *
- * A failed send keeps every value.
+ * The criteria are checked by the function, not here. A browser check is a
+ * courtesy to whoever is filling the form in, not a gate: the page is a static
+ * bundle anyone can edit before it posts, so the only check that counts is the
+ * one on the server.
+ *
+ * Nothing on this page says which answer ends an application either. A form
+ * that marks the disqualifying option is a puzzle with the answers printed on
+ * the back of it.
+ *
+ * A failed send keeps every value. A declined one does not: it is finished.
  */
 function ApplyForm() {
   const [state, setState] = useState<State>("idle");
@@ -115,7 +138,7 @@ function ApplyForm() {
       if (!res.ok || body.ok === false) {
         throw new Error(body.error || `Send failed (${res.status})`);
       }
-      setState("sent");
+      setState(body.qualified === false ? "declined" : "sent");
       form.reset();
     } catch (err) {
       setState("error");
@@ -123,14 +146,12 @@ function ApplyForm() {
     }
   }
 
-  if (state === "sent") {
+  if (state === "sent" || state === "declined") {
+    const said = state === "sent" ? SENT : DECLINED;
     return (
       <div className="form-done">
-        <p className="form-done-t">In.</p>
-        <p className="form-done-l">
-          Your application is on my desk. Every one gets read and every one gets an
-          answer — if it is a fit you will hear from me directly.
-        </p>
+        <p className="form-done-t">{said.title}</p>
+        <p className="form-done-l">{said.line}</p>
       </div>
     );
   }
@@ -187,6 +208,71 @@ function ApplyForm() {
           />
         </label>
       </div>
+
+      {/* ── what the role requires ──────────────────────────────────── */}
+
+      <div className="field-pair">
+        <label className="field">
+          <span className="field-l mono">Years closing high ticket</span>
+          <select className="field-i field-s" name="years" required defaultValue="">
+            <option value="" disabled>
+              Choose one
+            </option>
+            {YEARS.map((y) => (
+              <option key={y} value={y}>
+                {y}
+              </option>
+            ))}
+          </select>
+        </label>
+
+        <label className="field">
+          <span className="field-l mono">Are you on an offer now?</span>
+          <select className="field-i field-s" name="onOffer" required defaultValue="">
+            <option value="" disabled>
+              Choose one
+            </option>
+            {ON_OFFER.map((o) => (
+              <option key={o} value={o}>
+                {o}
+              </option>
+            ))}
+          </select>
+        </label>
+      </div>
+
+      {/* Not required, deliberately. Required would mean the browser blocks
+          the send and nobody without it ever reaches an answer. They send it,
+          and the function decides. */}
+      <label className="field-check">
+        <input className="check-i" name="b2b" type="checkbox" value="yes" />
+        <span className="check-l">I have closed B2B offers.</span>
+      </label>
+
+      <div className="field-pair">
+        <label className="field">
+          <span className="field-l mono">Sales call recording</span>
+          <input
+            className="field-i"
+            name="callRecording"
+            type="url"
+            required
+            inputMode="url"
+            placeholder="https://..."
+          />
+        </label>
+
+        <label className="field">
+          <span className="field-l mono">Date of that call</span>
+          <input className="field-i" name="callDate" type="date" required max={today()} />
+        </label>
+      </div>
+      <span className="field-note mono">
+        A recorded call of you closing. Within the last {CALL_IDEAL_DAYS} days is what
+        we are looking for. Make sure the link is one we can open.
+      </span>
+
+      {/* ── the rest ────────────────────────────────────────────────── */}
 
       <label className="field">
         <span className="field-l mono">Facebook profile</span>
