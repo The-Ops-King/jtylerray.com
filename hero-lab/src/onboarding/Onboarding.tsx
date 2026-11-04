@@ -21,7 +21,6 @@ import {
   type OnboardingRecord,
   type SectionAnswer,
   type ToolAnswer,
-  type WorkspaceStatus,
 } from "./model";
 import "../card/card.css";
 import "../apply/apply.css";
@@ -182,8 +181,6 @@ function Start({ onStarted }: { onStarted: (id: string) => void }) {
           you'll get a private link so you can finish later on any device.
         </p>
       </header>
-
-      <Contact />
 
       {last && (
         <a className="btn btn-ghost onb-resume" href={`?c=${encodeURIComponent(last)}`}>
@@ -478,12 +475,6 @@ function Progress({ items }: { items: Item[] }) {
 
 /* ── 01 · workspace ─────────────────────────────────────────────────── */
 
-const WS_OPTIONS: { id: WorkspaceStatus; label: string }[] = [
-  { id: "done", label: "Done" },
-  { id: "notyet", label: "Not yet" },
-  { id: "missing", label: "We don't have Google Workspace" },
-];
-
 function WorkspaceStep({
   answers,
   update,
@@ -497,6 +488,7 @@ function WorkspaceStep({
   const suggested = `team@${domainOf(client.website) || "yourcompany.com"}`;
   const setW = (patch: Partial<Answers["workspace"]>) =>
     update((a) => ({ ...a, workspace: { ...a.workspace, ...patch } }));
+  const done = w.status === "done";
   const flag = workspaceItem(answers).flag;
 
   return (
@@ -504,44 +496,51 @@ function WorkspaceStep({
       <header className="blk-head">
         <span className="blk-sub mono">01 · Start here</span>
         <h2 className="blk-title" id="sec-ws">
-          A login at your company
+          Google Workspace Login
         </h2>
       </header>
 
-      <p className="onb-p">
-        I work from one account inside your company: <strong>{suggested}</strong>. You own it,
-        everything I build stays in your name, and you can switch it off in one click when we're
-        done.
-      </p>
-
       <div className={`onb-tool is-${flag}`}>
-        <ol className="onb-steps">
-          {WORKSPACE.steps.map((s) => (
-            <li key={s}>{s}</li>
-          ))}
-        </ol>
-        <p className="onb-note">
-          This adds one user to your Workspace bill. When I first sign in I'll change the
-          password and put two-step verification on my phone.
-        </p>
-        <p className="onb-docs">
-          {WORKSPACE.docs.map((d) => (
-            <a key={d.href} href={d.href} target="_blank" rel="noreferrer">
-              {d.label} ↗
-            </a>
-          ))}
+        <p className="onb-p onb-p-first">
+          Start by creating a <strong>{suggested}</strong> Google Workspace email and make it a
+          Super Admin. Then send me the login.
         </p>
 
-        <p className="onb-q">Is the team@ user set up as Super Admin?</p>
-        <Choice
-          name="ws"
-          options={WS_OPTIONS}
-          value={w.status}
-          onChange={(v) => setW({ status: v })}
-          bad={["notyet", "missing"]}
-        />
+        <HowTo>
+          <ol className="onb-steps">
+            {WORKSPACE.steps.map((s) => (
+              <li key={s}>{s}</li>
+            ))}
+          </ol>
+          <p className="onb-note">
+            This adds one user to your Workspace bill. When I first sign in I'll change the
+            password and put two-step verification on my phone.
+          </p>
+          <p className="onb-docs">
+            {WORKSPACE.docs.map((d) => (
+              <a key={d.href} href={d.href} target="_blank" rel="noreferrer">
+                {d.label} ↗
+              </a>
+            ))}
+          </p>
+        </HowTo>
 
-        {w.status === "done" && (
+        <button
+          type="button"
+          className={done ? "onb-toggle is-on" : "onb-toggle"}
+          aria-pressed={done}
+          onClick={() =>
+            setW(done ? { status: "notyet" } : { status: "done", email: w.email || suggested })
+          }
+        >
+          <span className="onb-toggle-box" aria-hidden="true">
+            {done ? "✓" : ""}
+          </span>
+          {done ? "Done" : "Not yet"}
+        </button>
+        {!done && <p className="onb-note">Tap it once the login is set up and sent.</p>}
+
+        {done && (
           <label className="field">
             <span className="field-l mono">The address you created</span>
             <input
@@ -553,32 +552,9 @@ function WorkspaceStep({
             />
           </label>
         )}
-        {w.status === "notyet" && (
-          <p className="onb-alert">I need this before anything else. Follow the steps above.</p>
-        )}
-        {w.status === "missing" && (
-          <p className="onb-alert">
-            You'll need it. Sign up at{" "}
-            <a href="https://workspace.google.com" target="_blank" rel="noreferrer">
-              workspace.google.com
-            </a>
-            , set up your domain, then come back here.
-          </p>
-        )}
 
-        <Notes value={w.note} onChange={(note) => setW({ note })} hint="Anything I should know?" />
+        <Notes value={w.note} onChange={(note) => setW({ note })} />
       </div>
-
-      <p className="onb-q">Where should every other invite go?</p>
-      <Choice
-        name="inviteTo"
-        options={[
-          { id: "team", label: `${(w.email ?? "").trim() || suggested} (recommended)` },
-          { id: "jt", label: TYLER.email },
-        ]}
-        value={answers.inviteTo}
-        onChange={(v) => update((a) => ({ ...a, inviteTo: v as Answers["inviteTo"] }))}
-      />
     </section>
   );
 }
@@ -720,9 +696,8 @@ function ToolCard({
             ]}
             value={ans?.paid}
             onChange={(v) => onChange({ paid: v as ToolAnswer["paid"] })}
-            bad={["no"]}
           />
-          {ans?.paid === "no" && <p className="onb-alert">{tool.paid.why}</p>}
+          {ans?.paid === "no" && <p className="onb-note onb-ok">Ok, we'll need that.</p>}
         </>
       )}
 
@@ -737,9 +712,10 @@ function ToolCard({
         bad={["partial", "none", "unsure"]}
       />
 
-      {needsSteps && (
-        <div className="onb-how">
-          <p className="onb-alert">I need {tool.role} here. Here's how to add me:</p>
+      {needsSteps && <p className="onb-alert">I need {tool.role} here.</p>}
+
+      {ans?.status !== "admin" && (
+        <HowTo>
           <ol className="onb-steps">
             {tool.steps.map((s) => (
               <li key={s}>
@@ -754,15 +730,11 @@ function ToolCard({
               </a>
             </p>
           )}
-          <p className="onb-note">Once it's done, come back and switch this to "Yes, admin."</p>
-        </div>
+          <p className="onb-note">Once it's done, switch the answer above to "Yes, admin."</p>
+        </HowTo>
       )}
 
-      <Notes
-        value={ans?.note}
-        onChange={(note) => onChange({ note })}
-        hint={tool.hint ?? "Anything I should know? (optional)"}
-      />
+      <Notes value={ans?.note} onChange={(note) => onChange({ note })} />
     </div>
   );
 }
@@ -960,11 +932,9 @@ function Chip({
 function Notes({
   value,
   onChange,
-  hint,
 }: {
   value: string | undefined;
   onChange: (v: string) => void;
-  hint: string;
 }) {
   return (
     <label className="field onb-notes">
@@ -972,11 +942,21 @@ function Notes({
       <textarea
         className="field-i field-t"
         rows={2}
-        placeholder={hint}
+        placeholder="Anything I should know, or any issues you're running into?"
         value={value ?? ""}
         onChange={(e) => onChange(e.target.value)}
       />
     </label>
+  );
+}
+
+/** the steps, closed until asked for */
+function HowTo({ children }: { children: React.ReactNode }) {
+  return (
+    <details className="onb-howto">
+      <summary className="onb-howto-s">Don't know how? Click here.</summary>
+      <div className="onb-howto-b">{children}</div>
+    </details>
   );
 }
 

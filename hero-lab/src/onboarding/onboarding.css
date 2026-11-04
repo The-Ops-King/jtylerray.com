@@ -17,9 +17,49 @@
   --onb-red-edge: rgba(217, 139, 122, 0.55);
   --onb-amber: #d8b25a;
   --onb-green: var(--accent-text, #5e9e78);
-  --onb-line: rgba(181, 175, 165, 0.24);
+  --onb-line: rgba(201, 195, 184, 0.34);
   --onb-well: rgba(138, 133, 124, 0.06);
   max-width: 660px;
+}
+
+/* ── type scale + contrast ─────────────────────────────────────────
+   Bigger heads than the card, and every secondary grey lifted. apply.css
+   puts labels at #b5afa4; a checklist is read line by line, often on a
+   phone, so text here sits at #d9d3c8 (about 12:1 on --ink) and only the
+   footer stays quiet. */
+.onb {
+  --onb-text: #d9d3c8;
+  --onb-label: #c9c3b8;
+}
+.onb .card-name {
+  font-size: clamp(42px, 11vw, 64px);
+  line-height: 1.02;
+}
+.onb .blk-title {
+  font-size: clamp(30px, 7.6vw, 36px);
+  line-height: 1.08;
+}
+.onb .card-eyebrow {
+  font-size: 12px;
+}
+.onb .apply-lede {
+  font-size: 17px;
+  color: var(--onb-text);
+}
+.onb .field-l,
+.onb .blk-sub {
+  font-size: 11px;
+  color: var(--onb-label);
+}
+.onb .field-i {
+  border-color: rgba(201, 195, 184, 0.5);
+}
+.onb .field-i::placeholder {
+  color: rgba(201, 195, 184, 0.7);
+}
+.onb .card-head,
+.onb .blk-head {
+  border-bottom-color: rgba(201, 195, 184, 0.32);
 }
 
 .onb strong {
@@ -44,7 +84,7 @@
   border-color: rgba(94, 158, 120, 0.45);
 }
 .onb-contact-l {
-  font-size: 10px;
+  font-size: 11px;
   letter-spacing: 0.18em;
   text-transform: uppercase;
   color: #b5afa4;
@@ -65,7 +105,7 @@
   margin-top: 10px;
   font-size: 14px;
   line-height: 1.55;
-  color: #b5afa4;
+  color: var(--onb-text);
 }
 .onb-contact-t a {
   color: var(--onb-green);
@@ -79,9 +119,9 @@
 
 .onb-warn {
   margin-top: 32px;
-  font-size: 13px;
+  font-size: 14px;
   line-height: 1.55;
-  color: #b5afa4;
+  color: var(--onb-text);
   text-align: center;
 }
 
@@ -107,10 +147,10 @@
 
 .onb-save {
   margin-top: 14px;
-  font-size: 10px;
+  font-size: 11px;
   letter-spacing: 0.16em;
   text-transform: uppercase;
-  color: #8f8a80;
+  color: var(--onb-label);
 }
 .onb-save.is-offline {
   color: var(--onb-amber);
@@ -135,10 +175,10 @@
 }
 .onb-progress-t {
   margin-top: 10px;
-  font-size: 11px;
+  font-size: 12px;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: #b5afa4;
+  color: var(--onb-text);
 }
 .onb-red {
   color: var(--onb-red);
@@ -151,22 +191,22 @@
 }
 .onb-p {
   margin-top: 16px;
-  font-size: 15px;
+  font-size: 16px;
   line-height: 1.6;
-  color: #cfc9be;
+  color: var(--onb-text);
 }
 .onb-q {
-  margin-top: 20px;
-  font-size: 15px;
-  font-weight: 500;
+  margin-top: 22px;
+  font-size: 17px;
+  font-weight: 600;
   line-height: 1.45;
   color: var(--bone);
 }
 .onb-note {
   margin-top: 12px;
-  font-size: 13px;
+  font-size: 14px;
   line-height: 1.55;
-  color: #b5afa4;
+  color: var(--onb-text);
 }
 .onb-alert {
   margin-top: 12px;
@@ -196,7 +236,7 @@
   display: flex;
   flex-direction: column;
   gap: 8px;
-  font-size: 14px;
+  font-size: 15px;
   line-height: 1.55;
   color: var(--bone);
 }
@@ -224,7 +264,7 @@
   align-items: center;
   min-height: 44px;
   padding: 10px 16px;
-  border: 1px solid rgba(181, 175, 165, 0.34);
+  border: 1px solid rgba(201, 195, 184, 0.5);
   border-radius: 999px;
   background: rgba(138, 133, 124, 0.06);
   color: var(--bone);
@@ -292,7 +332,7 @@
 .onb-tool-name {
   font-family: var(--display);
   font-weight: 500;
-  font-size: 20px;
+  font-size: 24px;
   letter-spacing: -0.02em;
   color: var(--bone);
 }
@@ -346,18 +386,18 @@
   min-width: 0;
 }
 .onb-row-tool {
-  font-size: 15px;
+  font-size: 16px;
   color: var(--bone);
 }
 .onb-row-sec {
-  font-size: 10px;
+  font-size: 11px;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: #8f8a80;
+  color: var(--onb-label);
 }
 .onb-row-why {
-  font-size: 13px;
-  color: #b5afa4;
+  font-size: 14px;
+  color: var(--onb-text);
   text-align: right;
   max-width: 22ch;
 }
@@ -407,4 +447,100 @@
   .onb-modal-act {
     grid-template-columns: 1fr 1fr;
   }
+}
+
+/* ── how-to dropdown ─────────────────────────────────────────────── */
+
+/* the steps stay shut until asked for: most clients know how to invite a
+   user, and a wall of numbered steps reads as homework */
+.onb-howto {
+  margin-top: 12px;
+}
+.onb-howto-s {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  cursor: pointer;
+  list-style: none;
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--onb-green);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.onb-howto-s::-webkit-details-marker {
+  display: none;
+}
+.onb-howto-s::before {
+  content: "+";
+  font-family: var(--mono, ui-monospace, monospace);
+  text-decoration: none;
+  display: inline-block;
+  width: 12px;
+}
+.onb-howto[open] .onb-howto-s::before {
+  content: "−";
+}
+.onb-howto-s:focus-visible {
+  outline: 2px solid var(--accent-text, var(--accent));
+  outline-offset: 2px;
+}
+.onb-howto-b {
+  padding: 4px 0 8px;
+}
+
+/* ── the step-01 toggle ──────────────────────────────────────────── */
+
+.onb-toggle {
+  margin-top: 16px;
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 52px;
+  padding: 12px 22px 12px 14px;
+  border: 1px solid var(--onb-red-edge);
+  border-radius: 999px;
+  background: rgba(217, 139, 122, 0.1);
+  color: var(--bone);
+  font-family: var(--sans);
+  font-size: 17px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: border-color 0.16s ease, background 0.16s ease;
+}
+.onb-toggle-box {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  border: 1.5px solid rgba(201, 195, 184, 0.7);
+  font-size: 15px;
+  line-height: 1;
+}
+.onb-toggle.is-on {
+  border-color: var(--accent-text, var(--accent));
+  background: rgba(63, 125, 92, 0.24);
+}
+.onb-toggle.is-on .onb-toggle-box {
+  border-color: var(--accent-text, var(--accent));
+  background: var(--accent);
+  color: var(--bone);
+}
+.onb-toggle:focus-visible {
+  outline: 2px solid var(--accent-text, var(--accent));
+  outline-offset: 2px;
+}
+
+.onb-p-first {
+  margin-top: 0;
+}
+/* "Ok, we'll need that." is an acknowledgement, not an error */
+.onb-ok {
+  color: var(--onb-amber);
+}
+.onb-tool.is-amber {
+  border-left-color: var(--onb-amber);
 }
