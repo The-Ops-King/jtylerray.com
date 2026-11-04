@@ -183,8 +183,6 @@ function Start({ onStarted }: { onStarted: (id: string) => void }) {
         </p>
       </header>
 
-      <Contact />
-
       {last && (
         <a className="btn btn-ghost onb-resume" href={`?c=${encodeURIComponent(last)}`}>
           Continue where you left off
