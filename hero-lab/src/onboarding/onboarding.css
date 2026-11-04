@@ -1,0 +1,410 @@
+/* ═══════════════════════════════════════════════════════════════════
+   jtylerray.com/client-onboarding
+
+   card.css does the structure and apply.css lifts the contrast. This file
+   adds what only the checklist has: the contact block, the private link, the
+   progress bar, tool chips, answer pills, tool cards with their state edge,
+   the access list and the confirm dialog.
+
+   State has one colour language on this page and nowhere else:
+   green = done, red = Tyler still needs admin, amber = they don't use one,
+   grey = not answered. The accent stays the site's green, so "done" and the
+   primary button share it on purpose.
+   ═══════════════════════════════════════════════════════════════════ */
+
+.onb {
+  --onb-red: #d98b7a;
+  --onb-red-edge: rgba(217, 139, 122, 0.55);
+  --onb-amber: #d8b25a;
+  --onb-green: var(--accent-text, #5e9e78);
+  --onb-line: rgba(181, 175, 165, 0.24);
+  --onb-well: rgba(138, 133, 124, 0.06);
+  max-width: 660px;
+}
+
+.onb strong {
+  color: var(--bone);
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+/* ── contact ─────────────────────────────────────────────────────── */
+
+/* the number is the one thing on the page that should be read across a room */
+.onb-contact,
+.onb-link {
+  margin-top: 28px;
+  padding: 20px;
+  border: 1px solid var(--onb-line);
+  border-radius: 8px;
+  background: var(--onb-well);
+}
+.onb-contact {
+  text-align: center;
+  border-color: rgba(94, 158, 120, 0.45);
+}
+.onb-contact-l {
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: #b5afa4;
+}
+.onb-phone {
+  display: inline-block;
+  margin-top: 8px;
+  font-family: var(--display);
+  font-weight: 500;
+  font-size: clamp(30px, 8.4vw, 40px);
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+  color: var(--bone);
+  text-decoration: none;
+  min-height: 44px;
+}
+.onb-contact-t {
+  margin-top: 10px;
+  font-size: 14px;
+  line-height: 1.55;
+  color: #b5afa4;
+}
+.onb-contact-t a {
+  color: var(--onb-green);
+  overflow-wrap: anywhere;
+}
+
+.onb-resume {
+  margin-top: 16px;
+  width: 100%;
+}
+
+.onb-warn {
+  margin-top: 32px;
+  font-size: 13px;
+  line-height: 1.55;
+  color: #b5afa4;
+  text-align: center;
+}
+
+/* ── link + save ─────────────────────────────────────────────────── */
+
+.onb-link {
+  text-align: left;
+}
+.onb-link-row {
+  margin-top: 10px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+}
+.onb-link-i {
+  font-family: var(--mono, ui-monospace, monospace);
+  font-size: 16px;
+  text-overflow: ellipsis;
+}
+.onb-copy {
+  min-width: 84px;
+}
+
+.onb-save {
+  margin-top: 14px;
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: #8f8a80;
+}
+.onb-save.is-offline {
+  color: var(--onb-amber);
+}
+
+/* ── progress ────────────────────────────────────────────────────── */
+
+.onb-progress {
+  margin-top: 28px;
+}
+.onb-bar {
+  height: 6px;
+  border-radius: 3px;
+  background: rgba(138, 133, 124, 0.16);
+  overflow: hidden;
+}
+.onb-bar span {
+  display: block;
+  height: 100%;
+  background: var(--accent);
+  transition: width 0.4s ease-out;
+}
+.onb-progress-t {
+  margin-top: 10px;
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #b5afa4;
+}
+.onb-red {
+  color: var(--onb-red);
+}
+
+/* ── section copy ────────────────────────────────────────────────── */
+
+.onb-sec .blk-head {
+  flex-direction: column-reverse;
+}
+.onb-p {
+  margin-top: 16px;
+  font-size: 15px;
+  line-height: 1.6;
+  color: #cfc9be;
+}
+.onb-q {
+  margin-top: 20px;
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 1.45;
+  color: var(--bone);
+}
+.onb-note {
+  margin-top: 12px;
+  font-size: 13px;
+  line-height: 1.55;
+  color: #b5afa4;
+}
+.onb-alert {
+  margin-top: 12px;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--onb-red);
+}
+.onb-alert a {
+  color: inherit;
+}
+.onb-docs {
+  margin-top: 10px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  font-size: 13px;
+}
+.onb-docs a {
+  color: var(--onb-green);
+  min-height: 32px;
+  display: inline-flex;
+  align-items: center;
+}
+.onb-steps {
+  margin-top: 12px;
+  padding-left: 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--bone);
+}
+.onb-steps li {
+  overflow-wrap: anywhere;
+}
+.onb-steps li::marker {
+  color: var(--onb-green);
+  font-family: var(--mono, ui-monospace, monospace);
+  font-size: 12px;
+}
+
+/* ── chips + pills ───────────────────────────────────────────────── */
+
+.onb-chips,
+.onb-choice {
+  margin-top: 12px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.onb-chip,
+.onb-opt {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 10px 16px;
+  border: 1px solid rgba(181, 175, 165, 0.34);
+  border-radius: 999px;
+  background: rgba(138, 133, 124, 0.06);
+  color: var(--bone);
+  font-family: var(--sans);
+  font-size: 15px;
+  line-height: 1.2;
+  cursor: pointer;
+  transition: border-color 0.16s ease, background 0.16s ease;
+}
+.onb-chip.is-on,
+.onb-opt.is-on {
+  border-color: var(--accent-text, var(--accent));
+  background: rgba(63, 125, 92, 0.24);
+}
+.onb-chip:focus-visible,
+.onb-opt:focus-within {
+  outline: 2px solid var(--accent-text, var(--accent));
+  outline-offset: 2px;
+}
+/* the radio is the pill: the native dot is hidden, not removed, so the
+   keyboard and the screen reader still get a real radio group */
+.onb-opt input {
+  position: absolute;
+  opacity: 0;
+  width: 1px;
+  height: 1px;
+}
+.onb-opt.is-on.is-bad {
+  border-color: var(--onb-red);
+  background: rgba(217, 139, 122, 0.16);
+}
+.onb-other {
+  margin-top: 16px;
+}
+.onb-tool > .field {
+  margin-top: 18px;
+}
+.onb-nowrap {
+  white-space: nowrap;
+}
+
+/* ── tool cards ──────────────────────────────────────────────────── */
+
+.onb-tool {
+  margin-top: 20px;
+  padding: 18px 18px 20px;
+  border: 1px solid var(--onb-line);
+  border-left-width: 3px;
+  border-radius: 8px;
+  background: var(--onb-well);
+}
+.onb-tool.is-green {
+  border-left-color: var(--onb-green);
+}
+.onb-tool.is-red {
+  border-color: var(--onb-red-edge);
+  border-left-color: var(--onb-red);
+  background: rgba(217, 139, 122, 0.06);
+}
+.onb-tool-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.onb-tool-name {
+  font-family: var(--display);
+  font-weight: 500;
+  font-size: 20px;
+  letter-spacing: -0.02em;
+  color: var(--bone);
+}
+.onb-how {
+  margin-top: 8px;
+}
+.onb-notes {
+  margin-top: 18px;
+}
+.onb-notes .field-t {
+  min-height: 72px;
+}
+
+/* ── dots ────────────────────────────────────────────────────────── */
+
+.onb-dot {
+  flex: none;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: rgba(138, 133, 124, 0.4);
+}
+.onb-dot.is-green {
+  background: var(--onb-green);
+}
+.onb-dot.is-red {
+  background: var(--onb-red);
+}
+.onb-dot.is-amber {
+  background: var(--onb-amber);
+}
+
+/* ── access list ─────────────────────────────────────────────────── */
+
+.onb-list {
+  list-style: none;
+  margin-top: 12px;
+}
+.onb-row {
+  display: grid;
+  grid-template-columns: 10px minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: center;
+  padding: 12px 0;
+  border-bottom: 1px solid rgba(181, 175, 165, 0.12);
+}
+.onb-row-main {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.onb-row-tool {
+  font-size: 15px;
+  color: var(--bone);
+}
+.onb-row-sec {
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #8f8a80;
+}
+.onb-row-why {
+  font-size: 13px;
+  color: #b5afa4;
+  text-align: right;
+  max-width: 22ch;
+}
+.onb-row.is-red .onb-row-why {
+  color: var(--onb-red);
+}
+.onb-row.is-green .onb-row-why {
+  color: var(--onb-green);
+}
+
+/* ── send + confirm ──────────────────────────────────────────────── */
+
+.onb-send .form-done {
+  margin: 0 0 20px;
+}
+.onb-send .form-send {
+  margin-top: 16px;
+}
+
+.onb-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: rgba(0, 0, 0, 0.72);
+}
+.onb-modal-box {
+  width: 100%;
+  max-width: 480px;
+  max-height: calc(100dvh - 32px);
+  overflow-y: auto;
+  padding: 24px;
+  border: 1px solid var(--onb-red-edge);
+  border-radius: 10px;
+  background: var(--ink);
+}
+.onb-modal-act {
+  margin-top: 20px;
+  display: grid;
+  gap: 10px;
+}
+
+@media (min-width: 560px) {
+  .onb-modal-act {
+    grid-template-columns: 1fr 1fr;
+  }
+}
