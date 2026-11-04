@@ -404,6 +404,48 @@ function Checklist({ id }: { id: string }) {
 
 type Update = (fn: (a: Answers) => Answers) => void;
 
+/* ── pages ──────────────────────────────────────────────────────────── */
+
+/**
+ * Three pages instead of one long one. The record and the autosave are the
+ * same either way; only what is on screen changes. The page lives in the URL
+ * hash (#2), so a refresh stays put and the browser's back button goes back
+ * a page.
+ */
+type StepN = 1 | 2 | 3;
+type Step = { n: StepN; title: string; sub: string; sections: string[] };
+
+const STEPS: Step[] = [
+  {
+    n: 1,
+    title: "Your tools",
+    sub: "Logins, payments, contracts, CRM and forms",
+    sections: ["ws", "communication", "payments", "contracts", "crm", "forms"],
+  },
+  {
+    n: 2,
+    title: "Calls & delivery",
+    sub: "Meetings, recordings, calendars, automations, fulfillment and SOPs",
+    sections: ["meetings", "recording", "calendar", "automation", "fulfillment", "sops"],
+  },
+  {
+    n: 3,
+    title: "Your business",
+    sub: "Leads, sales process, offers and delivery, then send",
+    sections: ["business"],
+  },
+];
+
+const stepOf = (sectionId: string | undefined): StepN =>
+  STEPS.find((st) => st.sections.includes(sectionId ?? ""))?.n ?? 3;
+
+const hashStep = (): StepN | null => {
+  const n = Number(location.hash.replace("#", ""));
+  return n === 1 || n === 2 || n === 3 ? n : null;
+};
+
+type Blocker = { label: string; anchor: string; step: StepN };
+
 function ChecklistBody({
   record,
   answers,
@@ -421,32 +463,79 @@ function ChecklistBody({
   const invite = inviteAddress(answers, client);
   const items = useMemo(() => summarize(answers), [answers]);
   const missing = useMemo(() => businessMissing(answers.business), [answers.business]);
+
+  /* Everything that stands between the client and Send, in page order.
+     Step 01 counts: the login is the one thing everything else needs. */
+  const wsPending = answers.workspace.status !== "done";
   const blockers: Blocker[] = [
+    ...(wsPending ? [{ label: "Workspace login", anchor: "sec-ws", step: 1 as StepN }] : []),
     ...items
       .filter((i) => i.flag === "todo")
-      .map((i) => ({ label: i.tool === "Not picked yet" ? i.section : i.tool, anchor: i.anchor ?? "" })),
-    ...missing,
+      .map((i) => ({
+        label: i.tool === "Not picked yet" ? i.section : i.tool,
+        anchor: i.anchor ?? "",
+        step: stepOf(i.sectionId),
+      })),
+    ...missing.map((m) => ({ ...m, step: 3 as StepN })),
   ];
   const total = items.length + BUSINESS_STEPS;
-  const wsPending = answers.workspace.status !== "done";
-  // step 01 counts once it is done, not while it sits at "Not yet"
   const answered =
     items.filter((i) => i.flag !== "todo").length - (wsPending ? 1 : 0) + businessDone(answers.business);
-  /* step 01 is not a send blocker, but while it is "Not yet" it is the
-     next thing to do: everything else depends on that login */
-  const next: Blocker | undefined = wsPending
-    ? { label: "Workspace login", anchor: "sec-ws" }
-    : blockers[0];
+
+  /* the page: from the URL if it names one, otherwise the first page that
+     still needs something, so a returning client lands where they left off */
+  const [step, setStepState] = useState<StepN>(() => hashStep() ?? blockers[0]?.step ?? 3);
+  useEffect(() => {
+    const onPop = () => setStepState(hashStep() ?? 1);
+    window.addEventListener("popstate", onPop);
+    return () => window.removeEventListener("popstate", onPop);
+  }, []);
+  const goStep = (n: StepN, anchor?: string) => {
+    if (n !== step) {
+      history.pushState(null, "", `${location.pathname}${location.search}#${n}`);
+      setStepState(n);
+    }
+    // after the new page renders
+    requestAnimationFrame(() =>
+      // a new page opens at the page switcher, not above the greeting
+      jump(anchor ?? "onb-pages")
+    );
+  };
+  const goTo = (b: Blocker) => goStep(b.step, b.anchor);
+
+  const left = (n: StepN) => blockers.filter((b) => b.step === n).length;
+  const current = STEPS[step - 1]!;
+  const nextHere = blockers.find((b) => b.step === step);
+
+  /* the bottom bar's one action: the next gap on this page, else the next
+     page, else the next gap anywhere, else Send */
+  const action: BarAction = nextHere
+    ? { kicker: "Jump to next question ↓", label: nextHere.label, run: () => goTo(nextHere) }
+    : step < 3
+      ? {
+          kicker: "This page is done",
+          label: `Next page: ${STEPS[step]!.title} →`,
+          run: () => goStep((step + 1) as StepN),
+        }
+      : blockers[0]
+        ? {
+            kicker: `Still to do, page ${blockers[0].step}`,
+            label: blockers[0].label,
+            run: () => goTo(blockers[0]),
+          }
+        : { kicker: "Everything's answered", label: "Go to Send ↓", run: () => jump("blk-send") };
 
   return (
     <>
       <header className="card-head">
         <p className="mono card-eyebrow">{client.company} onboarding</p>
         <h1 className="card-name">Hi {client.firstName}.</h1>
-        <p className="apply-lede">
-          Two parts: access to your tools, then a few questions about your business. Everything
-          saves as you go, so you can leave and come back from your link.
-        </p>
+        {step === 1 && (
+          <p className="apply-lede">
+            Three short pages: two on access to your tools, one about your business. Everything
+            saves as you go, so you can leave and come back from your link.
+          </p>
+        )}
       </header>
 
       {record.submittedAt && (
@@ -458,38 +547,84 @@ function ChecklistBody({
 
       <LinkBox id={record.id} />
 
-      <PartHead n={1} title="Access to your tools" />
-      <WorkspaceStep answers={answers} update={update} client={client} />
-      {SECTIONS.map((s, i) => (
-        <SectionBlock
-          key={s.id}
-          n={i + 2}
-          section={s}
-          answers={answers}
-          update={update}
-          invite={invite}
-        />
-      ))}
+      <nav className="onb-steps-nav" id="onb-pages" aria-label="Pages">
+        {STEPS.map((st) => {
+          const n = left(st.n as StepN);
+          return (
+            <button
+              key={st.n}
+              type="button"
+              className={`onb-stepbtn${st.n === step ? " is-on" : ""}${n === 0 ? " is-done" : ""}`}
+              aria-current={st.n === step ? "step" : undefined}
+              onClick={() => goStep(st.n as StepN)}
+            >
+              <span className="onb-stepbtn-n mono">{n === 0 ? "✓" : st.n}</span>
+              <span className="onb-stepbtn-t">{st.title}</span>
+              <span className="onb-stepbtn-l mono">{n === 0 ? "Done" : `${n} left`}</span>
+            </button>
+          );
+        })}
+      </nav>
 
-      <PartHead n={2} title="Your business" />
-      <BusinessPart business={answers.business ?? {}} update={update} />
+      <div className="onb-part">
+        <p className="mono onb-part-n">Page {step} of 3</p>
+        <p className="onb-part-t">{current.title}</p>
+        <p className="onb-part-s">{current.sub}</p>
+      </div>
 
-      <AccessList items={items} />
-      <Submit
-        record={record}
-        answers={answers}
-        items={items}
-        blockers={blockers}
-        onSubmitted={onSubmitted}
-      />
+      {step === 1 && <WorkspaceStep answers={answers} update={update} client={client} />}
+      {step < 3 &&
+        SECTIONS.map((s, i) =>
+          current.sections.includes(s.id) ? (
+            <SectionBlock
+              key={s.id}
+              n={i + 2}
+              section={s}
+              answers={answers}
+              update={update}
+              invite={invite}
+            />
+          ) : null
+        )}
+
+      {step === 3 && (
+        <>
+          <BusinessPart business={answers.business ?? {}} update={update} />
+          <AccessList items={items} />
+          <Submit
+            record={record}
+            answers={answers}
+            items={items}
+            blockers={blockers}
+            onJump={goTo}
+            onSubmitted={onSubmitted}
+          />
+        </>
+      )}
+
+      <div className="onb-pagenav">
+        {step > 1 ? (
+          <button type="button" className="btn btn-ghost" onClick={() => goStep((step - 1) as StepN)}>
+            ← {STEPS[step - 2]!.title}
+          </button>
+        ) : (
+          <span />
+        )}
+        {step < 3 && (
+          <button type="button" className="btn btn-fill" onClick={() => goStep((step + 1) as StepN)}>
+            Next page: {STEPS[step]!.title} →
+          </button>
+        )}
+      </div>
+
       <NoPasswords />
 
-      <NextBar answered={answered} total={total} save={save} next={next} />
+      <NextBar answered={answered} total={total} save={save} action={action} />
     </>
   );
 }
 
-type Blocker = { label: string; anchor: string };
+type BarAction = { kicker: string; label: string; run: () => void };
 
 function jump(anchor: string) {
   const el = document.getElementById(anchor);
@@ -497,26 +632,18 @@ function jump(anchor: string) {
   el.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
-function PartHead({ n, title }: { n: number; title: string }) {
-  return (
-    <div className="onb-part">
-      <p className="mono onb-part-n">Part {n} of 2</p>
-      <p className="onb-part-t">{title}</p>
-    </div>
-  );
-}
-
-/** pinned to the bottom: how far along, whether it saved, and one tap to the next gap */
+/** pinned to the bottom: how far along, whether it saved, and one tap to
+    whatever comes next. The kicker says what the tap does. */
 function NextBar({
   answered,
   total,
   save,
-  next,
+  action,
 }: {
   answered: number;
   total: number;
   save: Save;
-  next: Blocker | undefined;
+  action: BarAction;
 }) {
   return (
     <div className="onb-nextbar" role="region" aria-label="Progress">
@@ -529,12 +656,9 @@ function NextBar({
             {save === "saved" ? "Saved" : save === "saving" ? "Saving…" : "Offline, saved here"}
           </span>
         </p>
-        <button
-          type="button"
-          className="btn btn-fill onb-nextbar-b"
-          onClick={() => jump(next ? next.anchor : "blk-send")}
-        >
-          {next ? `Next: ${next.label}` : "Ready to send"}
+        <button type="button" className="btn btn-fill onb-nextbar-b" onClick={action.run}>
+          <span className="onb-nextbar-k">{action.kicker}</span>
+          <span className="onb-nextbar-l">{action.label}</span>
         </button>
       </div>
     </div>
@@ -890,12 +1014,14 @@ function Submit({
   answers,
   items,
   blockers,
+  onJump,
   onSubmitted,
 }: {
   record: OnboardingRecord;
   answers: Answers;
   items: Item[];
   blockers: Blocker[];
+  onJump: (b: Blocker) => void;
   onSubmitted: (at: string) => void;
 }) {
   const [confirm, setConfirm] = useState(false);
@@ -940,13 +1066,14 @@ function Submit({
       {blockers.length > 0 && (
         <div className="onb-blockers">
           <p className="onb-note">
-            {blockers.length} left before you can send. Tap one to jump to it:
+            {blockers.length} left before you can send. Tap one to go to it:
           </p>
           <ul>
             {blockers.map((b) => (
               <li key={b.anchor + b.label}>
-                <button type="button" className="onb-jump" onClick={() => jump(b.anchor)}>
+                <button type="button" className="onb-jump" onClick={() => onJump(b)}>
                   {b.label}
+                  {b.step !== 3 && <span className="onb-jump-p mono"> · page {b.step}</span>}
                 </button>
               </li>
             ))}
