@@ -234,3 +234,47 @@ horizontal scroll at 390px.
 - Paid plan "No" shows "Ok, we'll need that." and is amber, not red. It no
   longer appears in the "Are you sure?" list. It is red only alongside a
   missing-admin answer.
+
+## 2026-11-04 — /client-onboarding Part 2 and UX audit (PR #11)
+
+- New access sections:
+  - Contracts: PandaDoc, DocuSign
+  - Applications & forms: Typeform, Jotform, GHL Forms, Fillout
+  - Fulfillment platform: Skool, Kajabi, Circle, Teachable
+  - SOPs: Notion, Google Docs/Drive. It asks "Where are your SOPs stored?",
+    and the none option reads "We don't have a single place for SOPs".
+- A section can override its question (`question`) and its none label
+  (`noneLabel`) in catalog.ts.
+- Part 2 "Your business" sits after the access sections, and every field is
+  required to send:
+  - Lead sources: chips, plus Other.
+  - How calls get booked.
+  - After booking, up to the close.
+  - Offers: repeatable cards with name, price, payment options, program
+    length, who it's for and deliverables.
+  - What you deliver, and who delivers it.
+- The first offer card is virtual (id "first") until typed in, so an
+  untouched form saves nothing. Its id never changes, which keeps focus on
+  the first keystroke.
+- Part 2 is stored in `answers.business`. api/onboarding.ts reads it
+  defensively for the email ("Their business") and five new Sheet columns:
+  Lead Sources, Setting, After Booking, Offers, Fulfillment.
+  **The Apps Script must be updated to write them**: Manage deployments →
+  edit → New version, which keeps the same URL. Until then the old script
+  ignores those fields.
+- UX audit fixes:
+  - The link and phone share one compact panel, so the first question is on
+    the first phone screen.
+  - The top progress bar is gone. A sticky bottom bar shows "x/y answered",
+    the save state, and a "Next: …" button that jumps to the first gap
+    (step 01 first while it is "Not yet").
+  - Step 01 is neutral until done instead of red on arrival.
+  - Blockers above Send are tap-to-jump chips.
+  - A banner shows "Sent on {date}" when a client returns.
+  - A pending save is flushed with `keepalive` on visibilitychange/pagehide.
+    A save that failed offline is retried on `online`.
+  - Tap targets are 44px or more.
+- Verified by Playwright in the local harness: instant tab close keeps the
+  edit, an offline edit syncs on reconnect, a second device sees it, the
+  Continue link appears on return, a bad link gets a clear message, and
+  nothing scrolls sideways at 390px.

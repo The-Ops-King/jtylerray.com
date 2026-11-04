@@ -20,6 +20,11 @@
  *  5. Vercel → jtylerray.com → Settings → Environment Variables:
  *     ONBOARDING_SHEET_WEBHOOK_URL = that URL, Production and Preview.
  *  6. Redeploy.
+ *
+ * UPDATING this script later: Deploy → Manage deployments → pencil on the
+ * existing deployment → Version: New version → Deploy. That keeps the same
+ * /exec URL. "New deployment" would make a new URL and the env var would
+ * need changing.
  */
 
 const HEADERS = [
@@ -39,6 +44,12 @@ const HEADERS = [
   'Updated',
   'Submitted',
   'All Items',
+  // part 2, appended so rows written before it keep their columns
+  'Lead Sources',
+  'Setting',
+  'After Booking',
+  'Offers',
+  'Fulfillment',
 ];
 
 function doPost(e) {
@@ -53,6 +64,11 @@ function doPost(e) {
       sheet.appendRow(HEADERS);
       sheet.getRange(1, 1, 1, HEADERS.length).setFontWeight('bold');
       sheet.setFrozenRows(1);
+    } else if (sheet.getLastColumn() < HEADERS.length) {
+      // a sheet made before a column existed gets the new headings written in
+      const from = sheet.getLastColumn() + 1;
+      const added = HEADERS.slice(from - 1);
+      sheet.getRange(1, from, 1, added.length).setValues([added]).setFontWeight('bold');
     }
 
     const values = [
@@ -72,6 +88,11 @@ function doPost(e) {
       d.updatedAt || '',
       d.submittedAt || '',
       d.items || '',
+      d.leadSources || '',
+      d.setting || '',
+      d.booked || '',
+      d.offers || '',
+      d.fulfillment || '',
     ];
 
     // find the client's row by id, or add one
