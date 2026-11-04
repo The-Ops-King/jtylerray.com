@@ -21,8 +21,8 @@ import { Resend } from 'resend';
  *  - The Google Sheet is Tyler's view: one row per client, upserted by id on
  *    start, on submit, and at most every five minutes while they work.
  *    ONBOARDING_SHEET_WEBHOOK_URL, script in Resources/onboarding-sheet.gs.
- *  - Resend sends the emails (RESEND_API_KEY, RESEND_FROM, NOTIFY_EMAIL).
- *    RESEND_FROM must be on a verified domain: the client gets an email too,
+ *  - Resend sends the emails (RESEND_API_KEY, ONBOARDING_FROM or RESEND_FROM,
+ *    NOTIFY_EMAIL). The sender must be on a verified domain: the client gets an email too,
  *    and Resend's sandbox sender only delivers to the account owner.
  *  - GHL_ONBOARDING_WEBHOOK_URL, if set, gets the same payload on start and
  *    submit, so a GHL workflow can text Tyler. Unset, it is skipped.
@@ -38,7 +38,10 @@ import { Resend } from 'resend';
  * email cannot disagree.
  */
 
-const FROM = process.env.RESEND_FROM || 'Onboarding <onboarding@resend.dev>';
+/* ONBOARDING_FROM lets client mail come from a different address than the
+   hiring mail (RESEND_FROM). Its domain must be verified in Resend. */
+const FROM =
+  process.env.ONBOARDING_FROM || process.env.RESEND_FROM || 'Onboarding <onboarding@resend.dev>';
 const TO = process.env.NOTIFY_EMAIL || 'jt@jtylerray.com';
 const PHONE = '+1 480-516-3213';
 
