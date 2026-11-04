@@ -168,11 +168,19 @@ function digestNow() {
 
 function sendDigest() {
   const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheets()[0];
-  const rows = sheet.getDataRange().getDisplayValues();
+  const range = sheet.getDataRange();
+  const rows = range.getDisplayValues();
   if (rows.length < 2) return 'Nothing in the sheet yet.';
 
   const head = rows[0];
   const stamp = head.indexOf('Submitted At');
+  if (stamp === -1) return 'No "Submitted At" column. Nothing sent.';
+
+  /* The timestamps are read as values, not as what the cell displays. Column A
+     is the one column written as a real value, so Sheets parses it and renders
+     it in the spreadsheet's own locale: Date.parse on "04/11/2026" is a guess
+     at which number is the month. getValues gives the Date itself. */
+  const stamps = range.getValues();
 
   /* Since the last digest, not since midnight: a trigger that slips an hour,
      or a day it could not run, would otherwise drop those applications out of
@@ -183,8 +191,8 @@ function sendDigest() {
 
   const fresh = [];
   for (let r = 1; r < rows.length; r++) {
-    const when = Date.parse(rows[r][stamp]);
-    if (!isNaN(when) && when > since) fresh.push(rows[r]);
+    const when = toMillis(stamps[r][stamp]);
+    if (when && when > since) fresh.push(rows[r]);
   }
 
   // the watermark moves whether or not anyone applied, so a quiet day does
@@ -233,6 +241,13 @@ function sendDigest() {
   });
 
   return 'Sent ' + fresh.length + '.';
+}
+
+/** a cell Sheets parsed into a Date, or one it left as text */
+function toMillis(cell) {
+  if (cell instanceof Date) return cell.getTime();
+  const t = Date.parse(String(cell));
+  return isNaN(t) ? 0 : t;
 }
 
 function esc(s) {
