@@ -292,3 +292,23 @@ horizontal scroll at 390px.
 - "I don't see the second page": production was verified rendering Part 2
   after SOPs, using the live bundle with a mocked record. The cause was a
   tab opened before the deploy. The SPA doesn't reload itself.
+
+## 2026-11-04 — onboarding in three pages, Send locked until complete (PR #13)
+
+- Three pages, set by STEPS in Onboarding.tsx:
+  1. Your tools: ws, communication, payments, contracts, crm, forms
+  2. Calls & delivery: meetings, recording, calendar, automation,
+     fulfillment, sops
+  3. Your business: Part 2, then the access checklist and Send
+- The page lives in the URL hash (#1–#3) via pushState, so refresh keeps it
+  and browser back works. With no hash, a client lands on the first page
+  with something left.
+- A switcher at the top shows "n left" or a check per page. Each page ends
+  with Back / "Next page: …". Changing page scrolls to the switcher.
+- Send is greyed out until everything is answered, and step 01 "Done?" now
+  counts. An "Other" tool with no name also blocks. The chips above Send say
+  which page each gap is on and switch pages to reach it.
+- The bottom bar button has two lines: a kicker saying what the tap does
+  ("Jump to next question ↓" / "This page is done" / "Everything's
+  answered") over the target.
+- Items carry `sectionId` so blockers know their page.

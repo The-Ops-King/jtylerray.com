@@ -194,6 +194,8 @@ export type Flag = "green" | "red" | "amber" | "todo";
 export type Item = {
   /** element id on the page, for "jump to"; not sent anywhere that needs it */
   anchor?: string;
+  /** which section it came from ("ws" for step 01), to find its page */
+  sectionId?: string;
   section: string;
   tool: string;
   role: string;
@@ -237,7 +239,7 @@ export function toolFlag(tool: Tool, ans: ToolAnswer | undefined): { flag: Flag;
 /** step 01 is a single toggle that starts as "Not yet" */
 export function workspaceItem(a: Answers): Item {
   const w = a.workspace;
-  const base = { anchor: "sec-ws", section: "Workspace", tool: WORKSPACE.title, role: "Super Admin", note: w.note };
+  const base = { anchor: "sec-ws", sectionId: "ws", section: "Workspace", tool: WORKSPACE.title, role: "Super Admin", note: w.note };
   if (w.status === "done") {
     const email = (w.email ?? "").trim();
     return { ...base, flag: "green", answer: email ? `Created ${email}` : "Done" };
@@ -252,6 +254,7 @@ export function summarize(a: Answers): Item[] {
     if (sa.none) {
       items.push({
         anchor: `sec-${section.id}`,
+        sectionId: section.id,
         section: section.title,
         tool: "None",
         role: "",
@@ -264,6 +267,7 @@ export function summarize(a: Answers): Item[] {
     if (!tools.length) {
       items.push({
         anchor: `sec-${section.id}`,
+        sectionId: section.id,
         section: section.title,
         tool: "Not picked yet",
         role: "",
@@ -274,13 +278,16 @@ export function summarize(a: Answers): Item[] {
     }
     for (const tool of tools) {
       const ans = sa.tools[tool.id];
-      const { flag, reason } = toolFlag(tool, ans);
+      // an "Other" with no name is not answered: Tyler can't act on it
+      const unnamed = tool.id === `${section.id}:other` && !(sa.otherName ?? "").trim();
+      const { flag, reason } = unnamed ? { flag: "todo" as Flag, reason: undefined } : toolFlag(tool, ans);
       const parts = [ans?.status ? STATUS_LABEL[ans.status] : "Not answered"];
       if (tool.paid && ans?.paid) parts.push(ans.paid === "yes" ? "paid plan" : "not paid");
       items.push({
-        anchor: `tool-${tool.id}`,
+        anchor: unnamed ? `sec-${section.id}` : `tool-${tool.id}`,
+        sectionId: section.id,
         section: section.title,
-        tool: tool.name,
+        tool: unnamed ? `${section.title}: name the Other tool` : tool.name,
         role: tool.role,
         flag,
         answer: flag === "amber" ? `${parts[0]}, needs a paid plan` : parts.join(", "),
@@ -297,5 +304,6 @@ export function sectionDone(section: Section, a: Answers): boolean {
   const sa = sectionAnswer(a, section.id);
   if (sa.none) return true;
   const tools = pickedTools(section, sa);
+  if (sa.picked.includes(`${section.id}:other`) && !(sa.otherName ?? "").trim()) return false;
   return tools.length > 0 && tools.every((t) => toolFlag(t, sa.tools[t.id]).flag !== "todo");
 }
