@@ -278,3 +278,17 @@ horizontal scroll at 390px.
   edit, an offline edit syncs on reconnect, a second device sees it, the
   Continue link appears on return, a bad link gets a clear message, and
   nothing scrolls sideways at 390px.
+
+## 2026-11-04 — onboarding tweaks (PR #12)
+
+- The step 01 toggle reads "Done?" with an empty box, then "Done." with a
+  check. The copy now says to send the login to jt@jtylerray.com.
+- "We don't use one" (and the SOPs none option) shows "Ok, we'll need one."
+  in amber. Tyler's list reads "Doesn't use one yet".
+- Zapier has `slackLogin: true`. It asks "Does Tyler have access to
+  Zapier?" and adds the answer "Sent Tyler the login on Slack", which counts
+  as done (green). The note says: give Tyler his own access, or Slack him
+  the login.
+- "I don't see the second page": production was verified rendering Part 2
+  after SOPs, using the live bundle with a mocked record. The cause was a
+  tab opened before the deploy. The SPA doesn't reload itself.
