@@ -3,7 +3,13 @@ import GridBackdrop from "../components/GridBackdrop";
 import { ACCENTS, applyAccent } from "../accents";
 import { SECTIONS, TYLER, WORKSPACE, type Section, type Tool } from "./catalog";
 import {
+  BUSINESS_STEPS,
+  LEAD_SOURCES,
+  OFFER_FIELDS,
   STATUS_OPTIONS,
+  businessDone,
+  businessMissing,
+  newOffer,
   emptyAnswers,
   fill,
   inviteAddress,
@@ -13,9 +19,10 @@ import {
   sectionDone,
   summarize,
   toolFlag,
-  workspaceItem,
   type Answers,
+  type Business,
   type Client,
+  type Offer,
   type Flag,
   type Item,
   type OnboardingRecord,
@@ -296,12 +303,14 @@ function Checklist({ id }: { id: string }) {
   }, [id]);
 
   const push = useCallback(
-    async (a: Answers) => {
+    async (a: Answers, keepalive = false) => {
       setSave("saving");
       try {
         const { updatedAt } = await call<{ updatedAt: string }>({
           method: "PUT",
           body: JSON.stringify({ id, answers: a, summary: summarize(a) }),
+          // lets the save finish after the tab is closed or backgrounded
+          keepalive,
         });
         // a newer edit may have landed while this was in flight
         if (latest.current === a) {
@@ -322,13 +331,38 @@ function Checklist({ id }: { id: string }) {
         latest.current = next;
         writeLocal(id, { answers: next, updatedAt: new Date().toISOString(), dirty: true });
         window.clearTimeout(timer.current);
-        timer.current = window.setTimeout(() => push(next), 700);
+        timer.current = window.setTimeout(() => {
+          timer.current = undefined;
+          push(next);
+        }, 700);
         return next;
       });
       setSave("saving");
     },
     [id, push]
   );
+
+  /* An edit typed in the last 700ms would be lost if the tab closed before
+     the debounce fired, so a pending save is sent the moment the page is
+     hidden. A save that failed offline is retried when the network returns. */
+  useEffect(() => {
+    const flush = () => {
+      if (timer.current === undefined) return;
+      window.clearTimeout(timer.current);
+      timer.current = undefined;
+      push(latest.current, true);
+    };
+    const onHide = () => document.visibilityState === "hidden" && flush();
+    const onOnline = () => readLocal(id)?.dirty && push(latest.current);
+    document.addEventListener("visibilitychange", onHide);
+    window.addEventListener("pagehide", flush);
+    window.addEventListener("online", onOnline);
+    return () => {
+      document.removeEventListener("visibilitychange", onHide);
+      window.removeEventListener("pagehide", flush);
+      window.removeEventListener("online", onOnline);
+    };
+  }, [id, push]);
 
   if (loadError) {
     return (
@@ -386,6 +420,23 @@ function ChecklistBody({
   const { client } = record;
   const invite = inviteAddress(answers, client);
   const items = useMemo(() => summarize(answers), [answers]);
+  const missing = useMemo(() => businessMissing(answers.business), [answers.business]);
+  const blockers: Blocker[] = [
+    ...items
+      .filter((i) => i.flag === "todo")
+      .map((i) => ({ label: i.tool === "Not picked yet" ? i.section : i.tool, anchor: i.anchor ?? "" })),
+    ...missing,
+  ];
+  const total = items.length + BUSINESS_STEPS;
+  const wsPending = answers.workspace.status !== "done";
+  // step 01 counts once it is done, not while it sits at "Not yet"
+  const answered =
+    items.filter((i) => i.flag !== "todo").length - (wsPending ? 1 : 0) + businessDone(answers.business);
+  /* step 01 is not a send blocker, but while it is "Not yet" it is the
+     next thing to do: everything else depends on that login */
+  const next: Blocker | undefined = wsPending
+    ? { label: "Workspace login", anchor: "sec-ws" }
+    : blockers[0];
 
   return (
     <>
@@ -393,20 +444,22 @@ function ChecklistBody({
         <p className="mono card-eyebrow">{client.company} onboarding</p>
         <h1 className="card-name">Hi {client.firstName}.</h1>
         <p className="apply-lede">
-          Work down the list. Anything red means I still don't have admin. Pick it back up any
-          time from your link.
-        </p>
-        <p className={`onb-save mono is-${save}`} aria-live="polite">
-          {save === "saved" ? "Saved" : save === "saving" ? "Saving…" : "Saved on this device only, will retry"}
+          Two parts: access to your tools, then a few questions about your business. Everything
+          saves as you go, so you can leave and come back from your link.
         </p>
       </header>
 
+      {record.submittedAt && (
+        <p className="onb-sent">
+          Sent to Tyler on {new Date(record.submittedAt).toLocaleDateString()}. You can still
+          change anything and send an update.
+        </p>
+      )}
+
       <LinkBox id={record.id} />
-      <Contact />
-      <Progress items={items} />
 
+      <PartHead n={1} title="Access to your tools" />
       <WorkspaceStep answers={answers} update={update} client={client} />
-
       {SECTIONS.map((s, i) => (
         <SectionBlock
           key={s.id}
@@ -418,21 +471,91 @@ function ChecklistBody({
         />
       ))}
 
+      <PartHead n={2} title="Your business" />
+      <BusinessPart business={answers.business ?? {}} update={update} />
+
       <AccessList items={items} />
-      <Submit record={record} answers={answers} items={items} onSubmitted={onSubmitted} />
+      <Submit
+        record={record}
+        answers={answers}
+        items={items}
+        blockers={blockers}
+        onSubmitted={onSubmitted}
+      />
       <NoPasswords />
+
+      <NextBar answered={answered} total={total} save={save} next={next} />
     </>
   );
 }
 
+type Blocker = { label: string; anchor: string };
+
+function jump(anchor: string) {
+  const el = document.getElementById(anchor);
+  if (!el) return;
+  el.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+function PartHead({ n, title }: { n: number; title: string }) {
+  return (
+    <div className="onb-part">
+      <p className="mono onb-part-n">Part {n} of 2</p>
+      <p className="onb-part-t">{title}</p>
+    </div>
+  );
+}
+
+/** pinned to the bottom: how far along, whether it saved, and one tap to the next gap */
+function NextBar({
+  answered,
+  total,
+  save,
+  next,
+}: {
+  answered: number;
+  total: number;
+  save: Save;
+  next: Blocker | undefined;
+}) {
+  return (
+    <div className="onb-nextbar" role="region" aria-label="Progress">
+      <div className="onb-nextbar-in">
+        <p className="onb-nextbar-t mono">
+          <span>
+            {answered}/{total} answered
+          </span>
+          <span className={`onb-save is-${save}`} aria-live="polite">
+            {save === "saved" ? "Saved" : save === "saving" ? "Saving…" : "Offline, saved here"}
+          </span>
+        </p>
+        <button
+          type="button"
+          className="btn btn-fill onb-nextbar-b"
+          onClick={() => jump(next ? next.anchor : "blk-send")}
+        >
+          {next ? `Next: ${next.label}` : "Ready to send"}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+/** the private link and the phone number, in one panel, so the first
+    question is on the first screen of a phone */
 function LinkBox({ id }: { id: string }) {
   const url = `${location.origin}${location.pathname}?c=${encodeURIComponent(id)}`;
   const [copied, setCopied] = useState(false);
   return (
     <div className="onb-link">
-      <p className="onb-contact-l mono">Your private link</p>
       <div className="onb-link-row">
-        <input className="field-i onb-link-i" readOnly value={url} onFocus={(e) => e.target.select()} />
+        <input
+          className="field-i onb-link-i"
+          readOnly
+          value={url}
+          aria-label="Your private link"
+          onFocus={(e) => e.target.select()}
+        />
         <button
           className="btn btn-ghost onb-copy"
           type="button"
@@ -446,28 +569,15 @@ function LinkBox({ id }: { id: string }) {
             )
           }
         >
-          {copied ? "Copied" : "Copy"}
+          {copied ? "Copied" : "Copy link"}
         </button>
       </div>
-      <p className="onb-contact-t">
-        It's in your email too. Anyone with this link can see your checklist, so keep it to
-        yourself.
-      </p>
-    </div>
-  );
-}
-
-function Progress({ items }: { items: Item[] }) {
-  const done = items.filter((i) => i.flag === "green" || i.flag === "amber").length;
-  const red = items.filter((i) => i.flag === "red").length;
-  return (
-    <div className="onb-progress" aria-label="Progress">
-      <div className="onb-bar">
-        <span style={{ width: `${(done / items.length) * 100}%` }} />
-      </div>
-      <p className="mono onb-progress-t">
-        {done} of {items.length} done
-        {red > 0 && <span className="onb-red"> · {red} need admin</span>}
+      <p className="onb-contact-t">Your private link. It's in your email too, so keep it to yourself.</p>
+      <p className="onb-stuck">
+        Stuck? Text me{" "}
+        <a className="onb-stuck-n" href={`sms:${TYLER.phoneHref}`}>
+          {TYLER.phone}
+        </a>
       </p>
     </div>
   );
@@ -489,7 +599,8 @@ function WorkspaceStep({
   const setW = (patch: Partial<Answers["workspace"]>) =>
     update((a) => ({ ...a, workspace: { ...a.workspace, ...patch } }));
   const done = w.status === "done";
-  const flag = workspaceItem(answers).flag;
+  // neutral until done: red on arrival reads as an error the client made
+  const flag = done ? "green" : "todo";
 
   return (
     <section className="blk onb-sec" aria-labelledby="sec-ws">
@@ -610,7 +721,9 @@ function SectionBlock({
         </h2>
       </header>
 
-      <p className="onb-q">What do you use for {section.noun}? Pick all that apply.</p>
+      <p className="onb-q">
+        {section.question ?? `What do you use for ${section.noun}? Pick all that apply.`}
+      </p>
       <div className="onb-chips" role="group" aria-label={`${section.title} tools`}>
         {section.tools.map((t) => (
           <Chip key={t.id} on={sa.picked.includes(t.id)} onClick={() => toggle(t.id)}>
@@ -624,7 +737,7 @@ function SectionBlock({
           on={!!sa.none}
           onClick={() => setSA((s) => ({ ...s, none: !s.none, picked: s.none ? s.picked : [] }))}
         >
-          We don't use one
+          {section.noneLabel ?? "We don't use one"}
         </Chip>
       </div>
 
@@ -674,7 +787,7 @@ function ToolCard({
   const needsSteps = ans?.status && ans.status !== "admin";
 
   return (
-    <div className={`onb-tool is-${flag}`}>
+    <div className={`onb-tool is-${flag}`} id={`tool-${tool.id}`}>
       <div className="onb-tool-head">
         <Dot flag={flag} />
         <h3 className="onb-tool-name">{tool.name}</h3>
@@ -772,17 +885,18 @@ function Submit({
   record,
   answers,
   items,
+  blockers,
   onSubmitted,
 }: {
   record: OnboardingRecord;
   answers: Answers;
   items: Item[];
+  blockers: Blocker[];
   onSubmitted: (at: string) => void;
 }) {
   const [confirm, setConfirm] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
-  const todo = items.filter((i) => i.flag === "todo");
   const red = items.filter((i) => i.flag === "red");
 
   async function send() {
@@ -808,7 +922,7 @@ function Submit({
   }
 
   return (
-    <section className="blk onb-send" aria-labelledby="blk-send">
+    <section className="blk onb-send" id="blk-send" aria-label="Send">
       {record.submittedAt && (
         <div className="form-done">
           <p className="form-done-t">Sent.</p>
@@ -819,12 +933,22 @@ function Submit({
         </div>
       )}
 
-      {todo.length > 0 ? (
-        <p className="onb-note">
-          Answer everything above before you send. {todo.length} left: {" "}
-          {todo.map((t) => (t.tool === "Not picked yet" ? t.section : t.tool)).join(", ")}.
-        </p>
-      ) : null}
+      {blockers.length > 0 && (
+        <div className="onb-blockers">
+          <p className="onb-note">
+            {blockers.length} left before you can send. Tap one to jump to it:
+          </p>
+          <ul>
+            {blockers.map((b) => (
+              <li key={b.anchor + b.label}>
+                <button type="button" className="onb-jump" onClick={() => jump(b.anchor)}>
+                  {b.label}
+                </button>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       {error && (
         <p className="form-err" role="alert">
@@ -835,7 +959,7 @@ function Submit({
       <button
         className="btn btn-fill form-send"
         type="button"
-        disabled={busy || todo.length > 0}
+        disabled={busy || blockers.length > 0}
         onClick={() => (red.length ? setConfirm(true) : send())}
       >
         {busy ? "Sending…" : record.submittedAt ? "Send the update to Tyler" : "Send it to Tyler"}
@@ -871,6 +995,183 @@ function Submit({
         </div>
       )}
     </section>
+  );
+}
+
+/* ── part 2 · the business ──────────────────────────────────────────── */
+
+function BusinessPart({ business: b, update }: { business: Business; update: Update }) {
+  const setB = (fn: (b: Business) => Business) =>
+    update((a) => ({ ...a, business: fn(a.business ?? {}) }));
+
+  /* there is always at least one offer card on screen. Until something is
+     typed in it, it exists only here, so an untouched form saves nothing */
+  const offers: Offer[] = b.offers?.length ? b.offers : [{ id: "first" }];
+  const setOffer = (i: number, patch: Partial<Offer>) =>
+    setB((cur) => {
+      // the on-screen first card keeps its id, so the field keeps focus
+      const list = cur.offers?.length ? [...cur.offers] : [{ id: "first" }];
+      list[i] = { ...list[i], ...patch };
+      return { ...cur, offers: list };
+    });
+  const addOffer = () =>
+    setB((cur) => ({
+      ...cur,
+      offers: [...(cur.offers?.length ? cur.offers : [{ id: "first" }]), newOffer()],
+    }));
+  const removeOffer = (i: number) =>
+    setB((cur) => ({ ...cur, offers: (cur.offers ?? []).filter((_, j) => j !== i) }));
+
+  const sources = b.leadSources ?? [];
+  const toggleSource = (src: string) =>
+    setB((cur) => {
+      const list = cur.leadSources ?? [];
+      return {
+        ...cur,
+        leadSources: list.includes(src) ? list.filter((x) => x !== src) : [...list, src],
+      };
+    });
+
+  return (
+    <>
+      <section className="blk onb-sec" aria-labelledby="biz-leads">
+        <header className="blk-head">
+          <h2 className="blk-title" id="biz-leads">
+            Leads
+          </h2>
+        </header>
+        <p className="onb-q">Where do your leads come from? Pick all that apply.</p>
+        <div className="onb-chips" role="group" aria-label="Lead sources">
+          {LEAD_SOURCES.map((src) => (
+            <Chip key={src} on={sources.includes(src)} onClick={() => toggleSource(src)}>
+              {src}
+            </Chip>
+          ))}
+        </div>
+        {sources.includes("Other") && (
+          <TextField
+            label="Where else?"
+            value={b.leadOther}
+            onChange={(v) => setB((cur) => ({ ...cur, leadOther: v }))}
+          />
+        )}
+      </section>
+
+      <section className="blk onb-sec" aria-labelledby="biz-setting">
+        <header className="blk-head">
+          <h2 className="blk-title" id="biz-setting">
+            Setting and closing
+          </h2>
+        </header>
+        <TextField
+          long
+          label="How do calls get booked, and who books them?"
+          placeholder="e.g. setters DM inbound leads on IG and book them from a GHL calendar"
+          value={b.setting}
+          onChange={(v) => setB((cur) => ({ ...cur, setting: v }))}
+        />
+        <div id="biz-booked">
+          <TextField
+            long
+            label="What happens after someone books, up to the close?"
+            placeholder="Reminders, pre-call videos, who takes the call, follow-up if they don't buy"
+            value={b.booked}
+            onChange={(v) => setB((cur) => ({ ...cur, booked: v }))}
+          />
+        </div>
+      </section>
+
+      <section className="blk onb-sec" aria-labelledby="biz-offers">
+        <header className="blk-head">
+          <h2 className="blk-title" id="biz-offers">
+            Offers
+          </h2>
+        </header>
+        <p className="onb-p">One card per offer, low ticket and high ticket.</p>
+        {offers.map((o, i) => (
+          <div className="onb-tool onb-offer" id={`offer-${o.id}`} key={o.id}>
+            <div className="onb-tool-head onb-offer-head">
+              <h3 className="onb-tool-name">{(o.name ?? "").trim() || `Offer ${i + 1}`}</h3>
+              {offers.length > 1 && (
+                <button
+                  type="button"
+                  className="onb-remove"
+                  onClick={() => window.confirm("Remove this offer?") && removeOffer(i)}
+                >
+                  Remove
+                </button>
+              )}
+            </div>
+            {OFFER_FIELDS.map((f) => (
+              <TextField
+                key={f.key}
+                long={f.long}
+                label={f.label}
+                placeholder={f.placeholder}
+                value={o[f.key]}
+                onChange={(v) => setOffer(i, { [f.key]: v })}
+              />
+            ))}
+          </div>
+        ))}
+        <button type="button" className="btn btn-ghost onb-add" onClick={addOffer}>
+          + Add another offer
+        </button>
+      </section>
+
+      <section className="blk onb-sec" aria-labelledby="biz-fulfillment">
+        <header className="blk-head">
+          <h2 className="blk-title" id="biz-fulfillment">
+            Fulfillment
+          </h2>
+        </header>
+        <TextField
+          long
+          label="What do you deliver after the sale, and who on your team delivers it?"
+          placeholder="Onboarding call, weekly group calls, community, 1:1 support… and who runs each"
+          value={b.fulfillment}
+          onChange={(v) => setB((cur) => ({ ...cur, fulfillment: v }))}
+        />
+        <p className="onb-note">The software you deliver it in goes in Fulfillment platform, in Part 1.</p>
+      </section>
+    </>
+  );
+}
+
+function TextField({
+  label,
+  value,
+  onChange,
+  placeholder,
+  long,
+}: {
+  label: string;
+  value: string | undefined;
+  onChange: (v: string) => void;
+  placeholder?: string;
+  long?: boolean;
+}) {
+  return (
+    <label className="field onb-field">
+      <span className="onb-field-l">{label}</span>
+      {long ? (
+        <textarea
+          className="field-i field-t"
+          rows={4}
+          placeholder={placeholder}
+          value={value ?? ""}
+          onChange={(e) => onChange(e.target.value)}
+        />
+      ) : (
+        <input
+          className="field-i"
+          type="text"
+          placeholder={placeholder}
+          value={value ?? ""}
+          onChange={(e) => onChange(e.target.value)}
+        />
+      )}
+    </label>
   );
 }
 

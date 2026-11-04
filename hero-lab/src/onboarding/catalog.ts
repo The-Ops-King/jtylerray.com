@@ -41,6 +41,10 @@ export type Section = {
   noun: string;
   title: string;
   tools: Tool[];
+  /** replaces "What do you use for {noun}? Pick all that apply." */
+  question?: string;
+  /** replaces "We don't use one" */
+  noneLabel?: string;
 };
 
 /** An "Other" entry is built from this, with the name the client typed. */
@@ -159,6 +163,32 @@ export const SECTIONS: Section[] = [
     ],
   },
   {
+    id: "contracts",
+    noun: "contracts",
+    title: "Contracts",
+    tools: [
+      {
+        id: "pandadoc",
+        name: "PandaDoc",
+        role: "Admin",
+        steps: [
+          "Open Settings, then Users.",
+          "Invite {invite} and set the role to Admin.",
+        ],
+      },
+      {
+        id: "docusign",
+        name: "DocuSign",
+        role: "Admin",
+        steps: [
+          "Open Settings, then Users.",
+          "Click Add User and enter {invite}.",
+          "Pick the DS Admin permission profile.",
+        ],
+      },
+    ],
+  },
+  {
     id: "crm",
     noun: "your CRM",
     title: "CRM",
@@ -190,6 +220,48 @@ export const SECTIONS: Section[] = [
         steps: [
           "Open Settings, then Team Management.",
           "Invite {invite} and give it the Admin role.",
+        ],
+      },
+    ],
+  },
+  {
+    id: "forms",
+    noun: "applications and forms",
+    title: "Applications & forms",
+    tools: [
+      {
+        id: "typeform",
+        name: "Typeform",
+        role: "Admin",
+        steps: [
+          "Open your organization settings, then Members.",
+          "Invite {invite} and set the role to Admin.",
+          "Give Tyler access to the workspaces that hold your forms.",
+        ],
+      },
+      {
+        id: "jotform",
+        name: "Jotform",
+        role: "Admin",
+        steps: [
+          "Open Teams (or the Admin console on Enterprise).",
+          "Invite {invite} with the Admin role.",
+        ],
+      },
+      {
+        id: "ghlforms",
+        name: "GHL Forms",
+        role: "Sub-account Admin",
+        note: "This comes with GoHighLevel admin access in the CRM section.",
+        steps: ["Give Tyler admin in GoHighLevel (CRM section). That covers its forms."],
+      },
+      {
+        id: "fillout",
+        name: "Fillout",
+        role: "Admin",
+        steps: [
+          "Open Settings, then Team.",
+          "Invite {invite} and set the role to Admin.",
         ],
       },
     ],
@@ -354,6 +426,79 @@ export const SECTIONS: Section[] = [
           "Change Tyler's role to Admin.",
         ],
         docs: { label: "n8n user management", href: "https://docs.n8n.io/user-management/" },
+      },
+    ],
+  },
+  {
+    id: "fulfillment",
+    noun: "delivering your program",
+    title: "Fulfillment platform",
+    tools: [
+      {
+        id: "skool",
+        name: "Skool",
+        role: "Admin",
+        steps: [
+          "Invite {invite} to your Skool group.",
+          "Once Tyler joins, open Members, find Tyler, and change the role to Admin.",
+        ],
+      },
+      {
+        id: "kajabi",
+        name: "Kajabi",
+        role: "Admin",
+        steps: [
+          "Open Settings, then Users.",
+          "Invite {invite} and give it the Admin role.",
+        ],
+      },
+      {
+        id: "circle",
+        name: "Circle",
+        role: "Admin",
+        steps: [
+          "Invite {invite} to your community.",
+          "Open Members, find Tyler, and set the role to Admin.",
+        ],
+      },
+      {
+        id: "teachable",
+        name: "Teachable",
+        role: "Owner or Admin",
+        steps: [
+          "Open Settings, then Admins (some plans call it Users).",
+          "Add {invite} with the Owner or Admin role.",
+        ],
+      },
+    ],
+  },
+  {
+    id: "sops",
+    noun: "SOPs",
+    title: "SOPs",
+    question: "Where are your SOPs stored? Pick all that apply.",
+    noneLabel: "We don't have a single place for SOPs",
+    tools: [
+      {
+        id: "notion",
+        name: "Notion",
+        role: "Workspace Owner",
+        steps: [
+          "Open Settings, then People.",
+          "Click Add members and enter {invite}.",
+          "Set the role to Workspace owner.",
+        ],
+      },
+      {
+        id: "gdocs",
+        name: "Google Docs / Drive",
+        role: "Editor on the SOP folder",
+        note: "If your SOPs are in your company Google Workspace, step 01 covers them. If they're in a personal Google account, share the folder.",
+        steps: [
+          "Open Google Drive and find the folder with your SOPs.",
+          "Click Share, add {invite}, and set it to Editor.",
+          "If it's a shared drive, add {invite} as a Manager instead.",
+        ],
       },
     ],
   },

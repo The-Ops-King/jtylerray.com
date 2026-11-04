@@ -36,7 +36,86 @@ export type SectionAnswer = {
 /* "missing" is no longer offered; kept so older records still read */
 export type WorkspaceStatus = "done" | "notyet" | "missing";
 
+/* ── part 2: the business ────────────────────────────────────────────── */
+
+export type Offer = {
+  id: string;
+  name?: string;
+  price?: string;
+  /** paid in full, splits, deposits */
+  payment?: string;
+  /** e.g. 12 weeks */
+  length?: string;
+  /** who it's for */
+  audience?: string;
+  deliverables?: string;
+};
+
+export type Business = {
+  leadSources?: string[];
+  leadOther?: string;
+  /** how leads get booked, and who does it */
+  setting?: string;
+  /** what happens from booking to close */
+  booked?: string;
+  offers?: Offer[];
+  /** what they deliver after the sale, and who delivers it */
+  fulfillment?: string;
+};
+
+export const LEAD_SOURCES = [
+  "FB / IG ads",
+  "Organic social",
+  "YouTube",
+  "SEO",
+  "Webinar",
+  "Cold email",
+  "Cold DM",
+  "Referrals",
+  "Other",
+] as const;
+
+export const OFFER_FIELDS: { key: Exclude<keyof Offer, "id">; label: string; long?: boolean; placeholder: string }[] = [
+  { key: "name", label: "Offer name", placeholder: "e.g. 1:1 Scale Program" },
+  { key: "price", label: "Price", placeholder: "e.g. $6,000" },
+  { key: "payment", label: "Payment options", placeholder: "e.g. PIF, or 3 × $2,200" },
+  { key: "length", label: "Program length", placeholder: "e.g. 12 weeks" },
+  { key: "audience", label: "Who it's for", long: true, placeholder: "Who buys this, and who shouldn't" },
+  { key: "deliverables", label: "Deliverables", long: true, placeholder: "Everything they get: calls, community, templates, support…" },
+];
+
+export const newOffer = (): Offer => ({ id: Math.random().toString(36).slice(2, 10) });
+
+const filled = (v: unknown) => typeof v === "string" && v.trim().length > 0;
+
+/** what part 2 still needs, as {label, anchor} so the page can link to it */
+export function businessMissing(b: Business | undefined): { label: string; anchor: string }[] {
+  const out: { label: string; anchor: string }[] = [];
+  const src = b?.leadSources ?? [];
+  if (!src.length || (src.includes("Other") && !filled(b?.leadOther))) {
+    out.push({ label: "Lead sources", anchor: "biz-leads" });
+  }
+  if (!filled(b?.setting)) out.push({ label: "How calls get booked", anchor: "biz-setting" });
+  if (!filled(b?.booked)) out.push({ label: "After a call is booked", anchor: "biz-booked" });
+  const offers = b?.offers ?? [];
+  if (!offers.length) out.push({ label: "Offers", anchor: "biz-offers" });
+  offers.forEach((o, i) => {
+    const gaps = OFFER_FIELDS.filter((f) => !filled(o[f.key]));
+    if (gaps.length) out.push({ label: `Offer ${i + 1}: ${gaps.map((g) => g.label.toLowerCase()).join(", ")}`, anchor: `offer-${o.id}` });
+  });
+  if (!filled(b?.fulfillment)) out.push({ label: "What you deliver", anchor: "biz-fulfillment" });
+  return out;
+}
+
+/** the five part-2 questions, for the progress count */
+export const BUSINESS_STEPS = 5;
+export function businessDone(b: Business | undefined): number {
+  const missing = new Set(businessMissing(b).map((m) => m.anchor.startsWith("offer-") ? "biz-offers" : m.anchor));
+  return ["biz-leads", "biz-setting", "biz-booked", "biz-offers", "biz-fulfillment"].filter((a) => !missing.has(a)).length;
+}
+
 export type Answers = {
+  business?: Business;
   workspace: {
     status?: WorkspaceStatus;
     /** the address they created, e.g. team@acme.com */
@@ -112,6 +191,8 @@ export function pickedTools(section: Section, sa: SectionAnswer): Tool[] {
 export type Flag = "green" | "red" | "amber" | "todo";
 
 export type Item = {
+  /** element id on the page, for "jump to"; not sent anywhere that needs it */
+  anchor?: string;
   section: string;
   tool: string;
   role: string;
@@ -146,7 +227,7 @@ export function toolFlag(tool: Tool, ans: ToolAnswer | undefined): { flag: Flag;
 /** step 01 is a single toggle that starts as "Not yet" */
 export function workspaceItem(a: Answers): Item {
   const w = a.workspace;
-  const base = { section: "Workspace", tool: WORKSPACE.title, role: "Super Admin", note: w.note };
+  const base = { anchor: "sec-ws", section: "Workspace", tool: WORKSPACE.title, role: "Super Admin", note: w.note };
   if (w.status === "done") {
     const email = (w.email ?? "").trim();
     return { ...base, flag: "green", answer: email ? `Created ${email}` : "Done" };
@@ -160,6 +241,7 @@ export function summarize(a: Answers): Item[] {
     const sa = sectionAnswer(a, section.id);
     if (sa.none) {
       items.push({
+        anchor: `sec-${section.id}`,
         section: section.title,
         tool: "None",
         role: "",
@@ -170,7 +252,14 @@ export function summarize(a: Answers): Item[] {
     }
     const tools = pickedTools(section, sa);
     if (!tools.length) {
-      items.push({ section: section.title, tool: "Not picked yet", role: "", flag: "todo", answer: "" });
+      items.push({
+        anchor: `sec-${section.id}`,
+        section: section.title,
+        tool: "Not picked yet",
+        role: "",
+        flag: "todo",
+        answer: "",
+      });
       continue;
     }
     for (const tool of tools) {
@@ -179,6 +268,7 @@ export function summarize(a: Answers): Item[] {
       const parts = [ans?.status ? STATUS_LABEL[ans.status] : "Not answered"];
       if (tool.paid && ans?.paid) parts.push(ans.paid === "yes" ? "paid plan" : "not paid");
       items.push({
+        anchor: `tool-${tool.id}`,
         section: section.title,
         tool: tool.name,
         role: tool.role,

@@ -131,6 +131,53 @@ function parseBody(req: VercelRequest): Record<string, unknown> {
   return b as Record<string, unknown>;
 }
 
+/* ── part 2, read defensively ────────────────────────────────────────── */
+
+/**
+ * Part 2 arrives inside `answers`, which this function otherwise treats as
+ * opaque. These read it as text for the email and the Sheet, tolerating any
+ * shape: a field that is missing or the wrong type becomes an empty string.
+ */
+type BizText = { leads: string; setting: string; booked: string; offers: string; fulfillment: string };
+
+function business(answers: unknown): BizText {
+  const b = ((answers as { business?: unknown } | null)?.business ?? {}) as Record<string, unknown>;
+  const t = (v: unknown, max = 4000) => str(v, max);
+  const sources = Array.isArray(b.leadSources) ? b.leadSources.map((x) => t(x, 60)).filter(Boolean) : [];
+  const other = t(b.leadOther, 200);
+  const leads = sources.map((x) => (x === 'Other' && other ? `Other: ${other}` : x)).join(', ');
+  const offers = (Array.isArray(b.offers) ? b.offers : [])
+    .slice(0, 20)
+    .map((o, i) => {
+      const r = (o ?? {}) as Record<string, unknown>;
+      return [
+        `${i + 1}. ${t(r.name, 200) || 'Unnamed offer'}`,
+        `   Price: ${t(r.price, 200)}`,
+        `   Payment: ${t(r.payment, 400)}`,
+        `   Length: ${t(r.length, 200)}`,
+        `   For: ${t(r.audience)}`,
+        `   Deliverables: ${t(r.deliverables)}`,
+      ].join('\n');
+    })
+    .join('\n\n');
+  return { leads, setting: t(b.setting), booked: t(b.booked), offers, fulfillment: t(b.fulfillment) };
+}
+
+function businessHtml(answers: unknown): string {
+  const b = business(answers);
+  const row = (label: string, v: string) =>
+    `<h3 style="font-family:sans-serif;font-size:15px;margin:18px 0 4px">${label}</h3>` +
+    `<div style="font-family:sans-serif;font-size:14px;white-space:pre-wrap">${esc(v || '—')}</div>`;
+  return (
+    `<h2 style="font-family:sans-serif;margin-top:28px">Their business</h2>` +
+    row('Lead sources', b.leads) +
+    row('How calls get booked', b.setting) +
+    row('After booking, up to the close', b.booked) +
+    row('Offers', b.offers) +
+    row('Fulfillment', b.fulfillment)
+  );
+}
+
 /* ── outputs ─────────────────────────────────────────────────────────── */
 
 const esc = (s: string) =>
@@ -156,6 +203,7 @@ const reds = (rec: OnboardingRecord) => rec.summary.filter((i) => i.flag === 're
 
 function payload(rec: OnboardingRecord, link: string, event: string) {
   const red = reds(rec);
+  const biz = business(rec.answers);
   const done = rec.summary.filter((i) => i.flag === 'green' || i.flag === 'amber').length;
   return {
     event,
@@ -173,6 +221,11 @@ function payload(rec: OnboardingRecord, link: string, event: string) {
     createdAt: rec.createdAt,
     updatedAt: rec.updatedAt,
     submittedAt: rec.submittedAt || '',
+    leadSources: biz.leads,
+    setting: biz.setting,
+    booked: biz.booked,
+    offers: biz.offers,
+    fulfillment: biz.fulfillment,
   };
 }
 
@@ -378,7 +431,8 @@ async function submit(req: VercelRequest, res: VercelResponse, b: Record<string,
       ? `<strong style="color:${FLAG_COLOR.red}">${red.length} item${red.length > 1 ? 's' : ''} still need admin.</strong> `
       : `<strong style="color:${FLAG_COLOR.green}">Everything is marked admin.</strong> `) +
     `<a href="${esc(link)}">Open their checklist</a></p>` +
-    summaryTable(rec.summary);
+    summaryTable(rec.summary) +
+    businessHtml(rec.answers);
 
   const [mailed, sheeted] = await Promise.all([
     mail(TO, subject, html, c.email),
