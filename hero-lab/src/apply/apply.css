@@ -217,3 +217,55 @@
 .apply .field-s:invalid {
   color: rgba(181, 175, 165, 0.62);
 }
+
+/* ── the older-call prompt ────────────────────────────────────────── */
+
+/* A native <dialog>: focus trapping, Escape to close and the backdrop all
+   come with it. Only the look is written here. */
+.ask {
+  /* The reset at the top of index.css sets margin: 0 on everything, which
+     takes out the margin: auto a modal dialog is centred by, so it was
+     rendering in the top left corner. Put back explicitly. */
+  margin: auto;
+  width: calc(100% - 40px);
+  max-width: 420px;
+  max-height: calc(100dvh - 40px);
+  padding: 26px;
+  border: 1px solid rgba(181, 175, 165, 0.34);
+  border-radius: 4px;
+  background: var(--raised, #141312);
+  color: var(--bone);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.6);
+}
+.ask::backdrop {
+  background: rgba(7, 6, 5, 0.72);
+}
+
+.ask-t {
+  font-family: var(--display);
+  font-size: 22px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.25;
+  color: var(--bone);
+}
+.ask-l {
+  margin-top: 12px;
+  font-size: 15px;
+  line-height: 1.6;
+  color: #b5afa4;
+}
+
+/* stacked, because these are sentences rather than labels and the one that
+   does the thing being asked for goes first */
+.ask-btns {
+  margin-top: 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.ask-btns .btn {
+  width: 100%;
+  justify-content: center;
+  text-align: center;
+}
