@@ -1,10 +1,12 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import GridBackdrop from "../components/GridBackdrop";
 import { ACCENTS, applyAccent } from "../accents";
 import {
   APPLY,
   APPLY_ENDPOINT,
+  CALL_ASK_DAYS,
   CALL_IDEAL_DAYS,
+  CALL_PROMPT,
   CLOSED,
   DECLINED,
   ON_OFFER,
@@ -102,6 +104,16 @@ function today(): string {
   return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
 }
 
+/** Whole days old, both ends pinned to noon UTC. The same arithmetic the
+ *  handler uses, so the page never warns about a date the server accepts or
+ *  stays quiet about one it rejects. */
+function daysOld(value: string): number {
+  const when = Date.parse(value + "T12:00:00Z");
+  if (Number.isNaN(when)) return 0;
+  const now = Date.parse(new Date().toISOString().slice(0, 10) + "T12:00:00Z");
+  return Math.round((now - when) / 86400000);
+}
+
 /**
  * The form.
  *
@@ -119,6 +131,11 @@ function today(): string {
 function ApplyForm() {
   const [state, setState] = useState<State>("idle");
   const [error, setError] = useState("");
+  const dialog = useRef<HTMLDialogElement>(null);
+  const callDate = useRef<HTMLInputElement>(null);
+  /* the one date they have already been asked about and stood by, so picking
+     it again, or tabbing back through the field, does not ask twice */
+  const settled = useRef("");
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -264,7 +281,19 @@ function ApplyForm() {
 
         <label className="field">
           <span className="field-l mono">Date of that call</span>
-          <input className="field-i" name="callDate" type="date" required max={today()} />
+          <input
+            ref={callDate}
+            className="field-i"
+            name="callDate"
+            type="date"
+            required
+            max={today()}
+            onChange={(e) => {
+              const v = e.target.value;
+              if (!v || v === settled.current) return;
+              if (daysOld(v) > CALL_ASK_DAYS) dialog.current?.showModal();
+            }}
+          />
         </label>
       </div>
       <span className="field-note mono">
@@ -326,6 +355,41 @@ function ApplyForm() {
       <button className="btn btn-fill form-send" type="submit" disabled={busy}>
         {busy ? "Sending…" : "Submit application"}
       </button>
+
+      {/* A native dialog: it traps focus, closes on Escape and dims the page
+          behind it without any of that being written here. It asks, it does
+          not block — the handler is what decides, and somebody whose most
+          recent call really is old should still be able to finish. */}
+      <dialog className="ask" ref={dialog}>
+        <h2 className="ask-t">{CALL_PROMPT.title}</h2>
+        <p className="ask-l">{CALL_PROMPT.line}</p>
+        <div className="ask-btns">
+          <button
+            type="button"
+            className="btn btn-fill"
+            onClick={() => {
+              dialog.current?.close();
+              /* cleared, not left sitting there: the point is a different
+                 date, and an old one still in the field invites submitting it
+                 by accident */
+              if (callDate.current) callDate.current.value = "";
+              callDate.current?.focus();
+            }}
+          >
+            {CALL_PROMPT.change}
+          </button>
+          <button
+            type="button"
+            className="btn btn-ghost"
+            onClick={() => {
+              settled.current = callDate.current?.value ?? "";
+              dialog.current?.close();
+            }}
+          >
+            {CALL_PROMPT.keep}
+          </button>
+        </div>
+      </dialog>
     </form>
   );
 }
