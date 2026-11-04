@@ -218,3 +218,19 @@ Unanswered sections block sending.
 Playwright drove the full flow: start, answer, red confirm, send, then reopen
 in a fresh browser to confirm the record came back. No console errors and no
 horizontal scroll at 390px.
+
+## 2026-11-04 — /client-onboarding simplified (PRs #9 and #10)
+
+- The start page is just the form. The contact box lives on the checklist.
+- Titles are bigger and all secondary greys are lifted (`--onb-text` #d9d3c8).
+- Step 01 is "Google Workspace Login": one line of instructions and one
+  toggle that starts as "Not yet". The "We don't have Workspace" option and
+  the "where should invites go" question are gone. Every invite now goes to
+  the team@ address, and `inviteTo` was removed from the model.
+- How-to steps are a closed `<details>` ("Don't know how? Click here.") on
+  step 01 and on every tool not marked admin.
+- Every notes box uses one placeholder. Per-tool hints were removed.
+- Fanbasis is now "Fanbasis / Commas".
+- Paid plan "No" shows "Ok, we'll need that." and is amber, not red. It no
+  longer appears in the "Are you sure?" list. It is red only alongside a
+  missing-admin answer.

@@ -33,6 +33,7 @@ export type SectionAnswer = {
   tools: Record<string, ToolAnswer>;
 };
 
+/* "missing" is no longer offered; kept so older records still read */
 export type WorkspaceStatus = "done" | "notyet" | "missing";
 
 export type Answers = {
@@ -42,8 +43,6 @@ export type Answers = {
     email?: string;
     note?: string;
   };
-  /** where every invite after the workspace step goes */
-  inviteTo: "team" | "jt";
   sections: Record<string, SectionAnswer>;
 };
 
@@ -67,7 +66,6 @@ export type OnboardingRecord = {
 
 export const emptyAnswers = (): Answers => ({
   workspace: {},
-  inviteTo: "team",
   sections: {},
 });
 
@@ -84,8 +82,8 @@ export function domainOf(website: string): string {
     .split(/[/?#]/)[0];
 }
 
+/** every invite after step 01 goes to the team@ user they created */
 export function inviteAddress(a: Answers, client: Client): string {
-  if (a.inviteTo === "jt") return TYLER.email;
   const typed = (a.workspace.email ?? "").trim();
   if (typed) return typed;
   const d = domainOf(client.website);
@@ -129,34 +127,31 @@ const STATUS_LABEL: Record<Status, string> = Object.fromEntries(
   STATUS_OPTIONS.map((o) => [o.id, o.label])
 ) as Record<Status, string>;
 
+/**
+ * A missing paid plan is not a blocker for the client: they are told "we'll
+ * need that" and it reaches Tyler as amber. Missing admin is red.
+ */
 export function toolFlag(tool: Tool, ans: ToolAnswer | undefined): { flag: Flag; reason?: string } {
   if (!ans?.status) return { flag: "todo" };
   if (tool.paid && !ans.paid) return { flag: "todo" };
-  if (tool.paid && ans.paid === "no") return { flag: "red", reason: "Not on a paid plan" };
-  if (ans.status === "admin") return { flag: "green" };
-  if (ans.status === "partial") return { flag: "red", reason: `Tyler is not ${tool.role}` };
-  if (ans.status === "none") return { flag: "red", reason: "Tyler has no access" };
-  return { flag: "red", reason: "Not confirmed" };
+  const unpaid = tool.paid && ans.paid === "no";
+  const also = unpaid ? ", and needs a paid plan" : "";
+  if (ans.status === "partial") return { flag: "red", reason: `Tyler is not ${tool.role}${also}` };
+  if (ans.status === "none") return { flag: "red", reason: `Tyler has no access${also}` };
+  if (ans.status === "unsure") return { flag: "red", reason: `Not confirmed${also}` };
+  if (unpaid) return { flag: "amber", reason: "Needs a paid plan" };
+  return { flag: "green" };
 }
 
+/** step 01 is a single toggle that starts as "Not yet" */
 export function workspaceItem(a: Answers): Item {
   const w = a.workspace;
   const base = { section: "Workspace", tool: WORKSPACE.title, role: "Super Admin", note: w.note };
-  if (!w.status) return { ...base, flag: "todo", answer: "Not answered" };
   if (w.status === "done") {
-    return (w.email ?? "").trim()
-      ? { ...base, flag: "green", answer: `Created ${w.email!.trim()}` }
-      : { ...base, flag: "todo", answer: "Missing the address you created" };
+    const email = (w.email ?? "").trim();
+    return { ...base, flag: "green", answer: email ? `Created ${email}` : "Done" };
   }
-  if (w.status === "notyet") {
-    return { ...base, flag: "red", answer: "Not done yet", reason: "No team@ user yet" };
-  }
-  return {
-    ...base,
-    flag: "red",
-    answer: "No Google Workspace",
-    reason: "They need Google Workspace",
-  };
+  return { ...base, flag: "red", answer: "Not yet", reason: "No team@ login yet" };
 }
 
 export function summarize(a: Answers): Item[] {
@@ -188,7 +183,7 @@ export function summarize(a: Answers): Item[] {
         tool: tool.name,
         role: tool.role,
         flag,
-        answer: parts.join(", "),
+        answer: flag === "amber" ? `${parts[0]}, needs a paid plan` : parts.join(", "),
         reason,
         note: ans?.note?.trim() || undefined,
       });
