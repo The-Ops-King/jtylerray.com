@@ -8,6 +8,7 @@ set -euo pipefail
 #   /card            ← hero-lab/dist-card      → public/card
 #   /apply           ← hero-lab/dist-apply     → public/apply
 #   /research        ← hero-lab/dist-research  → public/research
+#   /client-onboarding ← hero-lab/dist-client-onboarding → public/client-onboarding
 #
 # This was a copy-paste step for a while, and a failed build still left the
 # previous bundle sitting in public/ looking like a successful one. `set -e`
@@ -24,8 +25,9 @@ npm run build          # the page
 npm run build:card     # the card
 npm run build:apply    # the closer application
 npm run build:research # the market research form
+npm run build:onboarding # the client onboarding checklist
 
-for target in new-home card apply research; do
+for target in new-home card apply research client-onboarding; do
   src="$root/hero-lab/dist-$target"
   dest="$root/public/$target"
   [ -d "$src" ] || { echo "missing $src"; exit 1; }
@@ -35,4 +37,4 @@ for target in new-home card apply research; do
 done
 
 echo
-echo "Built. Commit public/new-home, public/card, public/apply and public/research, then push to deploy."
+echo "Built. Commit public/new-home, public/card, public/apply, public/research and public/client-onboarding, then push to deploy."

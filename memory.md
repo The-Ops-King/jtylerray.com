@@ -163,3 +163,58 @@ and `RESEND_API_KEY` were already there. Env changes need a redeploy to take —
 
 Verified end to end against production: `{"ok":true,"sheet":true,"email":true}`,
 and the honeypot returns a bare `{"ok":true}` having written nothing.
+
+## 2026-11-04 — /client-onboarding: the access checklist for new clients
+
+**What it is.** jtylerray.com/client-onboarding. A new client clicks "Start
+onboarding", fills in name, email, phone, company and website, and gets a
+private link (`?c=<128-bit id>`) on screen and by email. The link opens their
+checklist, which saves as they go and works on any device.
+
+**Flow.** 01 Google Workspace comes first: create team@theircompany as Super
+Admin and send the password through a one-time link (onetimesecret.com),
+never by email. That address is where every later invite goes, with a
+per-client switch to jt@jtylerray.com. Then seven sections: Communication,
+Payments, CRM, Meetings, Call recording, Calendar and Automation. Each is a
+multi-select with Other and "We don't use one". Each picked tool asks "Is
+Tyler a <role>?" with four answers (Yes admin / Has access, not admin / No
+access / Not sure). Any answer other than admin turns red and shows that
+tool's steps. Zoom, Zapier and Fathom also ask whether the plan is paid, and
+No is red. Sending with red items opens an "Are you sure?" listing them.
+Unanswered sections block sending.
+
+**Files.**
+- `hero-lab/src/onboarding/catalog.ts`: every section, tool, role, step and
+  doc link. Adding a tool or section is an entry here and nothing else. Doc
+  links are only the five checked to exist (Google ×2, Stripe, Slack, n8n).
+- `hero-lab/src/onboarding/model.ts`: answers shape, plus `summarize()`,
+  which decides green/red/amber/todo. Both the screen and the email use it.
+- `Onboarding.tsx` / `onboarding.css`: drawn in the card's language, importing
+  card.css and apply.css, like /apply.
+- `api/onboarding.ts`: start / GET / PUT autosave / submit. Upstash Redis is
+  the record. The Sheet is Tyler's view, upserted by id on start, on submit
+  and at most every 5 min while they work. Resend emails the client their
+  link, tells Tyler on start, and sends Tyler a red-first summary on submit.
+  Starts are rate-limited to 10/hour/IP because each one emails a typed
+  address.
+- `Resources/onboarding-sheet.gs`: the upsert script, one row per client, red
+  rows shaded.
+- Fifth build target: `VITE_ONBOARDING`, `npm run build:onboarding`, and
+  build-pages.sh copies it into public/client-onboarding. noindex and
+  no-referrer headers are set in vercel.json. It is not in the sitemap.
+
+**Still to do by hand (nothing saves until the first one is done):**
+1. Vercel → Storage → Upstash for Redis (free) → connect to jtylerray.com.
+   That sets KV_REST_API_URL / KV_REST_API_TOKEN.
+2. A new Sheet plus onboarding-sheet.gs deployed as a web app with access
+   "Anyone". Set ONBOARDING_SHEET_WEBHOOK_URL.
+3. RESEND_FROM must be on a verified domain, or the client never gets their
+   link email.
+4. Later: a GHL Inbound Webhook workflow that texts Tyler. Set
+   GHL_ONBOARDING_WEBHOOK_URL. It already gets `start` and `submit` events.
+5. Redeploy after env changes.
+
+**Tested locally.** The real handler ran against a mock Redis and sinks, and
+Playwright drove the full flow: start, answer, red confirm, send, then reopen
+in a fresh browser to confirm the record came back. No console errors and no
+horizontal scroll at 390px.

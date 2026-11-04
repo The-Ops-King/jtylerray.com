@@ -18,6 +18,7 @@ const TARGETS = [
   { flag: 'VITE_CARD', dir: 'card' },
   { flag: 'VITE_APPLY', dir: 'apply' },
   { flag: 'VITE_RESEARCH', dir: 'research' },
+  { flag: 'VITE_ONBOARDING', dir: 'client-onboarding' },
   { flag: 'VITE_LAB', dir: 'brand-1' },
 ] as const
 
