@@ -6,7 +6,8 @@ import "./themes.css";
 /**
  * Five targets from one source: VITE_CARD=1 builds the contact card (/card),
  * VITE_APPLY=1 the closer application (/apply), VITE_RESEARCH=1 the market
- * research form (/research), VITE_LAB=1 the exploration lab (/brand-1), and
+ * research form (/research), VITE_ONBOARDING=1 the client onboarding
+ * checklist (/client-onboarding), VITE_LAB=1 the exploration lab (/brand-1), and
  * the default is the page itself (/new-home).
  *
  * The roots are imported dynamically so each build carries only its own tree.
@@ -24,6 +25,7 @@ const at = (root: string) => path === root || path === root + "/";
 const card = import.meta.env.VITE_CARD || at("/card");
 const apply = import.meta.env.VITE_APPLY || at("/apply");
 const research = import.meta.env.VITE_RESEARCH || at("/research");
+const onboarding = import.meta.env.VITE_ONBOARDING || at("/client-onboarding");
 const lab = import.meta.env.VITE_LAB || at("/brand-1");
 
 const load = card
@@ -32,7 +34,9 @@ const load = card
     ? () => import("./apply/Apply")
     : research
       ? () => import("./research/Research")
-      : lab
+      : onboarding
+        ? () => import("./onboarding/Onboarding")
+        : lab
         ? () => import("./Lab")
         : () => import("./App");
 

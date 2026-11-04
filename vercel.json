@@ -43,6 +43,15 @@
       "permanent": true
     }
   ],
+  "headers": [
+    {
+      "source": "/client-onboarding(.*)",
+      "headers": [
+        { "key": "X-Robots-Tag", "value": "noindex, nofollow" },
+        { "key": "Referrer-Policy", "value": "no-referrer" }
+      ]
+    }
+  ],
   "rewrites": [
     { "source": "/privacy", "destination": "/privacy.html" },
     { "source": "/terms", "destination": "/terms.html" },
@@ -54,6 +63,8 @@
     { "source": "/apply/", "destination": "/apply/index.html" },
     { "source": "/research", "destination": "/research/index.html" },
     { "source": "/research/", "destination": "/research/index.html" },
+    { "source": "/client-onboarding", "destination": "/client-onboarding/index.html" },
+    { "source": "/client-onboarding/", "destination": "/client-onboarding/index.html" },
     { "source": "/v/:slug", "destination": "https://yoom.jtylerray.com/v/:slug" },
     { "source": "/v/:slug/:path*", "destination": "https://yoom.jtylerray.com/v/:slug/:path*" },
     { "source": "/(.*)", "destination": "/index.html" }
