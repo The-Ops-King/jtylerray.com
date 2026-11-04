@@ -9,7 +9,8 @@ import { SECTIONS, TYLER, WORKSPACE, otherTool, type Section, type Tool } from "
  * something is done.
  */
 
-export type Status = "admin" | "partial" | "none" | "unsure";
+/* "login": the client sent Tyler the login on Slack (tools with slackLogin) */
+export type Status = "admin" | "login" | "partial" | "none" | "unsure";
 
 export const STATUS_OPTIONS: { id: Status; label: string }[] = [
   { id: "admin", label: "Yes, admin" },
@@ -204,8 +205,17 @@ export type Item = {
   note?: string;
 };
 
+export const LOGIN_OPTION: { id: Status; label: string } = {
+  id: "login",
+  label: "Sent Tyler the login on Slack",
+};
+
+/** the answers a tool offers: the four, plus the Slack login where allowed */
+export const statusOptions = (tool: Tool) =>
+  tool.slackLogin ? [STATUS_OPTIONS[0], LOGIN_OPTION, ...STATUS_OPTIONS.slice(1)] : STATUS_OPTIONS;
+
 const STATUS_LABEL: Record<Status, string> = Object.fromEntries(
-  STATUS_OPTIONS.map((o) => [o.id, o.label])
+  [...STATUS_OPTIONS, LOGIN_OPTION].map((o) => [o.id, o.label])
 ) as Record<Status, string>;
 
 /**
@@ -246,7 +256,7 @@ export function summarize(a: Answers): Item[] {
         tool: "None",
         role: "",
         flag: "amber",
-        answer: "Doesn't use one",
+        answer: "Doesn't use one yet",
       });
       continue;
     }

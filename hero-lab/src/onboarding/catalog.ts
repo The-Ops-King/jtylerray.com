@@ -31,6 +31,9 @@ export type Tool = {
   docs?: { label: string; href: string };
   /** a paid plan is needed; the page asks, and "no" is noted for Tyler */
   paid?: boolean;
+  /** offers "Sent Tyler the login on Slack" as an answer that counts as done,
+      for tools clients usually share by login rather than by invite */
+  slackLogin?: boolean;
   /** a one-line note under the question, for tools with a catch */
   note?: string;
 };
@@ -399,10 +402,13 @@ export const SECTIONS: Section[] = [
         name: "Zapier",
         role: "Admin",
         paid: true,
+        slackLogin: true,
+        note: "Either give Tyler his own access, or Slack him the login.",
         steps: [
-          "Open Settings, then Members.",
+          "Own access: open Settings, then Members.",
           "Invite {invite} and set the role to Admin.",
           "Share the folders that hold your Zaps with the team.",
+          "Or skip all that: send Tyler the Zapier login in a Slack DM.",
         ],
       },
       {

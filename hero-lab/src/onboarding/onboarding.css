@@ -498,10 +498,10 @@
   align-items: center;
   gap: 12px;
   min-height: 52px;
-  padding: 12px 22px 12px 14px;
-  border: 1px solid var(--onb-red-edge);
+  padding: 12px 14px 12px 22px;
+  border: 1px solid rgba(201, 195, 184, 0.5);
   border-radius: 999px;
-  background: rgba(217, 139, 122, 0.1);
+  background: rgba(138, 133, 124, 0.08);
   color: var(--bone);
   font-family: var(--sans);
   font-size: 17px;

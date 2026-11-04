@@ -6,8 +6,8 @@ import {
   BUSINESS_STEPS,
   LEAD_SOURCES,
   OFFER_FIELDS,
-  STATUS_OPTIONS,
   businessDone,
+  statusOptions,
   businessMissing,
   newOffer,
   emptyAnswers,
@@ -614,7 +614,7 @@ function WorkspaceStep({
       <div className={`onb-tool is-${flag}`}>
         <p className="onb-p onb-p-first">
           Start by creating a <strong>{suggested}</strong> Google Workspace email and make it a
-          Super Admin. Then send me the login.
+          Super Admin. Then send the login to <strong>{TYLER.email}</strong>.
         </p>
 
         <HowTo>
@@ -644,12 +644,11 @@ function WorkspaceStep({
             setW(done ? { status: "notyet" } : { status: "done", email: w.email || suggested })
           }
         >
+          {done ? "Done." : "Done?"}
           <span className="onb-toggle-box" aria-hidden="true">
             {done ? "✓" : ""}
           </span>
-          {done ? "Done" : "Not yet"}
         </button>
-        {!done && <p className="onb-note">Tap it once the login is set up and sent.</p>}
 
         {done && (
           <label className="field">
@@ -741,6 +740,8 @@ function SectionBlock({
         </Chip>
       </div>
 
+      {sa.none && <p className="onb-note onb-ok">Ok, we'll need one.</p>}
+
       {sa.picked.includes(otherId) && (
         <label className="field onb-other">
           <span className="field-l mono">What's it called?</span>
@@ -784,7 +785,8 @@ function ToolCard({
   onChange: (patch: Partial<ToolAnswer>) => void;
 }) {
   const { flag } = toolFlag(tool, ans);
-  const needsSteps = ans?.status && ans.status !== "admin";
+  const settled = ans?.status === "admin" || ans?.status === "login";
+  const needsSteps = ans?.status && !settled;
 
   return (
     <div className={`onb-tool is-${flag}`} id={`tool-${tool.id}`}>
@@ -815,11 +817,13 @@ function ToolCard({
       )}
 
       <p className="onb-q">
-        Is Tyler {/^[aeiou]/i.test(tool.role) ? "an" : "a"} {tool.role} in {tool.name}?
+        {tool.slackLogin
+          ? `Does Tyler have access to ${tool.name}?`
+          : `Is Tyler ${/^[aeiou]/i.test(tool.role) ? "an" : "a"} ${tool.role} in ${tool.name}?`}
       </p>
       <Choice
         name={`${tool.id}-status`}
-        options={STATUS_OPTIONS}
+        options={statusOptions(tool)}
         value={ans?.status}
         onChange={(v) => onChange({ status: v })}
         bad={["partial", "none", "unsure"]}
@@ -827,7 +831,7 @@ function ToolCard({
 
       {needsSteps && <p className="onb-alert">I need {tool.role} here.</p>}
 
-      {ans?.status !== "admin" && (
+      {!settled && (
         <HowTo>
           <ol className="onb-steps">
             {tool.steps.map((s) => (
