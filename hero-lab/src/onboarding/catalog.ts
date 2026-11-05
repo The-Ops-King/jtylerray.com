@@ -31,6 +31,8 @@ export type Tool = {
   docs?: { label: string; href: string };
   /** a paid plan is needed; the page asks, and "no" is noted for Tyler */
   paid?: boolean;
+  /** the tool adds people by phone number (Tyler's), not by the team@ email */
+  byPhone?: boolean;
   /** offers "Sent Tyler the login on Slack" as an answer that counts as done,
       for tools clients usually share by login rather than by invite */
   slackLogin?: boolean;
@@ -97,8 +99,8 @@ export const SECTIONS: Section[] = [
         role: "Workspace Admin",
         steps: [
           "Click your workspace name, then Invite people, and invite {invite}.",
-          "Once Tyler joins, open Tools & settings, then Manage members.",
-          "Find Tyler, click the three dots, choose Change account type, and pick Workspace Admin.",
+          "Once {invite} joins, open Tools & settings, then Manage members.",
+          "Find {invite}, click the three dots, choose Change account type, and pick Workspace Admin.",
         ],
         docs: {
           label: "Change a member's role",
@@ -109,11 +111,12 @@ export const SECTIONS: Section[] = [
         id: "whatsapp",
         name: "WhatsApp",
         role: "Group admin",
+        byPhone: true,
         note: "WhatsApp goes by phone number, so add {phone} to each group.",
         steps: [
           "Open each group Tyler should be in and tap the group name.",
           "Tap Add member and add {phone}.",
-          "Tap Tyler in the member list and choose Make group admin.",
+          "Tap {phone} in the member list and choose Make group admin.",
           "Repeat for every group, including client groups.",
         ],
       },
@@ -124,7 +127,7 @@ export const SECTIONS: Section[] = [
         steps: [
           "Create an invite link to your server and email it to {invite}.",
           "Open Server Settings, then Roles, and create a role with Administrator turned on.",
-          "Once Tyler joins, give that role to Tyler.",
+          "Once that account joins, give it that role.",
         ],
       },
     ],
@@ -239,7 +242,7 @@ export const SECTIONS: Section[] = [
         steps: [
           "Open your organization settings, then Members.",
           "Invite {invite} and set the role to Admin.",
-          "Give Tyler access to the workspaces that hold your forms.",
+          "Give {invite} access to the workspaces that hold your forms.",
         ],
       },
       {
@@ -256,7 +259,7 @@ export const SECTIONS: Section[] = [
         name: "GHL Forms",
         role: "Sub-account Admin",
         note: "This comes with GoHighLevel admin access in the CRM section.",
-        steps: ["Give Tyler admin in GoHighLevel (CRM section). That covers its forms."],
+        steps: ["Give {invite} admin in GoHighLevel (CRM section). That covers its forms."],
       },
       {
         id: "fillout",
@@ -282,7 +285,7 @@ export const SECTIONS: Section[] = [
         steps: [
           "Sign in at zoom.us and open User Management, then Users.",
           "Click Add Users, enter {invite}, and set the type to Licensed.",
-          "Open User Management, then Roles, and add Tyler to the Admin role.",
+          "Open User Management, then Roles, and add {invite} to the Admin role.",
         ],
       },
       {
@@ -370,7 +373,7 @@ export const SECTIONS: Section[] = [
         name: "GHL Calendar",
         role: "Sub-account Admin",
         note: "This comes with GoHighLevel admin access in the CRM section.",
-        steps: ["Give Tyler admin in GoHighLevel (CRM section). That covers its calendars."],
+        steps: ["Give {invite} admin in GoHighLevel (CRM section). That covers its calendars."],
       },
       {
         id: "iclosed",
@@ -403,7 +406,7 @@ export const SECTIONS: Section[] = [
         role: "Admin",
         paid: true,
         slackLogin: true,
-        note: "Either give Tyler his own access, or Slack him the login.",
+        note: "Either give {invite} its own access, or Slack Tyler the login.",
         steps: [
           "Own access: open Settings, then Members.",
           "Invite {invite} and set the role to Admin.",
@@ -418,7 +421,7 @@ export const SECTIONS: Section[] = [
         steps: [
           "Open your organization, then Users.",
           "Invite {invite} and give it the Admin role.",
-          "Add Tyler to every team that holds scenarios.",
+          "Add {invite} to every team that holds scenarios.",
         ],
       },
       {
@@ -429,7 +432,7 @@ export const SECTIONS: Section[] = [
         steps: [
           "Open Settings, then Users.",
           "Invite {invite}.",
-          "Change Tyler's role to Admin.",
+          "Change the role for {invite} to Admin.",
         ],
         docs: { label: "n8n user management", href: "https://docs.n8n.io/user-management/" },
       },
@@ -446,7 +449,7 @@ export const SECTIONS: Section[] = [
         role: "Admin",
         steps: [
           "Invite {invite} to your Skool group.",
-          "Once Tyler joins, open Members, find Tyler, and change the role to Admin.",
+          "Once {invite} joins, open Members, find it, and change the role to Admin.",
         ],
       },
       {
@@ -464,7 +467,7 @@ export const SECTIONS: Section[] = [
         role: "Admin",
         steps: [
           "Invite {invite} to your community.",
-          "Open Members, find Tyler, and set the role to Admin.",
+          "Open Members, find {invite}, and set the role to Admin.",
         ],
       },
       {

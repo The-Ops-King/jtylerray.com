@@ -941,9 +941,17 @@ function ToolCard({
       )}
 
       <p className="onb-q">
-        {tool.slackLogin
-          ? `Does Tyler have access to ${tool.name}?`
-          : `Is Tyler ${/^[aeiou]/i.test(tool.role) ? "an" : "a"} ${tool.role} in ${tool.name}?`}
+        {/* names the account being added, from "The address you created" */}
+        {tool.slackLogin ? (
+          <>
+            Does <strong>{invite}</strong> have access to {tool.name}?
+          </>
+        ) : (
+          <>
+            Have you added <strong>{tool.byPhone ? TYLER.phone : invite}</strong> as {tool.role} in{" "}
+            {tool.name}?
+          </>
+        )}
       </p>
       <Choice
         name={`${tool.id}-status`}
