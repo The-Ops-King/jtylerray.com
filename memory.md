@@ -312,3 +312,17 @@ horizontal scroll at 390px.
   ("Jump to next question ↓" / "This page is done" / "Everything's
   answered") over the target.
 - Items carry `sectionId` so blockers know their page.
+
+## 2026-11-04 — questions name the team@ address; onboarding sender (PR #14)
+
+- Access questions read "Have you added <address> as <role> in <tool>?",
+  with the address taken live from step 01's "The address you created"
+  (inviteAddress, falling back to team@<domain>). WhatsApp has
+  `byPhone: true` and names Tyler's number. Zapier asks "Does <address> have
+  access to Zapier?". Steps that referred to "Tyler" as the account now use
+  {invite}. Mentions of Tyler personally stay (phone, Slacking him a login).
+- Env: ONBOARDING_FROM = "J. Tyler Ray <jt@jtylerray.com>" (Production and
+  Preview). jtylerray.com is verified in Resend: the resend._domainkey DKIM
+  and send. SPF/MX records exist, and a production test returned
+  email:true. Client emails reply to jt@jtylerray.com, because NOTIFY_EMAIL
+  is unset and the code falls back to it.
